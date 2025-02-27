@@ -1,0 +1,8 @@
+Slack = -0.051
+Slack = -0.234
+Slack = -0.311
+Slack = -0.056
+Slack = -0.434
+Slack = -0.316
+Slack = -0.151
+Slack = -0.524
