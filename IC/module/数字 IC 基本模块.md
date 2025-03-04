@@ -87,7 +87,7 @@ $$
 
 ### FIFO
 
-[[docs/FIFO/异步FIFO面试题]]
+[[../求职八股/docs/FIFO/异步FIFO面试题|docs/FIFO/异步FIFO面试题]]
 
 [格雷码与异步FIFO笔记](./docs/异步FIFO.md)
 

@@ -132,5 +132,3 @@ Address Calculation 计算出存储器的地址；Disambiguation 对 load/store 
 总结，写缓存相当于是 L 1 Cache 到下级存储器的缓冲，通过它，向下级存储器中写入数据的动作会被隐藏。尤其对于写通类似的 D-Cache 来说很重要。
 
 ### 写流水
-
-# Ch3 虚拟存储器

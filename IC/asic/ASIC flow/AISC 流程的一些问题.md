@@ -5,6 +5,9 @@ dateModified: 2025-02-27
 # 参考
 
 [皓宇的筆記 (wordpress.com)](https://timsnote.wordpress.com/)
+# 约束
+
+约束怎么做？
 
 # RAM 生成
 
