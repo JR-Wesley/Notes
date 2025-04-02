@@ -10,7 +10,7 @@ $建立时间容限＝T_{clk}-T_{ffpd}(max)-T_{comb}(max)-T_{setup}$
 
 $T_{setup}≤T_{clk}-T_{ffpd}(max)-T_{comb}(max)$
 
-![img](../求职八股/pics/hold_time.png)
+![img](../jobinterview/pics/hold_time.png)
 
 $保持时间容限+T_{hold}＝T_{ffpd}(min)+T_{comb}(min)$
 

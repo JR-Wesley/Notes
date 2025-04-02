@@ -1,6 +1,6 @@
 ---
 dateCreated: 2025-02-27
-dateModified: 2025-02-27
+dateModified: 2025-04-02
 ---
 # 📜 A Digital IC Explorer's Atlas | Ongoing Learning Repository
 
@@ -29,36 +29,33 @@ This repository archives my (**not well organized**) learning journey through **
 ```bash
 .
 ├── EDA
+│   └── assets
 ├── IC
-│   ├── CMOS
 │   ├── DSP
 │   ├── FPGA
 │   ├── STA
-│   ├── arithmetic
-│   ├── art of IC
 │   ├── asic
+│   ├── book
 │   ├── commFig
 │   ├── fpu
-│   ├── memory
 │   ├── module
 │   ├── protocal
 │   ├── sv
-│   └── verification
+│   ├── verification
+│   └── jobinterview
 ├── Soc
 │   ├── deep_in_riscv_debug-master
 │   └── riscv
 ├── cs
 │   ├── GPU
-│   ├── SuperScalar
-│   ├── algo
+│   ├── assets
+│   ├── book - SuperScalar
 │   ├── comp arch paper
-│   ├── compression
-│   ├── csarchGraph
-│   └── csorggraph
+│   └── compression
 ├── cv
 │   ├── GPUhw
+│   ├── assets
 │   ├── coding
-│   ├── pycv
 │   └── rayTracing
 ├── dl
 │   ├── AIsys
@@ -68,19 +65,21 @@ This repository archives my (**not well organized**) learning journey through **
 │   ├── sparse
 │   └── yolo
 ├── embeded
-│   └── stm32相关资料
-├── encryption
-│   ├── arch
-│   └── meng
+│   └── stm32
 ├── hdc
 │   ├── CA
 │   ├── img
-│   ├── 讲座
-│   └── 论文参考
+│   ├── lecture
+│   └── paper
 ├── language
+├── learning
+├── music
+│   └── assets
 ├── tools
 │   └── img
 ├── web
+├── ysyx
+│   └── assets
 ```
 
 ## 🔐 License Matrix
@@ -91,4 +90,4 @@ This repository archives my (**not well organized**) learning journey through **
 
 ## 📚 Reference
 
-I've copied and modified a framework by <a href="https://github.com/ProudBenzene/Reverse1999Wiki-in-Obsidian">A local Wikipedia in Obsidian</a> for my own usage.
+I've copied and modified a notebook framework by <a href="https://github.com/ProudBenzene/Reverse1999Wiki-in-Obsidian">A local Wikipedia in Obsidian</a> for my own usage.

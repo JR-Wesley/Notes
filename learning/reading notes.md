@@ -28,6 +28,12 @@ Breakthrough moments are often the result of many previous actions, which build 
 
 Goals are about the results you want to achieve. Systems are about the processes that lead to those results.
 
+#### Problem 1：winners and Losers Have the Same Goals
+
+Goal setting suffers from a serious case of survivorsihp bias. We concentrate on the people who end up winning and mistatkenly assume that ambitious gols led to their success while overlooking all of the people who had the same objective but didn't succeed.
+
+#### Problem 2: Achieving a Goal is only a Momentary Change
+
 ### Summary
 - Habits are the compound interest of self-improvement. Getting 1 percent better every day counts for a lot in the long-run.
 - Habits are double-edged sword. They can work for you or against you, which is why understanding the details is essential.

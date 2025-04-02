@@ -1,8 +1,8 @@
 ---
 dateCreated: 2024-11-13
-dateModified: 2025-02-19
+dateModified: 2025-04-01
 ---
-	# Vim 核心使用
+# Vim 核心使用
 - move
 `h (left)       j (down)       k (up)       l (right)`
 - operator

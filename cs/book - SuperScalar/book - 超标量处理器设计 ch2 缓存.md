@@ -1,7 +1,7 @@
 ---
 banner: "[[../../300-以影像之/Clorinde 8205816.jpeg]]"
 dateCreated: 2024-11-20
-dateModified: 2025-03-27
+dateModified: 2025-03-31
 ---
 # Ch2 Cache
 ## 2.1 Cache 的一般设计
@@ -133,19 +133,35 @@ Address Calculation 计算出存储器的地址；Disambiguation 对 load/store 
 
 ### 2.2.2 流水线
 
-对于读取 D-Cache 来说，由于 Tag SRAM 和 Data SRAM 可以在同时进行读取，所有当处理器的周期时间要求不是很严格时，可以在一个周期内完成读取的操作；对于写 D-Cache 来说，只能串行地完成。只要通过 Tag 比较，确认要写的地址在 Cache 中后，才可以写 Data SRAM，在主频比较高时，操作难以在一周期内完成，这就是要对写操作流水线。流水线的划分方式有很多，比较典型的是将 Tag SRAM 地读取和比较放在一个周期，写 Data SRAM 放在下一个周期。这样对于一条 store 指令来说，即使在 D-Cache 命中的时候，最快也需要两个周期才可以完成写操作。若连续地执行 store，可以获得流水地效果。
+对于读取 D-Cache 来说，由于 Tag SRAM 和 Data SRAM 可以在同时进行读取，所有当处理器的周期时间要求不是很严格时，可以在一个周期内完成读取的操作；对于写 D-Cache 来说，只能串行地完成。只要通过 Tag 比较，确认要写的地址在 Cache 中后，才可以写 Data SRAM，在主频比较高时，操作难以在一周期内完成，这就是要对写操作流水线。流水线的划分方式有很多，比较典型的是*将 Tag SRAM 地读取和比较放在一个周期，写 Data SRAM 放在下一个周期*。这样对于一条 store 指令来说，即使在 D-Cache 命中的时候，最快也需要两个周期才可以完成写操作。若连续地执行 store，可以获得流水地效果。
 
 ![](assets/ch2%20Cache/Cache%20写流水.png)
 
 在上图的实现方式中，load 指令在 D-Cache 命中的情况下，可以在一个周期内完成，store 指令则一周期读取 Tag 一周期选择是否写入 Data。当指令 load 指令时，它需要的数据可能正好在 store 指令的流水线寄存器中（即上图中的 Delayed Store Data），而不在 Data SRAM 中，所以需要一种机制进行判断、转发。
 
 ### 2.2.3 多级结构
-![](assets/ch2%20Cache/多级.png)
-通常，L 1 Cache 容量很小，和处理器内核保持同样的速度等级，L 2 Cache 访问消耗几个处理器时钟周期，容量更大些，现代处理器中 L 1 和 L 2 Cache 通常在统一芯片内
 
+![](assets/ch2%20Cache/多级.png)
+
+通常，L 1 Cache 容量很小，和处理器内核保持同样的速度等级，L 2 Cache 访问消耗几个处理器时钟周期，容量更大些，现代处理器中 L 1 和 L 2 Cache 通常在同一芯片内。一般在处理器中，L 2 Cache 会使用写回方式，对于 L 1 Cache 来说，写通实现也可以接受，这样可以简化流水线设计，便于在多核环境下管理存储器之间的一致性。
+
+对于多结构得 Cache (multilevel Cache) 还需要了解两个概念 Inclusive/Exclusive，以 L 1/L 2 Cache 为例。
+
+- **Inclusive**: L 2 Cache 包括了 L 1 Cache 中的所有内容。
+- **Exclusive**: L 2 Cache 和 L 1 Cache 中的内容互不相同。
+![](assets/ch2%20Cache/Inclusive%20exlusive.png)
+Inclusive 比较浪费资源，因为它将一份数据保存在了两个地方，但这也带来了明显的好处，首先可以将数据直接写到 L 1 Cache 中，虽然此时会将 Cache line 中原来的数据覆盖，但是在 L 2 Cache 中存有这个数据的备份，所以覆盖不会引起问题（被覆盖的 line 不能是脏状态）；Inclusive 类型简化了一致性 coherence 管理，如在多核处理器中，一个处理器改变了存储器中一个地址的数据时，如果其他处理器的私有 Cache 中也保存了这个数据，那么需要将它们设为无效。对于 Inclusive 类型，只需要检查最低一级的 Cache 即可，这个例子中就是 L 2 Cache，如果没有发现对应的地址，也就不需要更新 L 1 Cache，避免影响处理器流水线；对于 Exclusive 类型，显然需要检查所有 Cache，检查 L 1 Cache 显然影响了处理器流水线，如果处理器要读取的数据不在 L 1 Cache 而是在 L 2 Cache 中，将数据从 L 2 Cache 放到 L 1 Cache 的同时，也需要将 L 1 Cache 中覆盖的 line 写到 L 2 Cache 中，这种交换数据的过程会降低处理器的效率。但是 Exclusive 类型 Cache 避免了硬件的浪费，一定程度上提高了整体性能。现在大多数采用 Inclusive。
 
 ### 2.2.4 Victim Cache
 
 ### 2.2.5 预取
 
 ## 2.3 多端口 Cache
+
+为了提高性能，处理器需要在每周期同时执行多条 load/store 指令，这需要多端口 D-Cache 支持多条指令同时访问。实际上超标量处理器中很多部件都是多端口结构的如 RF, IQ, ROB，但是这些部件本身容量不大，即使采用多端口设计也不会对芯片面积功耗产生太大影响，而 D-Cache 则不行。本节介绍三种实现多端口 D-Cache 的方法。
+
+### True Multi-port
+
+### Multiple Cache Copied
+
+### Multi-banking

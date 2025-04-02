@@ -1,163 +1,17 @@
 ---
 dateCreated: 2023-07-31
-dateModified: 2024-12-06
+dateModified: 2025-04-01
 ---
+
 https://vim.wxnacy.com/#docs/get_started
 
 https://www.runoob.com/linux/linux-vim.html
 
 https://csguide.cn/
 
-# 常用操作
-
-```shell
-ls *.tar.gz | xargs -n1 tar xzvf
-
-```
-
-用 tar 命令批量解压某个文件夹下所有的 tar.gz 文件
-
-for file in *_1; do
-
-  mv "$file" "${file/_1/:1}"
-
-done
-
-# 程序运行
-
-# Linux
-
-linux 分底层与应用
-
-Ubuntu 密码 Eric zhy72538490
-
-## Shell
-
-```shell
-用户名@机器名:~$ ls
-command -option [argument]
-
-# 1. ls	显示指定目录下的内容
--a	显示所有文件及子目录，包括"."开头的隐藏文件
--l	显示文件的详细信息
--t	将文件按创建时间排序列出
--A	和-a相同，但不列出".”和".."子目录和父目录
--R	递归列出所有文件，包括子目录的文件
-# 参数可任意组合
-
-# 2. cd 目录切换
-cd /	进入/目录下
-cd /usr	进入"/usr"里面
-cd ..		进入上级目录
-cd ~		切换到当前用户主目录
-
-# 3. pwd 当前路径显示
-
-# 4. uname 系统信息查看
--r	列出当前系统具体内核版本号
--s	列出系统内核名称
--o	列出系统信息
-
-# 5. clear 清屏
-
-# 6. sudo 切换用户执行身份命令
--h	显示帮助信息
--l	列出当前用户可执行与不可执行的命令
--p	改变询问密码的提示符
-
-# 7. adduser 添加用户命令，需要sudo
--system	添加系统用户
--home DIR	DIR表示用户的主目录路径
--uid ID		ID表示用户的uid
--ingroup GRP	表示用户所属组名
-
-
-# 8. deluser 删除用户命令，需要sudo
--system				当用户是一个系统用户时才能删除
--remove-home	删除用户主目录
--remove-all-files	删除与用户有关的所有文件
--backup		备份用户信息
-
-# 9. su 切换用户命令
--c -command		执行指定的命令，执行完后回复用户身份
--login	改变用户身份，同时改变工作目录和PATH环境变量
--m		改变用户身份的时候不改变环境变量
--h		显示帮助信息
-
-# 10. cat 显示文件内容命令
-# linux下类似记事本gedit
--n 由1开始对所有输出的行进行编号
--b 和n类似，但是不对空白行编号
--s 遇到连续两个空行以上合并成一个空白行
-
-# 11. ifconfig 显示和配置网络属性命令
-interface	网络接口，比如eth0
-up	开启网络涉笔
-down	关闭网络设备
-add	IP地址，设置网络IP
-netmask add	子网编码
-
-# 12. man 系统帮助
-
-# 13. reboot 系统重启
-
-# 14. poweroff 系统关闭
-
-# 15. install 软件安装
-
-```
-
-## 工具
-
-- APT 下载工具
-
-```shell
-sudo apt-get update
-sudo apt-get check
-sudo apt-get install package-name
-sudo apt-get upgrade package-name
-sudo apt-get remove package-name
-
-```
-
-- gedit/vi/vim
-
-```shell
-i	当前光标字符前，转为输入
-I	当前光标字符行首，转为输入
-a	当前光标字符后，转为输入
-A	当前光标所在行行尾，转为输入
-o	当前光标所在行下方，新建一行，转为输入
-O	当前光标所在行上方，新建一行，转为输入
-s	删除光标所在字符
-r	替换光标处字符
-```
-
-Ctrl+S 是短暂停止该终端，Ctrl+Q 重新打开
-
-ESC
-
-移动光标指令：
-
-h/i/j/k,nG,n+,n-,Ctrl+f,Ctrl+b,cc,dd,ndd,x,X,nyy,p
-
-底行命令：
-
-```shell
-x	保存文件并退出
-q	退出
-w	保存文档
-q!	退出VI/VIM，不保存文档
-/	搜索后面的文字
-```
-
 ## 文件系统
 
 用户根目录是:	/home/usrname，Linux 为每个用户都创建了根目录
-
-```shell
-cd /	//进入根目录
-```
 
 | 名          | 内容                                                         |
 | ----------- | ------------------------------------------------------------ |
@@ -203,39 +57,6 @@ touch [参数][文件名]	创建新文件
 -rmdir
 
 -cp
-
-cmv
-
-
-```
-
-文件压缩和解压
-
-```shell
-```
-
-```shell
-find [路径][参数][关键字]
--
-
-
-
-grep [参数] 关键字 文件列表
-
-
-```
-
-用户权限系统
-
-Ubuntu 是多用户系统，
-
-- 初次创建的用户。
-- root 用户，系统管理员
-- 普通用户。
-
-```shell
-chmod [参数][文件名、目录名]
-
 ```
 
 磁盘管理
@@ -316,8 +137,6 @@ ls file* | tee output.txt | wc -l
 ```
 
 当你想要使用 `ctrl+c` 中断该命令，同时让 `tee` 命令优雅的退出，这个选项尤为实用。
-
-
 
 # Petalinux
 
