@@ -12,7 +12,7 @@ https://www.zhihu.com/column/c_1663245806869291008
 
 # AMBA
 AMBA的全称为Advanced Microcontroller Bus Architecture。
-![[AMBADev.jpeg]]
+![[assets/AMBADev.jpeg]]
 
 # APB(Advanced Peripheral Bus)
 ## 介绍

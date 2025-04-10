@@ -1,10 +1,12 @@
 ---
 aliases: []
 dateCreated: 2024-09-18
-dateModified: 2025-04-02
+dateModified: 2025-04-04
 ---
 
 <a href=" https://langster.org/zh-hant/blog/learn-english-reading-resources">英文文章网站</a>
+
+<a href=" https://space.bilibili.com/131058159/upload/video">英语听力解析</a> 574-585
 
 # Expression
 - take it
@@ -15,13 +17,16 @@ dateModified: 2025-04-02
 给某人写信
 - back on track
 回到正轨
-- auto framing
-
-spwan forth
-
-game-chaning
-
-net new
+- was/were about to go
+即将做某事，将要做
+- was/were to do
+按过去的计划、安排将要做
+- spwan forth
+涌现、产生
+- game-chaning/**Disruptive**/**Groundbreaking**/**Breakthrough**/**Paradigm-shifting**/**Revolutionary**
+颠覆性、打破常规
+- net new/gain/growth/
+净新增。
 
 #### **爆发式传播**
 
@@ -70,13 +75,7 @@ net new
 ## LIST
 
 1. collouilly /kə'ləukwiəli/   adv. 用白话,用通俗语
-2. seam /sim/
 
-   n. 缝；接缝
-
-   vt. 缝合；接合；使留下伤痕
-
-   vi. 裂开；产生裂缝
 
 1. wrath /ræθ/
 
@@ -92,35 +91,7 @@ net new
 
    wrath: 文学用词，含义与 anger 相近，但语气强，含欲加惩罚或报复的意味。
 
-1. adjunct /'ædʒʌŋkt/
 
-    n. 附件,助手
-
-    adj. 附属的
-
-1. gist /dʒɪst/
-
-    n. 要点, 主旨
-
-1. calibration /ˌkæləˈbreʃən/
-
-    n. 调准; 校准
-
-    (测量器具上的) 刻度
-
-    口径测定
-
-1. cruise /krʊz/
-
-    vi. 巡航，巡游；漫游
-
-    vt. 巡航，巡游；漫游
-
-    n. 巡航，巡游；乘船游览
-
-1. crackerjack /'krækɚdʒæk/
-
-   n.〈俚〉能力极强的人,极佳之物
 
 # 介词整理
 

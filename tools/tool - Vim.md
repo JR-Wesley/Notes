@@ -2,6 +2,8 @@
 dateCreated: 2024-11-13
 dateModified: 2025-04-01
 ---
+<a href=" https://devhints.io/vim">cheatsheet vim</a>
+
 # Vim 核心使用
 - move
 `h (left)       j (down)       k (up)       l (right)`

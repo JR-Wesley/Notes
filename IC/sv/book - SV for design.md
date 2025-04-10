@@ -1,6 +1,6 @@
 ---
 dateCreated: 2024-10-25
-dateModified: 2024-12-27
+dateModified: 2025-04-03
 ---
 # Ch1 介绍
 
@@ -142,15 +142,43 @@ data = ~0; // 1 的补码
 data = -1; // 2 的补码
 ```
 
-> [!NOTE] 给一个向量赋予特殊的文本值
+> [!NOTE] SV 给一个向量赋予特殊的文本值
 > SV 有更简单的语法，只要指定值，不用指定进制；而且可以是逻辑 1。
 > 用 `'1 '0 'z 'x` 表示，文本值随左手向量宽度扩展。
 
 ## 3.2 \`define 增强
 
-SV 扩展了 Verilog 宏文本替换，可以包含特殊字符。
+>SV 扩展了 Verilog 宏文本替换，可以包含特殊字符。
 
-### 字符串内的宏变量替换
+Verilog 中 `define` 宏中使用 `""` 双引号内部的文本是文本串。如下，双引号内的变量不会被替换。
+```verilog
+`define print(v)\
+	$display("var v = %h", v);
+`print(data);
+
+$display("var v = %h", data);
+```
+>[!note] SV 允许双引号内的宏变量替换，需要加 `
+```systemverilog
+`define print(v)\
+	$display(`"var v = %h`", v);
+`print(data);
+
+$display("var data = %h", data);
+```
+verilog 中为了不影响字符串的双引号，字符串内嵌的引号必须加转义符 `\`，字符串包含变量替换的文本替换宏时，嵌入的引号要使用 \`\ \`"
+>在宏中，SV 可以使用两个连续的重音符号 ``，使得两个或多个文本宏连接
+```verilog
+bit d00_bit; wand d00_net = d00_bit;
+...
+bit d63_bit; wand d63_net = d63_bit;
+
+`define TWO_STATE_NET(name) bit name``_bit;\
+	wand name``_net = name``_bit;
+`TWO_STATE_NET(d00)
+...
+`TWO_STATE_NET(d63)
+```
 
 # Ch4 用户自定义和枚举数据类型
 
@@ -296,7 +324,104 @@ SV 增加了特有的过程块以减少建模的不确定性，这些块都是�
 
 # Ch7 过程语句
 
+## 7.9 改进的 case 语句
+
+Verilog 中的 `case casex casez` 允许多个选项中选择一个逻辑分支。关键字后的表达式叫**条件表达式**，用来和条件表达式匹配的表达式叫做**条件选项**。Verilog 规定 `case ` 语句必须按照列举顺序计算条件，选项间存在优先级，如果编译器判断所有选项是互斥，通常会优化多余优先级判断。SV 添加了 `unique priority` 修饰符。
+
+> 仿真和综合工具可能对 case 语句的解释不一样
+
+### 7.9.1 Unique case 条件判断
+
+`unique case` 语句指定：
+
+- 只有一个条件选项与条件表达式匹配。
+- 必须有一个条件选项和条件表达式匹配。
+
+> [!note] unique case 可以并行求值
+> 条件选项的顺序并不重要，可以并行求值；条件选项必须完整，表达式与一个且仅一个选项匹配；每个选项必须互斥。
+
+> [!note] 在 always_comb 中使用 unique case
+> always_comb 保证仿真时产生组合逻辑行为。
+
+### 7.9.2 Priority case 语句
+
 # Ch8 FSM 建模
+## 8.1 使用枚举类型建立状态机模型
+
+> [!note] 枚举类型有固定数值，可以有显式基类、显式值
+> 枚举类型提供了一种定义一个具有有限合法数值集合的变量的方法。数值用标签而不是数字逻辑值表示
+> 枚举类型支持高抽象层次的建模，能描述精确、可综合的硬件。四态类型如 logic 可作为基类。
+
+```verilog
+module traffic_light(
+	output logic g_l, y_l, r_l,
+	input sensor,
+	input [15 : 0] g_cnt, y_cnt,
+	input clk, rst_n
+);
+enum bit [2 : 0] {
+RED = 3'b001,
+GREEN = 3'b010, 
+YELLOW = 3'b100
+} state, next;
+always_ff @(posedge clk, negedge rst_n)
+	if (!rst_n) state <= RED;
+	else state <= next;
+
+always_comb begin : set_next_state
+	next = state;
+	unique case (state)
+		RED: if (sensor) next = GREEN;
+		GREEN: if (g_cnt == 0) next = YELLOW;
+		YELLOW: if (y_cnt == 0) next = RED;
+	endcase
+end : set_next_state
+
+always_comb begin: set_output
+	{g_l, y_l, r_l} = '0;
+	unique case (state)
+		RED: r_l = 1'b1;
+		GREEN: g_l = 1'b1;
+		YELLOW: y_l = 1'b1;
+	endcase
+end: set_output
+endmodule 
+```
+
+默认，枚举基类 `int`，每个枚举值标签（0，1，2）默认值，可能不能精确反应硬件行为。` int ` 是一个 32 位两态类型，实际硬件有三个状态，只需要 2 位或 3 位向量。实际的门级有四态，两态仿真的默认初值会掩盖设计问题，标签的默认值可能导致 RTL 和门级仿真不一致，四态类型默认初始值是 X 而不是 0。
+
+> [!note] one-hot 状态机可以使用反向 case 语句
+> 条件表达式是要匹配的文本，如 1 位 1，条件选项是状态变量的每一位。
+
+```verilog
+enum {
+R_BIT = 0,
+G_BIT = 1,
+Y_BIT = 2} state_bit;
+always_comb begin
+	next = state;
+	unique case (1'b1)
+		state[R_BIT]: ...
+		state[G_BIT]: ...
+		state[Y_BIT]: ...
+	endcase
+end
+```
+
+为 one-hot 码状态机的状态寄存器 case 语句添加 unique，可以简化逻辑、避免错误。
+
+### 未使用的值
+
+变量可能会有枚举列表中未定义的逻辑值。使用枚举类型和 uniquecase 语句结合，就不需要特定的编码需求了，如给 default 定义 xxx，给枚举基类定义 xxx。枚举类型将变量的值限定在其定义的值得集合中，case 中列出这些数值，加上 unique case 得语法检查，就能确保 RTL 模型和综合得门级模型仿真一致。
+
+> [!note] 枚举类型变量只能被赋值其类型集合中的值
+> 不能直接赋值文本值，不能对某一位单独赋值。如果要文本赋值，需要静态强制类型转换或动态强制类型转换。
+
+## 使用 2 态数据类型
+
+使用两态数据类型时，可能出现变量默认为 0 而不是 X，这样即使没有插入复位或者复位逻辑有错误，设计好像仍然复位了。另一种情况是，变量使用了缺省值，使得状态没有变化，状态无法转移。
+
+这种状态锁定问题可以通过两种方法解决。第一，使用四态基类如 `logic` 显式声明枚举变量，这样仿真开始时变量有非初始值 X，应用复位后，变量从 X 变为初始复位值。第二，使用默认基类和标签枚举，always_comb 块，即使敏感值没有变化，仿真开始过程块也会执行。
 
 # Ch9 层次化设计
 ## 9.1 模块原型

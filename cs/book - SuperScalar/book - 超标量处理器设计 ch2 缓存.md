@@ -1,7 +1,7 @@
 ---
 banner: "[[../../300-以影像之/Clorinde 8205816.jpeg]]"
 dateCreated: 2024-11-20
-dateModified: 2025-03-31
+dateModified: 2025-04-08
 ---
 # Ch2 Cache
 ## 2.1 Cache 的一般设计
@@ -154,14 +154,54 @@ Inclusive 比较浪费资源，因为它将一份数据保存在了两个地方�
 
 ### 2.2.4 Victim Cache
 
+有时候，Cache 中被踢出的数据可能马上又要使用，比如一个两路组相联的 D-Cache，有 3 个数据位于同一个 Cache set。增大 way 数又会浪费空间，因为其他 set 未必有这种特性。Victim Cache 就是用来保存被排出的数据，通常采用全相连的方式，容量较小，位置如下。
+
+![](assets/ch2%20Cache/VictimCache1.png)
+
+![](assets/ch2%20Cache/VictimCache2.png)
+
+Victim Cache 的本质相当于增加了 Cache 中 way 的个数，避免多个数据竞争 Cache 中有限的位置，从而降低 Cache 的缺失率。一般情况下 Cache 和 Victim Cache 存在互斥 exclusive 关系。如果在 Victim Cache 中找到了 Cache 中没有的数据，直接使用就可以了，和 Cache 命中效果一样，同时 Victim Cache 的数据会写入 Cache，相当于它们交换了数据，这个过程和 Exclusive Cache 行为一样。
+
+还有一种与之类似的思路，称为 Filter Cache，它是在 Cache 之前，即第一个数据被使用时，不会马上放到 Cache 中，而是放在 Filter Cache 中，等到这个数据再次被使用，才会搬移到 Cache 中，避免那些偶然使用的数据占据 Cache。
+
+![](assets/ch2%20Cache/Filter%20Cache.png)
+
 ### 2.2.5 预取
+
+影响 Cache 缺失率的 3 C 定律中，Compulsory 可以通过预取 prefetching 缓解。
+
+#### 硬件预取
+
+#### 软件预取
 
 ## 2.3 多端口 Cache
 
-为了提高性能，处理器需要在每周期同时执行多条 load/store 指令，这需要多端口 D-Cache 支持多条指令同时访问。实际上超标量处理器中很多部件都是多端口结构的如 RF, IQ, ROB，但是这些部件本身容量不大，即使采用多端口设计也不会对芯片面积功耗产生太大影响，而 D-Cache 则不行。本节介绍三种实现多端口 D-Cache 的方法。
+为了提高性能，处理器需要在每周期同时执行多条 load/store 指令，这需要**多端口** D-Cache 支持多条指令同时访问。实际上超标量处理器中很多部件都是多端口结构的如 RF, IQ, ROB，但是这些部件本身容量不大，即使采用多端口设计也不会对芯片面积功耗产生太大影响，而 D-Cache 则不行。本节介绍三种实现多端口 D-Cache 的方法。
 
 ### True Multi-port
 
+直接多端口实际不现实。以双端口为例，所有的控制通路和数据通路都需要复制，它有两套地址解码器，使两个端口可以同时寻址 Tag SRAM/Data SRAM；有两个 MUX，同时读取两个端口的数据；比较器也翻倍，用于判断两个端口的命中情况；同时需要两个对齐器用来完成字节或半字的读取等。Tag SRAM/Data SRAM 本身不需要复制，但它们的每个 Cell 需要同时支持两个并行的读取操作（对于 SRAM cell，不需要两个写端口）。
+
+![](assets/ch2%20Cache/多端口SRAM.png)
+
+这种方式能提供双端口，但是需要复制很多电路，增大了面积，同时驱动多个读端口需要更长的访问时间，功耗也会增加。
+
 ### Multiple Cache Copied
 
+![](assets/ch2%20Cache/MultiCacheCopies.png)
+
+这种方式将 SRAM 复制，和真双口相比，不需要多端口，消除了处理器周期时间的影响，但是浪费了很多面积，而且需要两个之间的同步。
+
 ### Multi-banking
+
+这种结构是现实中广泛使用的方法，它将 Cache 分为很多小 bank，每个 bank 都只有一个端口，如果一个周期之内，Cache 的多个端口上的访问地址都位于不同 bank 之中，这样不会引起问题，只有当两个或者多个端口的地址位于同一个 bank 之中，会引起 **bank 冲突 conflict**，这种方法称为 **multi-banking**。
+
+这种方法，一个双端口的 Cache 仍需要两个地址解码器 Address Decoder、两个 MUX、两套比较器和两个对齐器，Data SRAM 不需要多端口结构了，而由于需要判断 Cache 的每个端口是否命中，Tag SRAM 需要多端口同时读取。
+
+![](assets/ch2%20Cache/multibankingCache.png)
+
+影响这种多端口 Cache 性能的关键因素就是 bank 冲突，可以采用更多 bank 数，也可以提高 bank 利用率，避免数据集中在一个 bank。同时优势每个端口都会访问所有的 bank，需要更多布线资源，对版图设计会有一定影响。这个方式总体使得 Cache 总面积降低，而且不会对处理器周期时间产生太大影响。
+
+### AMD Opteron 多端口 Cache（TODO）
+
+## 2.4 超标量处理器的取指令

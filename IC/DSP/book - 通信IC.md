@@ -1,4 +1,4 @@
-![[../commFig/Pasted image 20240404145814.png]]# ch1 IC设计与HDL
+![[assets.通信IC/Pasted image 20240404145814.png]]# ch1 IC设计与HDL
 
 # ch2 FPGA 设计
 
@@ -41,7 +41,7 @@ FFT、DCT、DWT等算法本质都属于矩阵变换的最优实现方法。这�
 
 ### FIR
 ![[../commFig/Pasted image 20240404164615.png]]
-FIR滤波器指标![[滤波器指标.png|DSP/滤波器指标.png]]
+FIR滤波器指标![[assets.通信IC/滤波器指标.png|DSP/滤波器指标.png]]
 时域表达式：
 $$
 y(n) = \sum^{L-1}_{i=0}h(n)x(n-i)
@@ -53,7 +53,7 @@ y(z) = \sum^{N-1}_{n=0}h(z)z^{-n}= z^{1-N}\sum^{N-1}_{n=0}h(z)z^{N-n-1}
 $$
 ![[../commFig/Pasted image 20240404172732.png]]
 因此，直接结构N阶FIR滤波器需要N级数据一位寄存器、N个乘法器、N-1个加法器。
-![[Pasted image 20240404173145.png]]
+![[assets.通信IC/Pasted image 20240404173145.png]]
 转置型，不直接缓存输入数据，使得数据通道频率提升。但是缓存的数据位宽增加了，不过可以进行截短处理。
 
 #### 直接型结构 (Direct Form Structure)
@@ -131,7 +131,7 @@ $$
 可约性：$W_N^{nk}=W_{N/m}^{nk/m}$
 特殊性：$W_N^0=1, W_N^{N/2}=-1,  W_N^{k+N/2}=- W_N^k$
 可以理解$W_N^k$当作一个单位圆上的旋转向量，运用系数的性质来改善DFT运算效率。
-![[Pasted image 20240409174236.png]]
+![[assets.通信IC/Pasted image 20240409174236.png]]
 如图进行二分之后，N点DFT运算量正比于$Nlog_2(N)$。根据拆解方式不同，可以分为频域抽取DIF和时域抽取DIT。
 ##### 基2频域抽取FFT
 输入序列长度$N=2^M$，该序列按时间顺序的奇偶分解为子序列，称为基2时间抽取的FFT。若不满足可以加上若干零以补足到N。取$N=k^M$则称为基k算法。实际多采用基4或基8，LTE中也存在K为质数如基3。IC设计不采用基2是因为基2对中间结果存储消耗过大。

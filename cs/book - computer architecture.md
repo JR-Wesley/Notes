@@ -1,6 +1,6 @@
 ---
 dateCreated: 2024-09-23
-dateModified: 2025-03-04
+dateModified: 2025-04-08
 ---
 # Ch1 Fundamentals of Quantitative Design and Analysis
 
@@ -155,17 +155,21 @@ $$
 
 ## 2.1 Introduction
 
-unlimited amounts of fast memory - a memory hierarchy
+The solution to unlimited amounts of fast memory is a memory hierarchy, which takes advantage of locality and trade-offs in the cost-performance of memory technology. The (spatial and temporal) locality is that most programs do not access code or data uniformly.
 
-a memory hierarchy is organized into several levels—each smaller, faster, and more expensive per byte than the next lower level, which is farther from the processor.
+A memory hierarchy is organized into several levels—each smaller, faster, and more expensive per byte than the next lower level, which is farther from the processor. The goal is to provide a memory system with a cheapest-level cost per byte and a fastest-level speed.
 
-designers of memory hierarchies focused on optimizing average memory access time, which is determined by the cache access time, miss rate, and miss penalty. More recently, however, **power **has become a major consideration.
+Inclusion property is that the data contained in a lower level are a superset of the next higher level. It's required for the lowest level (main memory in the case of caches, the second storage (disk or flash) in the case of virtual memory) but not for all the level in all cases.
+
+Although the gap in access time increased significantly for many years, the lack of significant performance improvement in single processors has led to a slowdown in the growth of the gap between processors and DRAM. the gap between CPU memory demand and DRAM bandwidth continues to grow as the numbers of cores grow.
+
+Traditionally, designers of memory hierarchies focused on optimizing average memory access time, which is determined by the cache access time, miss rate, and miss penalty. Power has become a major consideration as static and dynamic power account for a large proportion of total power consumption.
 
 ### Basics of Memory Hierarchies: A Quick Review
 
-Each cache block(Multiple words) includes a tag to indicate which memory address it corresponds to.
+Each cache block (Multiple words) includes a tag to indicate which memory address it corresponds to. If there are n blocks in a set, the cache placement is called n-way set associative. Finding a block consists of first mapping the block address to the set and then searching the set—usually in parallel—to find the block. The set number equals to $<Block address> \mod <Number of sets in cache>$. The end points of set associativity is direct-mapped (one block per set) and fully associative (a block in anywhere).
 
-set associative:
+Caching data that is only read is easy because the copy in the cache and memory will be identical. There are two main strategies to caching writes. A write-through cache updates the item in the cache and writes through to update main memory. A write-back cache only updates the copy in the cache. Both write strategies can use a write buffer to allow the cache to proceed as soon as the data are placed in the buffer rather than wait for full latency to write the data into memory.
 
 ## 2.2 Memory Technology and Optimizations
 
@@ -471,7 +475,6 @@ The new normal is that **a computer will consist of standard processors to run c
 Part of the argument: preceding architecture may not be a good match to some domains(caches, out-of-order execution, etc.).
 
 1. architects should expand their areas of expertise. Domain-specific algorithms are almost always for small compute-intensive kernels of larger systems, such as for object recognition or speech understanding.
-
 2. find a target whose demand is large enough to justify allocating dedicated silicon on an SOC or even a custom chip.
 
 One way is to use reconfigurable chips such as FPGAs;
@@ -561,7 +564,6 @@ compiles a model the first time, the second and following evaluations run at ful
 1. Unified Buffer, Accumulators, weight FIFO
 2. dedicated memory and 65,536 8-bit ALUs
 3. two-dimensional SIMD parallelism with a systolic organiazation;
-
 
    overlapped execution pipeline of instr
 
@@ -1344,7 +1346,7 @@ RV64V 的创新是使用了动态寄存器类型，它可以减少向量指令�
 
 **How Vector Processor Work: An Example**
 
-当循环中没有**循环体间相关**时，循环是可向量化的。向量体系结构将元素之间相关数据的前递称为**链接**。最大向量长度（mvl）是硬件确定的，如果向量长度不等于 mvl，可以将向量长度存储在 _vl_ 寄存器中。由较窄的数据向较宽的数据的类型转换是自动的。
+当循环中没有**循环体间相关**时，循环是可向量化的。向量体系结构将元素之间相关数据的前递称为**链接**。最大向量长度（mvl）是硬件确定的，如果向量长度不等于 mvl，可以将向量长度存储在 *vl* 寄存器中。由较窄的数据向较宽的数据的类型转换是自动的。
 
 **Vector Execution Time**
 
@@ -1364,7 +1366,7 @@ RV64V 的创新是使用了动态寄存器类型，它可以减少向量指令�
 
 **Vector-Length Registers: Handling Loops Not Equal to 32**
 
-_vector-length register (vl)_ 控制向量操作的长度。使用 strip mining 来处理向量长度比 mvl 大的情况，_setvl_ 指令可以简化这个过程。
+*vector-length register (vl)* 控制向量操作的长度。使用 strip mining 来处理向量长度比 mvl 大的情况，*setvl* 指令可以简化这个过程。
 
 **Predicate Registers: Handling IF Statements in Vector Loops**
 
@@ -1739,7 +1741,7 @@ UPS 是分布式的。
 
 **Networking in a Google WSC**
 
-谷歌的网络拓扑系统称为 Clos。
+谷歌的网络拓扑系统称为 Close。
 
 **Servers in a Google WSC**
 
