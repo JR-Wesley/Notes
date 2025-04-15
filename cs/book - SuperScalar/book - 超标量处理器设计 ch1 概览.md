@@ -1,7 +1,7 @@
 ---
 banner: "[[../../300-以影像之/bloodborne-the-doll.png]]"
 dateCreated: 2024-10-23
-dateModified: 2025-02-24
+dateModified: 2025-04-11
 ---
 # FOREWORD
 
@@ -43,7 +43,7 @@ VLIW 也是一周期执行多条指令，不过 VLIW 需要编译器和程序员
 ## 1.2 普通处理器流水线
 ### 概述
 
-![[pipe1.png|SuperScalar/pipe1.png]]![[pipe2.png|SuperScalar/pipe2.png]] 流水线后的面积、周期变化为（用频率表示性能）：
+![[assets/ch1 概述/pipe1.png|SuperScalar/pipe1.png]]![[assets/ch1 概述/pipe2.png|SuperScalar/pipe2.png]] 流水线后的面积、周期变化为（用频率表示性能）：
 
 $$
 \begin{align}
@@ -61,15 +61,15 @@ G 表示不加入流水线的硬件面积，L 表示流水线寄存器面积；D
 3. 各个流水阶段的操作互相独立、互不相干，由于指令的相关性最难满足，常见的就是读写依赖。一般是影响流水执行的关键因素。
 对于 CISC 指令集，指令不等长，执行时间不等，所以直接实现流水会比较难；而 RISC 指令集因为指令等长，每条指令完成的任务比较规整，所以容易实现流水。
 经典 MIPS 处理器如下：
-![[pipe3.png|SuperScalar/pipe3.png]]
+![[assets/ch1 概述/pipe3.png|SuperScalar/pipe3.png]]
 但这种流水未必最优，因为每个阶段的时间相差很多。
-![[pipe4.png|SuperScalar/pipe4.png]]
+![[assets/ch1 概述/pipe4.png|SuperScalar/pipe4.png]]
 需要对流水线平衡，有两种方法：
 - 合并
-![[pipe5.png|SuperScalar/pipe5.png]]
+![[assets/ch1 概述/pipe5.png|SuperScalar/pipe5.png]]
 这种合并将流水线级降到三级，周期时间 13ns。这种方法适合性能要求不高的低功耗嵌入式处理器（ARM7/9、Cortex-M0/3）。
 - 拆分
-![[pipe6.png|SuperScalar/pipe6.png]]
+![[assets/ch1 概述/pipe6.png|SuperScalar/pipe6.png]]
 这种拆分方式将周期时间降低到 3.5ns，进一步提升了处理器性能。但是深流水线导致硬件消耗增大，如更多流水线寄存器和控制逻辑；寄存器端口、存储器端口需求也增多。同时功耗增大，预测的惩罚也增大。适合高频，**高性能，不太在意功耗**的场景。常见的就是 Intel，AMD 处理器。(_Pentium 4 处理器，增加流水深度，最后导致功耗高，分支预测失败影响执行效率等因素，导致其还不如 Pentium 3，是“高频低能”_)
 在**一定范围内拆分流水线**是可以明显提高处理器性能的，虽然可能会增加功耗和硬件开销。
 
@@ -79,7 +79,7 @@ G 表示不加入流水线的硬件面积，L 表示流水线寄存器面积；D
 - **先读后写（Write After Read，WAR）** 称为 anti dependence，指令结果将被写入某个寄存器，但是这个寄存器还在被其它指令读取。可以避免，将后执行的（下图中的 B）指令的结果写入其它寄存器即可。
 - **先写后写（Write After Write，WAW）** 称为 output dependence，两条指令想将结果写到同一个寄存器中去。可以避免，将其中一条指令（一般也是后一条）的结果写入其它寄存器即可。
 除了指令相关性还有**控制相关性（control dependence）**，一般是由分支指令引起
-![[dependency.png|SuperScalar/dependency.png]]
+![[assets/ch1 概述/dependency.png|SuperScalar/dependency.png]]
 同时上面说的是指令相关性对**寄存器**的关系，其实这写相关性对**存储器地址**也是适用的。不过存储器依赖会更隐蔽一些，可能需要将一些 load/store 指令携带的地址计算出来才能知道。
 
 各种指令相关性导致在处理器中**无法完全乱序执行**，在**一般处理器（标量）** 中一个周期只执行一条指令的话，WAW 和 WAR 这两种相关性就不存在问题，RAW 则可以用旁路（bypass）来解决。对于**超标量处理器**WAW，WAR，RAW 这三种相关性都会阻碍乱序执行需要在流水中特殊处理。
@@ -88,7 +88,7 @@ G 表示不加入流水线的硬件面积，L 表示流水线寄存器面积；D
 
 超标量处理器的定义：处理器在**每个周期**可以取出**多于一条**的指令送到**流水线中执行**，并且使用**硬件**来对指令进行调度。有两种指令执行方式，**顺序执行（in-order）** 和**乱序执行（out-of-order）**。
 
-![[execution.png|SuperScalar/execution.png]]
+![[assets/ch1 概述/execution.png|SuperScalar/execution.png]]
 
 **Frontend** 表示取指令（Fetch）和解码（Decode），乱序执行很难或者无意义；
 
@@ -100,7 +100,7 @@ G 表示不加入流水线的硬件面积，L 表示流水线寄存器面积；D
 
 ### 顺序执行
 
-![[inorder.png|SuperScalar/inorder.png]]
+![[assets/ch1 概述/inorder.png|SuperScalar/inorder.png]]
 
 假设流水线每周期可以从 I-Cache 取两条指令执行，就称为 2-way 超标量处理器。指令经过解码后根据自身类型，将两条指令送到对应 FU 中执行，称为**发射（Issue）**。
 
@@ -108,7 +108,7 @@ G 表示不加入流水线的硬件面积，L 表示流水线寄存器面积；D
 
 **ScoreBoard** 记录每条指令的执行情况。记录指令集中定义的每个逻辑寄存器（R0-R31）的执行情况。
 
-![[scoreboard.png|SuperScalar/scoreboard.png]]
+![[assets/ch1 概述/scoreboard.png|SuperScalar/scoreboard.png]]
 
 **P pending** 指令结果还没有写回到逻辑寄存器中
 
@@ -118,7 +118,7 @@ G 表示不加入流水线的硬件面积，L 表示流水线寄存器面积；D
 
 下面用一段程序进行示例。
 
-![[inorder1.png|SuperScalar/inorder1.png]]
+![[assets/ch1 概述/inorder1.png|SuperScalar/inorder1.png]]
 
 _注意这是 2-way 的，其中 F 表示读指令，D 表示解码指令，I 表示发射，W 表示回写。不要和指令 A，B，，，F 搞混了。_
 
@@ -128,14 +128,14 @@ _注意这是 2-way 的，其中 F 表示读指令，D 表示解码指令，I �
 
 ### 乱序执行
 **OoO** 超标量处理器中，指令在流水线中不在遵循程序指定的顺序来执行，一旦某条指令的操作数准备好了，就可以送进 FU 执行。
-![[OoO.png|SuperScalar/OoO.png]]
+![[assets/ch1 概述/OoO.png|SuperScalar/OoO.png]]
 - 要解决乱序执行的 WAW 和 WAR 相关性，需要对**寄存器重命名（register renaming）**，这个过程可以在解码阶段或者单独一个阶段来完成。处理器需要额外增加多于 ARF（逻辑寄存器）个数的 PRF（物理寄存器）来进行映射。
 - 发射之前，指令顺序执行。发射阶段，指令被放到**发射队列中（Issue Queue，IQ）**，一旦操作数准备好就可以被发射到 FU 中，发射阶段是顺序和乱序的分界，直到 Commit 之前都是乱序的。
 - 每个 FU 都有自己独有的流水级数，比如 ALU 就只有一个阶段，由于 FU 执行周期数不同所以写回也是乱序的。一条指令只要计算完成结果就会写回结果到 PRF 中，但是由于分支预测失败或异常的存在，PRF 的结果不一定都会写入 ARF 中，因此 PRF 也称为 **Future File**。
 - 为了保证程序串行结果，指令要按程序顺序更新处理器状态，因此在 Commit 阶段所有指令经过**重排序缓冲（ROB）** 来进行顺序更新。指令在这一阶段将结果写回 ARF，同时配合异常处理。如果指令顺利离开流水线并更新处理器状态，就称该指令**退休（retire）** 了，它也无法回到之前的状态了。
 - 这对于 store 指令就需要额外处理，因为 store 指令需要写存储器，如果因为预测失败或异常等原因这条指令要抹掉，之前的存储器结果可能已经被覆盖了，就无法将存储器的状态恢复了。所以需要增加一个 **Store Buffer（SB）** 来存储 store 在没有退休之前的结果。store 指令的结果，在写回阶段被缓存到 SB 中，只有 store 真的 retire 后才将 SB 的结果写到存储器中。这样，load 指令，除了从 D-Cache 找数据，还需要从 SB 找数据。这会增加一些设计复杂度。
 下面是一个 2-way 的乱序超标量处理器示例程序：
-![[OoO1.png|SuperScalar/OoO1.png]]
+![[assets/ch1 概述/OoO1.png|SuperScalar/OoO1.png]]
 补充一个 r 表示指令计算完成，在 ROB 中等待 retire。一条指令只有等它之前的指令都离开 ROB 了，才可以离开 ROB 然后进入 retire。C 表示经过 Commit 离开流水线而退休，提交是顺序执行的。
 对比两个执行流水周期，乱序的只要 9 个周期，小于之前的 12 个周期，可以说明一定程度的乱序是可以提高执行流水效率的，当指令更多时，这种优势会更明显。
 

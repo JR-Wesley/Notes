@@ -1,6 +1,6 @@
 ---
 dateCreated: 2023-09-04
-dateModified: 2025-04-09
+dateModified: 2025-04-11
 ---
 
 > 参考
@@ -14,8 +14,9 @@ dateModified: 2025-04-09
 >
 > 总结的文档：CDC 总结. md
 > https://www.cnblogs.com/lyc-seu/p/12441366.html
-
-[跨时钟域处理方法](https://www.cnblogs.com/rouwawa/p/7501319.html)
+> [跨时钟域处理方法](https://www.cnblogs.com/rouwawa/p/7501319.html)
+> https://blog.csdn.net/Loudrs/article/details/131076559?spm=1001.2014.3001.5502
+>> https://blog.csdn.net/Loudrs/article/details/131021317?spm=1001.2014.3001.5502
 
 # 跨时钟问题 (Clock Domain Crossing)
 

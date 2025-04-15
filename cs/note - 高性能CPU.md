@@ -1,21 +1,27 @@
+---
+dateCreated: 2025-02-27
+dateModified: 2025-04-11
+---
 # SOC
 
-[SoC设计方法与实现_第3版.pdf](./src/docs/SoC设计方法与实现_第3版.pdf)
+> [DarkRISC-V开源代码](https://github.com/darklife/darkriscv)
+> [tinyriscv](https://gitee.com/liangkangnan/tinyriscv)
 
-[DarkRISC-V开源代码](https://github.com/darklife/darkriscv)
+此 repo 实现了一个简单的 MIPS 五级流水 CPU：https://crpboy.github.io/p/nscscc-2024-report/
 
- [tinyriscv](https://gitee.com/liangkangnan/tinyriscv)
-
-[RISC-V手册中文版](./src/docs/RISC-V手册ch.pdf)
-
-此 repo 实现了一个简单的 MIPS 五级流水 CPU：
-
-https://crpboy.github.io/p/nscscc-2024-report/
+实现简单 MIPS 五级流水 CPU 对应视频：[教你写一个简单的CPU](https://www.bilibili.com/video/BV1pK4y1C7es)
 
 [计算机组成原理实验与参考实现](https://github.com/lvyufeng/step_into_mips)
 
-实现简单 MIPS 五级流水 CPU 对应视频：[教你写一个简单的CPU](https://www.bilibili.com/video/BV1pK4y1C7es)
+- 多发射
+- 乱序
+- cache 大小
+- tlb
+- miss 处理
+- cachemiss wave front 调度
+
 ## CPU
+
 高性能 CPU 设计涉及多个关键部件和技术，旨在提升指令执行效率、并行性和能效。以下是主要部件及其功能的详细介绍：
 
 ---
@@ -26,7 +32,7 @@ https://crpboy.github.io/p/nscscc-2024-report/
   - **静态预测**：基于指令类型简单预测（如总预测分支不跳转）。
   - **动态预测**：基于历史行为调整预测（如两位饱和计数器）。
   - **高级算法**：TAGE（Tagged Geometric History Length）、神经分支预测器。
-- **重要性**：错误预测会导致流水线清空（惩罚周期），准确预测可提升 10-30%性能。
+- **重要性**：错误预测会导致流水线清空（惩罚周期），准确预测可提升 10-30% 性能。
 
 ---
 
@@ -62,7 +68,7 @@ https://crpboy.github.io/p/nscscc-2024-report/
   - **浮点单元（FPU）**：加速浮点计算。
   - **向量单元（SIMD）**：如 SSE、AVX，单指令处理多数据。
   - **内存单元**：处理加载（Load）和存储（Store）操作。
-- **多端口设计**：支持同时执行多个同类操作（如 2 个整数单元+1 个浮点单元）。
+- **多端口设计**：支持同时执行多个同类操作（如 2 个整数单元 +1 个浮点单元）。
 
 ---
 
@@ -112,17 +118,5 @@ https://crpboy.github.io/p/nscscc-2024-report/
   - 定制 AMX 矩阵加速单元，专攻 AI 计算。
 
 ---
+
 高性能 CPU 通过分支预测降低控制冒险、超标量乱序执行提升并行性、多级缓存减少内存延迟、多核/多线程扩展吞吐量，结合先进制程和功耗管理，实现每秒万亿次计算的效率。未来趋势包括异构计算（CPU+GPU/FPGA）、Chiplet 集成和量子计算启发的新架构。
-
-
-书：超标量处理器
-- 多发射
-- 乱序
-- cache 大小
-- tlb
-- miss 处理
-- cachemiss wave front 调度
-
-https://ee.ac.cn/
-
-https://ee.ac.cn/index.php/archives/636.html

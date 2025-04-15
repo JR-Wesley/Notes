@@ -1,6 +1,6 @@
 ---
 dateCreated: 2024-09-23
-dateModified: 2025-03-04
+dateModified: 2025-04-12
 ---
 # Overview
 
@@ -309,7 +309,10 @@ A Content Addressable Memory (CAM) is a circuit that combines comparison and sto
 - Reducing the Miss Penalty Using Multilevel Caches
 **multilevel cache** A memory hierarchy with multiple levels of caches, rather than just a cache and main memory
 
-### Software Optimization via Blocking (waiting)
+### Software Optimization via Blocking (TODO)
+
+# 6 Parallel Processors from Client to Cloud
+## 6.1 Introduction
 
 # Digital Design and Computer Architecture
 
@@ -354,13 +357,3 @@ Multithreading doesn't improve the performance of an individual thread(no ILP in
 Western Digital’s SweRV cores, the SweRVolf SoC, and the PULP (Parallel Ultra Low Power) Platform.
 
 SiFive’s Freedom E310 core and Western Digital’s open-source SweRV
-
-# rvFPGA
-
-rvfpga-el2-v3.0
-
-[LinuxFoundationX：采用工业 RISC-V 内核的计算机架构 [RVfpga] |edX](https://www.edx.org/es/learn/computer-programming/the-linux-foundation-computer-architecture-with-an-industrial-risc-v-core)
-
-[Verilator User’s Guide — Verilator Devel 5.029 documentation](https://verilator.org/guide/latest/index.html)
-
-- riscv 工具链和 openOCD 待完成

@@ -1,13 +1,12 @@
 ---
 dateCreated: 2025-02-13
-dateModified: 2025-02-13
+dateModified: 2025-04-11
 ---
 
 参考整理：
 
-https://zhuanlan.zhihu.com/p/470648680
-
 https://www.cnblogs.com/lyc-seu?page=1
+
 ## 第 1 章：超标量处理器概述
 
 ### 1.1 为什么需要超标量

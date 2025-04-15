@@ -1,8 +1,10 @@
 ---
 dateCreated: 2025-02-12
-dateModified: 2025-02-13
+dateModified: 2025-04-15
 ---
-<a href=" https://nycu-caslab.github.io/AAML2024/labs/lab_2.html">CSIC30066 台湾课程</a>
+# 参考
+
+
 # Basics
 - Dennard scaling allowed voltage to shrink with transistor size
 - Dark Silicon: Not turn on all transistors on the chip
