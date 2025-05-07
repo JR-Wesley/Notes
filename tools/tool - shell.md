@@ -1,7 +1,10 @@
 ---
 dateCreated: 2025-04-02
-dateModified: 2025-04-02
+dateModified: 2025-04-16
 ---
+
+> https://github.com/crazyguitar/cppcheatsheet?tab=readme-ov-file
+
 # Shell
 
 ## Shell 脚本基础语法

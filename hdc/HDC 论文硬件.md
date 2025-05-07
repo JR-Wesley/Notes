@@ -1,8 +1,58 @@
 ---
 dateCreated: 2025-01-08
-dateModified: 2025-02-24
+dateModified: 2025-05-06
 ---
 # 3. 硬件
+
+# An Edge AI Accelerator Design Based on HDC Model for Real-time EEG-based Emotion Recognition System with RISC-V FPGA Platform
+
+**摘要：**
+- 论文提出了一种基于超维计算（HDC）模型的边缘 AI 加速器设计，该设计利用 FPGA 和 RISC-V 平台，针对使用 EEG 信号的实时情感识别系统。
+- HDC 模型在功耗效率和计算复杂性方面相较于传统神经网络具有优势，适合资源受限的 IoT 设备和边缘计算。
+- 在 17 通道 EEG 数据分析中，所提出的 HDC 模型在情感分析上达到了 79.04% 的愉悦度（valence）准确率和 85.95% 的唤醒度（arousal）准确率。
+- 硬件设计在 TSMC 16 纳米技术模拟中实现了 500 MHz 的频率和 42.69 nJ/prediction 的能效，比传统 AI 高出 2.1 倍的能效。
+
+**2. 系统架构：**
+- 实时 EEG 情感识别系统包括前端电路、RISC-V 平台、基于 HDC 的边缘 AI 加速器和用于显示的笔记本电脑。
+- 使用干电极 EEG 头戴设备测量 17 通道原始 EEG 数据，数据通过蓝牙传输到 RISC-V FPGA 平台进行后续信号处理。
+- RISC-V 处理器执行带通滤波和短时傅里叶变换，提取频率域特征。
+- 通过基线归一化和量化 EEG 信号频谱图，将数据转换为 200 级表示，以提高数据表示效率并降低计算复杂性。
+- 边缘 AI 加速器基于超维计算处理量化的 EEG 频谱图，将其转换为超向量，用于训练或分类情感。
+
+**3. HDC 硬件设计：**
+- HDC AI 加速器包括顶层控制器、数据存储、超向量映射、空间编码器、时间编码器、联想记忆和汉明距离计算。
+- 使用硬连线连接网络和 XOR 门实现 CiM 和 CiM-Hz，使用元胞自动机生成 iM 超向量。
+- 空间编码器使用位异或门执行绑定操作，时间编码器设计为 7 位移寄存器，联想记忆包含二进制和整数模型。
+
+**4. 实验结果：**
+- 使用公共 EEG 数据集 SEED 和高雄医学大学（KMU）收集的私有 EEG 数据集验证 HDC 模型。
+- 在 KMU 数据集上，达到了 79.04% 的愉悦度准确率和 85.95% 的唤醒度准确率。
+- 与其他最新工作相比，HDC 模型在唤醒度类别上表现出更高的准确率，而在愉悦度上略有降低。
+
+**5. 结论：**
+- 论文介绍了一种使用 HDC 的边缘 AI 加速器，用于实时基于 EEG 的情感识别，强调速度、效率和能效。
+- 在 Kintex 7 FPGA 上实现的 HDC 加速器在 TSMC 16 纳米技术上运行速度为 500 MHz，能效为 42.69 nJ 每次预测。
+- 未来的工作将集中在再生、重新训练和其他技术以提高精度和输出维度，通过 AI 和 IoT 驱动的情感识别在医疗保健中实现个性化干预和福祉。
+
+基于 HDC 用 FPGA RISCV 平台，设计的实时表情识别系统
+
+算法集合了 BPF STFT HDC 等方法，完成 EEG 信号检测，有算法测试和硬件设计
+
+N-gram 来源于 NLP
+
+其算法框架来源 A. Menon et al., ”A Highly Energy-Efficient Hyperdimensional Computing Processor for Biosignal Classification,”
+
+XOR
+
+Manuel Schmuck, Luca Benini, and Abbas Rahimi. 2019. Hardware Optimizations of Dense Binary Hyperdimensional Computing: Rematerialization of Hypervectors, Binarized Bundling, and Combinational Associative Memory. J. Em
+
+Rule 90 A. Menon et al., ”A Highly Energy-Efficient Hyperdimensional Computing Processor for Biosignal Classification,”
+
+数据集：
+
+SEEDKMU
+
+LOSOV 验证方法
 
 # EcoFlex-HDP: High-Speed and Low-Power and Programmable Hyperdimensional-Computing Platform with CPU Co-processing
 
@@ -218,56 +268,6 @@ method:
 2 exploiting HDC governing mathematics that compresses the HDC trained model into a single hypervector
 
 ## I Intro
-
-# An Edge AI Accelerator Design Based on HDC Model for Real-time EEG-based Emotion Recognition System with RISC-V FPGA Platform
-
-**摘要：**
-- 论文提出了一种基于超维计算（HDC）模型的边缘 AI 加速器设计，该设计利用 FPGA 和 RISC-V 平台，针对使用 EEG 信号的实时情感识别系统。
-- HDC 模型在功耗效率和计算复杂性方面相较于传统神经网络具有优势，适合资源受限的 IoT 设备和边缘计算。
-- 在 17 通道 EEG 数据分析中，所提出的 HDC 模型在情感分析上达到了 79.04% 的愉悦度（valence）准确率和 85.95% 的唤醒度（arousal）准确率。
-- 硬件设计在 TSMC 16 纳米技术模拟中实现了 500 MHz 的频率和 42.69 nJ/prediction 的能效，比传统 AI 高出 2.1 倍的能效。
-
-**2. 系统架构：**
-- 实时 EEG 情感识别系统包括前端电路、RISC-V 平台、基于 HDC 的边缘 AI 加速器和用于显示的笔记本电脑。
-- 使用干电极 EEG 头戴设备测量 17 通道原始 EEG 数据，数据通过蓝牙传输到 RISC-V FPGA 平台进行后续信号处理。
-- RISC-V 处理器执行带通滤波和短时傅里叶变换，提取频率域特征。
-- 通过基线归一化和量化 EEG 信号频谱图，将数据转换为 200 级表示，以提高数据表示效率并降低计算复杂性。
-- 边缘 AI 加速器基于超维计算处理量化的 EEG 频谱图，将其转换为超向量，用于训练或分类情感。
-
-**3. HDC 硬件设计：**
-- HDC AI 加速器包括顶层控制器、数据存储、超向量映射、空间编码器、时间编码器、联想记忆和汉明距离计算。
-- 使用硬连线连接网络和 XOR 门实现 CiM 和 CiM-Hz，使用元胞自动机生成 iM 超向量。
-- 空间编码器使用位异或门执行绑定操作，时间编码器设计为 7 位移寄存器，联想记忆包含二进制和整数模型。
-
-**4. 实验结果：**
-- 使用公共 EEG 数据集 SEED 和高雄医学大学（KMU）收集的私有 EEG 数据集验证 HDC 模型。
-- 在 KMU 数据集上，达到了 79.04% 的愉悦度准确率和 85.95% 的唤醒度准确率。
-- 与其他最新工作相比，HDC 模型在唤醒度类别上表现出更高的准确率，而在愉悦度上略有降低。
-
-**5. 结论：**
-- 论文介绍了一种使用 HDC 的边缘 AI 加速器，用于实时基于 EEG 的情感识别，强调速度、效率和能效。
-- 在 Kintex 7 FPGA 上实现的 HDC 加速器在 TSMC 16 纳米技术上运行速度为 500 MHz，能效为 42.69 nJ 每次预测。
-- 未来的工作将集中在再生、重新训练和其他技术以提高精度和输出维度，通过 AI 和 IoT 驱动的情感识别在医疗保健中实现个性化干预和福祉。
-
-基于 HDC 用 FPGA RISCV 平台，设计的实时表情识别系统
-
-算法集合了 BPF STFT HDC 等方法，完成 EEG 信号检测，有算法测试和硬件设计
-
-N-gram 来源于 NLP
-
-其算法框架来源 A. Menon et al., ”A Highly Energy-Efficient Hyperdimensional Computing Processor for Biosignal Classification,”
-
-XOR
-
-Manuel Schmuck, Luca Benini, and Abbas Rahimi. 2019. Hardware Optimizations of Dense Binary Hyperdimensional Computing: Rematerialization of Hypervectors, Binarized Bundling, and Combinational Associative Memory. J. Em
-
-Rule 90 A. Menon et al., ”A Highly Energy-Efficient Hyperdimensional Computing Processor for Biosignal Classification,”
-
-数据集：
-
-SEEDKMU
-
-LOSOV 验证方法
 
 # A Highly Energy-Efficient Hyperdimensional Computing Processor for Biosignal Classification
 
@@ -584,3 +584,7 @@ This framework supports **binary/ power-of-two, fixed-point**.
 support model initialization, retraining, online retraining.
 
 In te online hybrid retraining mode, the system executes both inference and retraining.
+
+# SparseHD: Algorithm-Hardware Co-Optimization for Efficient High-Dimensional Computing
+
+FPGA implementation of sparse HD computation that supports both the dimension-wise and class-wise sparse models.

@@ -1,6 +1,6 @@
 ---
 dateCreated: 2023-09-04
-dateModified: 2025-04-11
+dateModified: 2025-04-27
 ---
 
 > 参考
@@ -16,7 +16,8 @@ dateModified: 2025-04-11
 > https://www.cnblogs.com/lyc-seu/p/12441366.html
 > [跨时钟域处理方法](https://www.cnblogs.com/rouwawa/p/7501319.html)
 > https://blog.csdn.net/Loudrs/article/details/131076559?spm=1001.2014.3001.5502
->> https://blog.csdn.net/Loudrs/article/details/131021317?spm=1001.2014.3001.5502
+>
+> > https://blog.csdn.net/Loudrs/article/details/131021317?spm=1001.2014.3001.5502
 
 # 跨时钟问题 (Clock Domain Crossing)
 
@@ -247,3 +248,23 @@ $$
    ![image-20200807104711308](./CDC总结.assets/image-20200807104711308.png)
 
 ![](CDC总结.assets/image-20200807104727032.png)
+
+# Clock Domain Crossing (CDC) Design & Verification Techniques Using SystemVerilog
+
+<a href=" https://wuzhikai.blog.csdn.net/article/details/122874278">中文解读</a>
+
+https://wuzhikai.blog.csdn.net/article/details/123467630
+
+## 5.0 Passing Multiple Signals between Clock Domains
+
+**问题在于，多个被同步到同一时钟的信号会存在微小数据变化偏移，偶尔会在目标时钟域的不同上升沿被采样。即使我们能够完美控制和匹配多个信号的走线长度，信号上升/下降时间的差异以及芯片上的工艺偏差仍可能引入足够大的偏移，导致在精心匹配的走线上仍出现采样失败。**
+
+ 多 bit 信号的 CDC 问题主要来自信号之间的 skew（简单地理解为到达目的时钟域的时间无法控制一致），可能的后果就是某些 bit 可能还没到达，但是某些 bit 已经被采样了。
+
+### 5 .1 Multi-bit CDC Strategies
+
+three main categories:
+
+1. Multi-bit signal consolidation. Where possible, consolidate multiple CDC bits into 1bit CDC signals.
+2. Multi-cycle path formulations. Use a synchronized load signal to safely pass multiple CDC bits.
+3. Pass multiple CDC bits using gray codes.

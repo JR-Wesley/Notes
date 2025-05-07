@@ -77,3 +77,5 @@ https://zhuanlan.zhihu.com/p/120863919
 [FPGA时序分析—vivado篇](https://mp.weixin.qq.com/s/gkXRNblISyUIIrIxLRmLgw)
 
 [时序约束策略](https://mp.weixin.qq.com/s/dmJck_7vDd57JFvAL3dFpg)
+
+<a href=" https://www.cnblogs.com/IClearner/p/7306335.html">时序分析的三种模式</a>

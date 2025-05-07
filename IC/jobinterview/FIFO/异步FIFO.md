@@ -1,6 +1,6 @@
 ---
 dateCreated: 2023-09-04
-dateModified: 2025-04-09
+dateModified: 2025-04-27
 ---
 # 异步 FIFO
 
@@ -108,3 +108,5 @@ always @ (posedge wclk or negedge reset_n)
 # 深度计算
 
 https://blog.csdn.net/wuzhikaidetb/article/details/121659618
+
+总结：FIFO 深度的计算建立在满足一次突发传输的基础上。全部写入的数据量 - 已经被读走的数据量 = 需要缓存到 FIFO 的数据量，即异步 FIFO 的最小深度
