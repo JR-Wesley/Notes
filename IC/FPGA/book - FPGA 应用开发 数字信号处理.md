@@ -1,6 +1,6 @@
 ---
 dateCreated: 2024-12-24
-dateModified: 2025-04-27
+dateModified: 2025-05-18
 ---
 # 数字信号处理应用
 ## 基础
@@ -74,19 +74,79 @@ $$
 
 ## CORDIC
 
-坐标旋转机（CORDIC）是再直角坐标系中对向量进行旋转变换
+坐标旋转机（CORDIC）是再直角坐标系中对向量进行旋转变换。将 $(x_0, y_0)$ 逆时针旋转到 $(x_1, y_1)$，
 
 $$
+\begin{bmatrix} x_1\\ y_1 \end{bmatrix}=\begin{bmatrix} cos\theta&-sin\theta\\ sin\theta&cos\theta\end{bmatrix}\begin{bmatrix} x_0\\ y_0 \end{bmatrix}=cos\theta\begin{bmatrix} 1&-tan\theta\\ tan\theta&1\end{bmatrix}\begin{bmatrix} x_0\\ y_0 \end{bmatrix}
 $$
+
+定义
+
+$$
+\begin{bmatrix} x_1'\\ y_1' \end{bmatrix}=\begin{bmatrix} 1&-tan\theta\\ tan\theta&1\end{bmatrix}\begin{bmatrix} x_0\\ y_0 \end{bmatrix}
+$$
+
+为伪旋转，它将原始的向量逆时针旋转 $\theta$，长度变为 $1/cos\theta$。
+
+通过 $tan\theta_i=2^{-i}$，实现 $\theta_i=arctan2^{-i}$ 伪旋转将原始的旋转其转换为移位和加减。这样的转换无法实现任意角度，不过由于对所有 $i$ 都有 $2\theta_{i+1}>\theta_i>0$，所以对于 $|\theta|\le\sum_{i=0}^{\infty}\theta_i\approx99.883$，则 $\theta=lim_{k->\infty}\sum_{i=0}^{k}s_i\theta_i, s_i\in\{-1, 1\}$，$\{\theta_i\}$ 收敛于 0。实际中根据精度要求取固定的 $k$ 即可。
 
 ## FIR 滤波器
 
+有限冲击响应滤波器，传输函数为：
+
+$$
+H(z)=\sum_{k=0}^N h[k]\cdot z^{-k}
+$$
+
+其中 $N$ 为阶数，系数共有 $N+1$ 个。滤波器的结构如下，单位延时可用 D 触发器实现，增益为常系数乘法器。
+
+![](assets/数字信号处理/FIR滤波器.png)
+
+其中包含一个较长的加法链，这对于硬件实现是不利的。可以通过转置变换得到价结构，这个结构不包含长组合逻辑路径，因而适合时序逻辑实现。
+
+![](assets/数字信号处理/转置FIR.png)
+
+FIR 常用来实现线性相位响应的滤波器，线性相位响应的 FIR 滤波器的系数是对称的，即 $h[k]=h[N-k]$，这时所示结构还可以转换成图 7-24 和图 7-25 对称结构，前者为偶数阶的情况，后者为奇数阶的情况。
+
+![](assets/数字信号处理/转置FIR对称偶.png)
+
+![](assets/数字信号处理/转置FIR对称奇.png)
+
+相应地，如果实现的是线性相位的滤波器，群延迟将为：
+
+$$
+\tau_g=（N/2+1）1/f
+$$
+
 ## IIR 滤波器
+
+无限冲击响应滤波器，传输函数为：
+
+$$
+H(z)=\frac{\sum_{i=0}^N n_i\cdot z^{-i}}{1+\sum_{j=0}^D d_j\cdot z^{-j}}
+$$
+
+分子共有 $N+1$ 个系数，分母共有 $D$ 个系数 (除 0 次方项系数 1 以外)，其阶数定义为 $D$。
+
+用图 7-30 所示的结构在阶数大于 2 时，可能不稳定，并且阶数越大，有限字长效应导致的累积误差也越大，内部节点增益也可能很发散，所以一般将多阶 IIR 滤波器拆解成多个二阶级联，对于奇数阶，则最后增加一个一阶。
+
+![](assets/数字信号处理/IIR转置结构.png)
+
+二阶 IIR 传输函数：
+
+$$
+H(z)=\frac{n_0+n_1\cdot z^{-1}+n_2\cdot z^{-2}}{1+d_1\cdot z^{-1}+d_2\cdot z^{-2}}=g\frac{n_0'+n_1'\cdot z^{-1}+n_2'\cdot z^{-2}}{1+d_1\cdot z^{-1}+d_2\cdot z^{-2}}
+$$
+
+可以从分子提出系数 g，一般 $|g|<1$，有助于降低有限字长效应。
+
+IIR 则是由多级二阶滤波器构成的多阶滤波器。在 IIR 滤波器结构中，内部节点对输入的幅频响应可能存在大于 0dB 的点，所以在代码中，为数据扩展了位宽 EW 位。
+
 ### 定点小数
 
 数字信号处理中要表达的数值多半在 $[-1,1]$ 区间内。在数字域，应尽量让信号的数值范围接近数据位宽能表达的范围，以充分利用应有的量化精度，降低量化误差。
 
-两个定点小数 $a (Qm, n), b (Qp, q)$，加法器的位数应该为 $max\{m, p\} + max\{n, q\}$，应将小数点对齐。乘法器需要的位数为 $max(m+n, p+q)$ p
+两个定点小数 $a (Qm, n), b (Qp, q)$，加法器的位数应该为 $max\{m, p\} + max\{n, q\}$，应将小数点对齐。乘法器需要的位数为 $max(m+n, p+q)$
 
 ## 快速傅里叶变换
 

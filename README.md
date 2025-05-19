@@ -1,6 +1,6 @@
 ---
 dateCreated: 2025-02-27
-dateModified: 2025-04-02
+dateModified: 2025-05-19
 ---
 # 📜 A Digital IC Explorer's Atlas | Ongoing Learning Repository
 
@@ -28,58 +28,53 @@ This repository archives my (**not well organized**) learning journey through **
 
 ```bash
 .
-├── EDA
-│   └── assets
-├── IC
-│   ├── DSP
-│   ├── FPGA
-│   ├── STA
-│   ├── asic
-│   ├── book
-│   ├── commFig
-│   ├── fpu
-│   ├── module
-│   ├── protocal
-│   ├── sv
-│   ├── verification
-│   └── jobinterview
-├── Soc
-│   ├── deep_in_riscv_debug-master
-│   └── riscv
-├── cs
+├── CSarch
 │   ├── GPU
 │   ├── assets
-│   ├── book - SuperScalar
+│   ├── book - SuperScalarProcessor
 │   ├── comp arch paper
-│   └── compression
-├── cv
+├── CV
 │   ├── GPUhw
 │   ├── assets
 │   ├── coding
 │   └── rayTracing
-├── dl
+├── DL
 │   ├── AIsys
 │   ├── GPU
 │   ├── ML_notes
-│   ├── SNN
-│   ├── sparse
-│   └── yolo
-├── embeded
-│   └── stm32
-├── hdc
-│   ├── CA
-│   ├── img
-│   ├── lecture
-│   └── paper
+│   ├── quant
+│   └── typicalModel
+├── IC
+│   ├── DSP
+│   ├── EDA
+│   ├── FPGA
+│   ├── IP
+│   ├── STA
+│   ├── asic flow
+│   ├── cgra
+│   ├── program
+│   ├── protocal
+│   ├── sv
+│   └── verification
+├── SoC
+│   ├── deep_in_riscv_debug-master
+│   ├── embeded
+│   ├── pulp VLSI
+│   └── riscv
+├── algorithm
+│   ├── compression
+│   ├── encryption
+│   └── hdc
+├── development
+│   └── career
 ├── language
-├── learning
 ├── music
 │   └── assets
-├── tools
-│   └── img
-├── web
-├── ysyx
+├── tool
 │   └── assets
+└── ysyx
+    └── assets
+
 ```
 
 ## 🔐 License Matrix
@@ -87,7 +82,3 @@ This repository archives my (**not well organized**) learning journey through **
 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>
 
 ## 🌟 Roadmap to Enlightenment
-
-## 📚 Reference
-
-I've copied and modified a notebook framework by <a href="https://github.com/ProudBenzene/Reverse1999Wiki-in-Obsidian">A local Wikipedia in Obsidian</a> for my own usage.

@@ -1,6 +1,6 @@
 ---
 dateCreated: 2025-02-11
-dateModified: 2025-04-15
+dateModified: 2025-05-13
 ---
 
 相关资源推荐：https://zhuanlan.zhihu.com/p/20076957712
@@ -30,6 +30,8 @@ AL chip:
 - ece 5545 https://www.bilibili.com/video/BV1kn4y1o7Eu/?spm_id_from=333.1387.favlist.content.click&vd_source=bc07d988d4ccb4ab77470cec6bb87b69 https://zhuanlan.zhihu.com/p/668411397
 
 利用了谷歌的 CFU 平台<a href=" https://cfu-playground.readthedocs.io/en/latest/index.html">一个介绍的网站</a>
+
+CS 217 MIT 课程整理：https://www.zhihu.com/people/yan-xin-kai-38/posts
 
 # EE 290
 # DNN
