@@ -1,3 +1,18 @@
+# UC DISSERTATION
+
+- Enhancing Deep Learning Efficiency: A Hyperdimensional Computing Approach 2024
+
+1. We propose novel hybrid models that leverage the salient properties of HDC and DL to address each methods drawbacks. FHDnn
+2. Federated Hyperdimensional Computing
+3. Multi-Label Classification Using Hyperdi-mensional Representations
+
+- Vector Symbolic Architectures as a Computing Framework for Emerging Hardware.
+介绍 HDC 的基础
+
+
+- Hardware-Algorithm Co-design for Efficient and Privacy-Preserved Edge Computing
+提出了用 LUT 近似 popcoun 的方法
+RTL 实现 HDC
 # Collection of Hyperdimensional Computing Projects
 Here, we aim to provide a comprehensive collection of projects using hyperdimensional computing. Please [let us know](mailto:abbas@iis.ee.ethz.ch) if you have any related project.
 

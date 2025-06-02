@@ -1,8 +1,12 @@
 ---
-banner: "[[../../300-以影像之/Vertin.jpg]]"
+banner: "[[../300-以影像之/Vertin.jpg|../../300-以影像之/Vertin.jpg]]"
 dateCreated: 2024-11-27
-dateModified: 2025-04-15
+dateModified: 2025-06-02
 ---
+# 讲义内容
+
+对应学习讲义 B 阶段 B 3。
+
 # Slides
 
 # 缓存的验证

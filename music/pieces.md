@@ -1,8 +1,10 @@
 ---
 dateCreated: 2024-11-23
-dateModified: 2024-11-25
+dateModified: 2025-05-29
 banner: "[[../../300-以影像之/miku/mikuluka抹茶专门店.jpg]]"
 ---
+
+有些哈基人问我怎么做私人音乐，我也是在 B 站上找视频学的，这里贴一下我主要跟过的教程制作流程 https://www.bilibili.com/video/BV1Bu411V7BF/?spm_id_from=333.1391.0.0&vd_source=e9eb8a64acc8f514c35c1ba39fb0510a 麦乐迪 https://www.bilibili.com/video/BV1UU4y1c7yL/?spm_id_from=333.1391.0.0&vd_source=e9eb8a64acc8f514c35c1ba39fb0510a 水果 https://www.bilibili.com/video/BV1ai4y1X7eW/?spm_id_from=333.1391.0.0 混音 https://www.bilibili.com/video/BV1UK4y1Y7fd/?spm_id_from=333.1391.0.0
 
 <a href=" http://www.lesession.co.uk/index.htm">lesession page</a>
 

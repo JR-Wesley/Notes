@@ -1,8 +1,11 @@
 ---
 dateCreated: 2025-03-05
-dateModified: 2025-05-24
+dateModified: 2025-06-02
 ---
 # 讲义内容
+
+对应学习讲义预学习“复习 C 语言”到“数字电路基础实验”3 节。
+
 - [ ] C 练习题
 - [x] Verilator 环境与基本使用
 - [ ] 开源 EDA 使用

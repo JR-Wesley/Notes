@@ -1,7 +1,8 @@
 ---
 dateCreated: 2024-09-23
-dateModified: 2025-04-08
+dateModified: 2025-05-26
 ---
+
 # Ch1 Fundamentals of Quantitative Design and Analysis
 
 ## 1.1 Introduction

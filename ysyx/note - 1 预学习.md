@@ -1,16 +1,19 @@
 ---
 dateCreated: 2024-11-19
-dateModified: 2025-05-24
+dateModified: 2025-06-02
 banner: "[[../300-以影像之/Genshin/OST/沉玉沐芳 Jadeite Redolence.jpg]]"
 ---
 # 讲义内容
+
+对应学习讲义预学习“预学习概述”到“Linux 系统安装和基本使用”3 节。
+
 - [ ] 关于提问的文章
 - [x] 安装 linux，了解用法。
 - [x] ysyx 代码安装配置。
 - [ ] 复习 C/Verilog，配置 verilator。
 - [ ] 完成 PA 1
 
-参考：<a href="https://github.com/redlightASl/Notes/blob/master/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%BA%95%E5%B1%82/%E4%B8%80%E7%94%9F%E4%B8%80%E8%8A%AF/%E4%B8%80%E7%94%9F%E4%B8%80%E8%8A%AF%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B01%E3%80%90verilator%E3%80%91.md">这个仓库有一些学习笔记可以参考</a>， https://note.tonycrane.cc/
+参考：<a href="https://github.com/redlightASl/Notes/blob/master/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%BA%95%E5%B1%82/%E4%B8%80%E7%94%9F%E4%B8%80%E8%8A%AF/%E4%B8%80%E7%94%9F%E4%B8%80%E8%8A%AF%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B01%E3%80%90verilator%E3%80%91.md">这个仓库有一些学习笔记可以参考</a>，https://note.tonycrane.cc/
 
 <a href=" https://ysyx.oscc.cc/docs/ics-pa/PA0.html">ysyx PA 0</a>, <a href="https://nju-projectn.github.io/ics-pa-gitbook/ics2024/">NJU PA 0</a>
 
@@ -20,11 +23,11 @@ banner: "[[../300-以影像之/Genshin/OST/沉玉沐芳 Jadeite Redolence.jpg]]"
 	- ICS 计算机组成构造，@b
 	- OS 课，jyy @b
 
-工具：<a href="https://dir.scmor.com/">镜像和各种搜索引擎</a>
+工具：
 
-x 86/ riscv 32 (64)/ ISA 无关的手册
-
-<a href=" https://nju-projectn.github.io/ics-pa-gitbook/ics2024/blank.html">杂项各种</a>
+- <a href="https://dir.scmor.com/">镜像和各种搜索引擎</a>
+- x 86/ riscv 32 (64)/ ISA 无关的手册
+- <a href=" https://nju-projectn.github.io/ics-pa-gitbook/ics2024/blank.html">杂项各种</a>
 
 > [!warning]
 PA 的某些特性会依赖于 64 位平台和图形显示.

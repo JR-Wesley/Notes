@@ -1,7 +1,7 @@
 ---
 aliases: []
 dateCreated: 2024-09-18
-dateModified: 2025-05-19
+dateModified: 2025-05-27
 ---
 
 <a href=" https://langster.org/zh-hant/blog/learn-english-reading-resources">英文文章网站</a>
@@ -31,6 +31,8 @@ dateModified: 2025-05-19
 - in lieu of 代替
 - hick-up 打嗝引申为短暂的、轻微的问题或障碍
 - bear with sb 表示容忍、耐心等待某人
+- take with a grain/pinch of salt **对某事物持怀疑态度，不完全相信，有保留地接受**。
+- take at face value（从表面看待，完全相信） believe unconditionally（无条件相信）
 
 #### **爆发式传播**
 

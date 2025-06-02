@@ -1,6 +1,6 @@
 ---
 dateCreated: 2025-05-21
-dateModified: 2025-05-21
+dateModified: 2025-05-29
 ---
 # 5 Large and Fast: Exploiting Memory Hierarchy
 ## 5.1 Introduction
@@ -125,6 +125,8 @@ In a **write-back** cache, because we cannot overwrite the block, *stores either
 **split cache** A scheme in which a level of the memory hierarchy is composed of two independent caches that operate in parallel with each other, with one handling instructions and one handling data.
 
 ## 5.4 Measuring and Improving Cache Performance
+- Reducing miss rate: reducing the probability of contention of two blocks for the same cache location
+- reducing miss penalty: adding an additional level - multilevel caching
 
 $$
 CPU\ time = (CPU\ execution\ clock\ cycles + Memory-stall\ clock\ cycles\ Clock\ cycle\ time
@@ -143,10 +145,10 @@ $$
 For write-through:
 
 $$
-Write-stall\ cycles\ Writes  = \frac{Write}{Program} × \ miss\ rate × Write\ miss \ penalty+Write buffer stalls
+Write-stall\ cycles\ Writes  = \frac{Write}{Program} × \ miss\ rate × Write\ miss \ penalty+Write\ buffer\ stalls
 $$
 
-Assume that the write buffer stalls are negligible:
+In most write-through cache organizations, the read and write miss penalties are the same (the time to fetch the block from memory). Assume that the write buffer stalls are negligible:
 
 $$
 Memory-stall\ clock\ cycles\ = \frac{Memory\ accesses }{Program} × Miss\ rate × Miss\ penalty
@@ -163,25 +165,40 @@ AMAT = Time\ for\ a\ hit + Miss\ rate × Miss\ penalty
 $$
 
 ### Reducing Cache Misses by More Flexible Placement of Blocks
-**fully associative cache** A cache structure in which a block can be placed in any location in the cache.
-**set-associative cache** A cache that has a fixed number of locations (at least two) where each block can be placed.
-n-way set-associative cache - n locations for a block
+- **fully associative cache** A cache structure in which a block can be placed in any location in the cache.
+- **set-associative cache** A cache that has a fixed number of locations (at least two) where each block can be placed.
+- n-way set-associative cache - n locations for a block
 Each block in the memory maps to a unique set in the cache given by the index field, and a block can be placed in any element of that set.
 The set containing a memory block is given by $(Block\ number) modulo (Number\ of\ sets\ in\ the\ cache)$
 Since the block may be placed in any element of the set, all the tags of all the elements of the set must be searched.
 
+![](assets/Fig5.14.png)
+
+In a set-associative cache, the set containing a memory block is given by $(Block\ number) \mod (Number\ of\ sets\ in\ the\ cache)$. All the tags of all the elements of the set must be searched.
+
 ![](assets/Fig5.15.png)
+
+### Locating a Block in the Cache
 
 The cache access consists of indexing the appropriate set and then searching the tags of the set.
 
+![](assets/Fig5.17.png)
+
+> [!note] Elaboration
+> A Content Addressable Memory (CAM) is a circuit that combines comparison and storage in a single device. Instead of supplying an address and reading a word like a RAM, you send the data and the CAM looks to see if it has a copy and returns the index of the matching row.
+
 ![](assets/Fig5.18.png)
 
-A Content Addressable Memory (CAM) is a circuit that combines comparison and storage in a single device(eight-way and above built using CAMs in 2013).
-
-- Choosing Which Block to Replace
+### Choosing Which Block to Replace
 **least recently used (LRU)** A replacement scheme in which the block replaced is the one that has been unused for the longest time. LRU replacement is implemented by keeping track of when each element in a set was used relative to the other elements in the set.
 - Reducing the Miss Penalty Using Multilevel Caches
 **multilevel cache** A memory hierarchy with multiple levels of caches, rather than just a cache and main memory
+
+## 5.5 Dependable Memory Hierarchy
+
+## 5.6 Virtual Machines
+
+## 5.7 Virtual Memory
 
 ## 5.9 Using a Finite-State Machine to Control a Simple Cache
 

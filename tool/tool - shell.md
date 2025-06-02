@@ -1,6 +1,6 @@
 ---
 dateCreated: 2025-04-02
-dateModified: 2025-04-16
+dateModified: 2025-05-29
 ---
 
 > https://github.com/crazyguitar/cppcheatsheet?tab=readme-ov-file
@@ -26,10 +26,10 @@ dateModified: 2025-04-16
    - `if-then-elif-else-fi` 结构。
    - 条件表达式：
 
-     ```bash
-     if [ "$a" -eq "$b" ]; then  # 数值比较
-     if [[ "$str" == "pattern" ]]; then  # 字符串匹配（推荐双中括号）
-     ```
+ ```bash
+ if [ "$a" -eq "$b" ]; then  # 数值比较
+ if [[ "$str" == "pattern" ]]; then  # 字符串匹配（推荐双中括号）
+```
 
    - 文件测试：`-f`（文件存在）、`-d`（目录存在）、`-x`（可执行）。
 
@@ -49,6 +49,10 @@ dateModified: 2025-04-16
          echo $line
      done < file.txt
 ```
+
+- `&&` 若前一条语句（退出状态码零）成功，执行第二条，否则调整。
+- `||` 若第一条失败（退出状态码非零），执行第二条，否则跳过。
+- `;` 分隔符，无论是否成功执行
 
 ### 6. **函数**
    - 定义函数：
@@ -83,6 +87,104 @@ dateModified: 2025-04-16
 | `chmod`    | **权限**     | 修改文件权限                 |
 
 `cat more less` 用于显示，`cat` 只展示最后布满屏幕的内容，`more` 逐行显示，`less` 支持上下滚动。
+
+#### **`basename` 命令的基本用法**
+1. **提取文件名**
+
+```bash
+basename /path/to/file.txt
+# 输出: file.txt
+```
+
+  1. **删除后缀（可选参数）**
+
+```bash
+basename /path/to/file.txt .txt
+# 输出: file
+```
+
+- **注意**：后缀必须匹配文件的完整后缀（如 `.tar.gz` 需要完整指定）。
+ 1. **处理目录路径**
+
+```bash
+basename /home/user/docs/
+# 输出: docs
+```
+
+1. **相关选项**
+
+- `-a`：处理多个参数（适用于 GNU 版本的 basename）。
+
+```bash
+basename -a /path/to/file1.txt /path/to/file2.txt
+# 输出:
+# file1.txt
+# file2.txt
+```
+
+- `-s suffix`：指定要删除的后缀（等效于直接在参数后添加后缀）。
+
+#### **相关命令：`dirname`**
+
+`dirname` 与 `basename` 互补，用于提取文件路径中的目录部分：
+
+```bash
+dirname /path/to/file.txt
+# 输出: /path/to
+
+dirname /home/user/docs/
+# 输出: /home/user
+```
+
+#### **`realpath`**
+
+获取文件的绝对路径，解析符号链接：
+
+```bash
+realpath ../relative/path/file.txt
+# 输出: /absolute/path/to/file.txt
+```
+
+#### **参数替换（Shell 内置）**
+
+使用 `${var%pattern}` 和 `${var##pattern}` 提取路径部分：
+
+```bash
+path="/path/to/file.txt"
+
+# 等效于 basename
+echo "${path##*/}"  # 输出: file.txt
+
+# 等效于 dirname
+echo "${path%/*}"   # 输出: /path/to
+```
+
+#### **场景示例**
+ 1. **批量处理文件**
+
+```bash
+for file in /data/*.log; do
+  base=$(basename "$file" .log)
+  echo "处理文件: $base"
+  # 执行操作: mv "$file" "${base}.bak"
+done
+```
+
+ 1. **脚本中获取自身名称**
+
+```bash
+#!/bin/bash
+script_name=$(basename "$0")
+echo "当前脚本: $script_name"
+```
+
+### **总结**
+
+|命令|功能描述|示例|
+|---|---|---|
+|`basename`|从路径中提取文件名|`basename /a/b/c.txt → c.txt`|
+|`dirname`|从路径中提取目录名|`dirname /a/b/c.txt → /a/b`|
+|`realpath`|获取文件的绝对路径（解析符号链接）|`realpath ./file → /full/path`|
 
 ---
 

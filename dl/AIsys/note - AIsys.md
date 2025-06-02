@@ -1,9 +1,11 @@
 ---
 dateCreated: 2025-02-11
-dateModified: 2025-05-13
+dateModified: 2025-05-26
 ---
 
 相关资源推荐：https://zhuanlan.zhihu.com/p/20076957712
+
+AI 相关大学课程严忻恺：https://www.zhihu.com/people/yan-xin-kai-38/posts
 
 综述：
 

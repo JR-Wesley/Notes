@@ -15,6 +15,24 @@ dateModified: 2024-11-22
 
 <a href=" https://wh-xu.github.io/"> HDC 领域的一个作者</a>。其中的 FSL-HDnn 结合了 CNN 和 HDC 的硬件架构。
 
+
+# 可能的参考
+
+https://wh-xu.github.io/
+https://escholarship.org/uc/item/64t2x17z
+https://dl.acm.org/doi/pdf/10.1145/3470496.3527422
+https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9847238
+Understanding hyperdimensional computing for parallel single-pass learning
+https://github.com/sjduan/LeHDC
+https://github.com/Cornell-RelaxML/Hyperdimensional-Computing
+
+
+https://dl.acm.org/doi/pdf/10.1145/3620665.3640374
+https://arxiv.org/pdf/2203.09680
+https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9407181
+https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9407181
+https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9088251
+
 ## 未来发展
 
 (1) exploit HDC intrinsic characteristics for more classifica844 tion/cognitive tasks in different domains like security, image 845 processing, and real-time applications. (2) focus on develop846 ing an efficient encoding algorithm that handles HDC capac847 ity limitation and would improve data representation for 2D 848 applications. (3) develop more hardware friendly metrics for 849 similarity measurement that would enhance system accuracy. 850 (4) design a unified HD processor that addresses diverse data 851 types and can trade-offs accuracy to efficiency based on the 852 application requirements. (5) investigate the dimension of HD 853 vector that store and manipulate different data representations 854 to reduce the memory footprint and enhance system effi855 ciency. (6) study various methods for integrating the DL/ML 856 techniques with HDC and analyzing system performance 857 effects.
