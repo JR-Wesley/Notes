@@ -1,7 +1,8 @@
 ---
 dateCreated: 2024-11-13
-dateModified: 2025-04-01
+dateModified: 2025-06-03
 ---
+
 <a href=" https://devhints.io/vim">cheatsheet vim</a>
 
 # Vim 核心使用
@@ -151,6 +152,9 @@ Vim 允许在一个窗口中分割显示多个文件或多个部分，使用以�
 打开 PowerToys 的设置，在键盘管理页面将 Caps Lock 键映射为 Esc 键。
 
 # Neovim 配置
+
+<a href="https://soda.dnggentle.art/%E4%B8%BA%E9%9B%84%E5%BF%83%E5%8B%83%E5%8B%83%E7%9A%84%E5%BC%80%E5%8F%91%E8%80%85%E8%80%8C%E6%89%93%E9%80%A0%E7%9A%84lazyvim%E6%95%99%E7%A8%8B/0-%E5%89%8D%E8%A8%80/">lazyvim 中文翻译，使用教程</a>
+
 ## Lazyvim 安装
 
 <a href=" https://lazyvim-ambitious-devs.phillips.codes/">关于 lazyvim 配置的教程</a>

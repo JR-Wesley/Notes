@@ -1,12 +1,11 @@
 ---
 dateCreated: 2023-08-02
-dateModified: 2025-04-02
+dateModified: 2025-06-03
 ---
 
 <a href=" https://www.gnu.org/software/make/manual/">GNU Make Manual 官方文档</a>
 
 <a href=" https://makefiletutorial.com/">Makefile Tutorial</a>；<a href=" https://cppcheatsheet.com/notes/c_make.html">Makefile cheatsheet</a>
-
 
 # 介绍
 
@@ -65,6 +64,82 @@ make 找第一个目标文件 target，作为最终目标文件。make 会一层
 | `-` | Ignore errors                               |
 | `@` | Don’t print command                         |
 | `+` | Run even if Make is in ‘don’t execute’ mode |
+
+## 特殊目标
+
+### **1. `.PHONY`：声明伪目标**
+
+告诉 Make 某个目标**不对应实际文件**，而是代表一组命令的名称。即使存在同名文件，Make 也会强制执行对应的命令。
+
+```makefile
+.PHONY: 目标1 目标2 …
+```
+
+```makefile
+.PHONY: clean all
+
+all: program
+clean:
+    rm -f program *.o
+```
+
+- `all` 和 `clean` 是伪目标，不对应实际文件。
+- 执行 `make clean` 时，无论是否存在名为 `clean` 的文件，都会执行 `rm` 命令。
+- **避免冲突**：若目录中存在名为 `clean` 的文件，`make clean` 会认为目标已更新，导致命令不执行。
+- **提高效率**：伪目标不检查文件时间戳，直接执行命令。
+
+### **2. `.DEFAULT_GOAL`：指定默认目标**
+
+当用户直接运行 `make` 而不指定目标时，明确告诉 Make 应该执行哪个目标。
+
+```makefile
+.DEFAULT_GOAL: 目标名称
+```
+
+```makefile
+.DEFAULT_GOAL: all
+
+all: program
+    @echo "Building program…"
+```
+
+- 直接执行 `make` 时，等同于执行 `make all`。
+
+传统上，Make 默认执行 Makefile 中**第一个**目标。但使用 `.DEFAULT_GOAL` 可以：
+
+- 显式指定默认目标，提高可读性。
+- 将默认目标放在文件任意位置（不必是第一个）。
+
+```makefile
+.DEFAULT_GOAL: all
+.PHONY: all clean
+
+all: program
+    @echo "Building program…"
+
+clean:
+    @echo "Cleaning up…"
+    rm -f program *.o
+```
+
+- 直接运行 `make` 时，默认执行 `all`。
+- `all` 和 `clean` 始终被视为未更新，确保命令执行。
+
+### **注意事项**
+
+1. **兼容性**
+    `.DEFAULT_GOAL` 是 GNU Make 的特性，部分旧版 Make 可能不支持。传统项目通常通过将 `all` 作为第一个目标实现相同效果。
+
+2. **伪目标命名**
+    伪目标应避免与实际文件名冲突，常见命名如：`all`, `clean`, `install`, `test`, `check` 等。
+
+3. **执行顺序**
+    `.DEFAULT_GOAL` 的声明位置不影响默认目标的执行顺序，它只决定 “哪个目标是默认的”。
+
+### **总结**
+
+- **`.PHONY`**：确保目标命令始终执行，避免与文件冲突。
+- **`.DEFAULT_GOAL`**：明确指定默认目标，增强 Makefile 的可维护性。
 
 ## Make 运行
 
@@ -151,6 +226,15 @@ sources = foo.c bar.c
 include $(sources:.c=.d)
 ```
 
+`$(@:.o=.d)` 是一个**变量替换表达式**，用于将目标文件（`.o`）的名称转换为对应的依赖文件（`.d`）的名称。
+
+- **`$@`**：自动变量，表示当前规则的目标文件（如 `build/main.o`）。
+- **`:%.o=%.d`**：替换模式，将 `.o` 后缀替换为 `.d`。
+**示例**：
+
+- 若 `$@` 为 `build/main.o`，则 `$(@:.o=.d)` 会变为 `build/main.d`。
+在编译 C/C++ 代码时，`.d` 文件用于记录源文件的头文件依赖关系，确保头文件修改时能触发重新编译。可以 **使用 `patsubst` 替代**
+
 ## 模式规则
 
 模式规则类似一个一般的规则，只是规则中，目标定义需要 `%` 字符，它可以表达一个或多个任意字符。依赖中也可以包含。
@@ -193,6 +277,8 @@ endif
 使用 `ifeq ifneq` 判断。
 
 `ifdef ` 判断变量是否为空，
+
+- `$(if CONDITION, THEN-PART, ELSE-PART)` 是 Makefile 的条件函数。
 
 # 变量
 
