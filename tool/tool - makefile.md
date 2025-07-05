@@ -1,6 +1,6 @@
 ---
 dateCreated: 2023-08-02
-dateModified: 2025-06-03
+dateModified: 2025-06-18
 ---
 
 <a href=" https://www.gnu.org/software/make/manual/">GNU Make Manual 官方文档</a>
@@ -338,15 +338,90 @@ make 运行时的系统环境变量可以在 make 开始运行时被载入 Makef
 
 当 make 嵌套调用时，上层 Makefile 定义的变量会以系统环境变量的方式传递给下层 Makefile。默认只有命令行设置的变量会被传递。定义在文件中的变量，向下层 Makefile 传递，需要使用 export 关键字声明。
 
-## 自动化变量
-- `$@` 规则中的目标文件集
+## 内置变量
+
+在 Makefile 中，GNU Make 提供了许多内置变量（也称为自动变量和预定义变量），这些变量可以简化规则编写并提供对当前构建环境的访问。以下是一些常见的内置变量分类及示例：
+
+### **一、自动变量（针对每个规则生效）**
+
+自动变量在规则的命令中使用，引用与当前目标和依赖相关的文件名称。
+
+|变量名|描述|
+|---|---|
+|`$@`|当前目标的名称。<br>**示例**：`target: dep` 中，`$@` 为 `target`。|
+|`$<`|第一个依赖文件的名称。<br>**示例**：`target: a.o b.o` 中，`$<` 为 `a.o`。|
+|`$^`|所有依赖文件的名称，以空格分隔，会去除重复项。<br>**示例**：`target: a.o b.o a.o` 中，`$^` 为 `a.o b.o`。|
+|`$+`|所有依赖文件的名称，以空格分隔，**保留重复项**。<br>**示例**：`target: a.o b.o a.o` 中，`$+` 为 `a.o b.o a.o`。|
+|`$?`|所有比目标更新的依赖文件，以空格分隔。常用于只处理更新过的文件。|
+|`$*`|目标文件的主文件名（不含扩展名）。<br>**示例**：目标为 `foo.o`，`$*` 为 `foo`。|
+|`$(@D)`|当前目标的目录部分（不含文件名）。<br>**示例**：目标为 `src/foo.o`，`$(@D)` 为 `src`。|
+|`$(@F)`|当前目标的文件部分（不含目录）。<br>**示例**：目标为 `src/foo.o`，`$(@F)` 为 `foo.o`。|
+|`$(<D)`|第一个依赖的目录部分。|
+|`$(<F)`|第一个依赖的文件部分。|
+
 - `$%` 仅当目标是函数库文件时，表示规则中的目标成员名
-- `$<` 依赖目标中的第一个目标名
-- `$?` 所有比目标新的依赖目标集合
-- `$^` 所有依赖目标的集合，去除重复目标
-- `$+` 类似 `$^` 也是依赖目标集合，不去除重复的目标
 - `$*` 表示目标模式中 `%` 及其之前的部分
 - `$(@D) $(@F)` 表示 `$@` 的目录部分和文件部分，如 `dir/foo.o` 中分别是 `dir foo.o`。同样有 `$(*D) $(%D) $(<D) $(^D) $(+D) $(?D)`
+
+### **二、预定义变量（由 Make 自动设置）**
+
+这些变量提供对编译器、链接器和其他工具的默认设置。
+
+#### **1. 编译器和工具**
+
+|变量名|默认值|描述|
+|---|---|---|
+|`CC`|`cc`|C 编译器命令|
+|`CXX`|`g++`|C++ 编译器命令|
+|`AS`|`as`|汇编器命令|
+|`LD`|`ld`|链接器命令|
+|`AR`|`ar`|归档工具（如创建静态库）|
+|`RM`|`rm -f`|删除文件命令|
+|`MAKE`|`make`|递归调用 make 的命令|
+
+#### **2. 编译和链接选项**
+
+|变量名|描述|
+|---|---|
+|`CFLAGS`|C 编译器的选项（如 `-O2 -Wall`）|
+|`CXXFLAGS`|C++ 编译器的选项|
+|`CPPFLAGS`|C/C++ 预处理器的选项（如 `-I` 头文件路径）|
+|`LDFLAGS`|链接器的选项（如 `-L` 库路径）|
+|`LIBS`|链接时需要的库（如 `-lm`）|
+|`ASFLAGS`|汇编器的选项|
+|`ARFLAGS`|归档工具的选项（如 `rcs`）|
+
+### **三、其他内置变量**
+
+|变量名|描述|
+|---|---|
+|`MAKEFILE_LIST`|当前 make 读取的所有 Makefile 文件名，按读取顺序排列。<br>**示例**：`Makefile config.mk`|
+|`MAKECMDGOALS`|命令行指定的目标列表。<br>**示例**：执行 `make clean all` 时，`MAKECMDGOALS` 为 `clean all`。|
+|`SHELL`|执行命令的 shell，默认为 `/bin/sh`。|
+|`VPATH`|搜索依赖文件的目录列表（以冒号分隔）。|
+|`PWD`|当前工作目录（等同于 shell 中的 `$PWD`）。|
+
+### **四、变量修改修饰符**
+
+这些修饰符可用于处理文件名，通常与自动变量结合使用。
+
+|修饰符|示例|描述|
+|---|---|---|
+|`%`|`$(var:%=foo_%)`|模式替换。<br>**示例**：若 `var=a.o b.o`，则结果为 `foo_a.o foo_b.o`。|
+|`D`|`$(dir src/foo.c)`|取目录部分。结果为 `src/`。|
+|`F`|`$(notdir src/foo.c)`|取文件部分。结果为 `foo.c`。|
+|`S`|`$(suffix foo.c)`|取后缀。结果为 `.c`。|
+|`B`|`$(basename foo.c)`|取 basename（不含后缀）。结果为 `foo`。|
+
+### **六、查看所有内置变量**
+
+你可以通过以下命令查看 GNU Make 的所有内置变量及其默认值：
+
+```bash
+make -p -f /dev/null | grep '^[A-Z]' | sort
+```
+
+这会输出 Make 的内置规则和变量定义，帮助你了解可用的内置变量。
 
 # 函数
 
@@ -405,3 +480,109 @@ make 运行时的系统环境变量可以在 make 开始运行时被载入 Makef
 ```shell
 cc main.c -o main
 ```
+
+# Misc
+
+## MAKEFILE_LIST
+
+
+当使用 `sed 's/vitis-run/\/opt\/vitis/g' Makefile | make -f -` 和直接执行 `make` 时，`MAKEFILE_LIST` 变量的内容会有明显不同。下面为你详细分析：
+
+### **1. `MAKEFILE_LIST` 变量的作用**
+
+在 Makefile 里，`MAKEFILE_LIST` 是一个内置变量，它的作用是按顺序记录 make 所读取的所有 Makefile 文件的名称。具体来说：
+
+- 第一个元素一般是默认的 Makefile（像 `Makefile`、`makefile` 或者 `GNUmakefile`）。
+- 后续元素是通过 `include` 指令包含进来的其他 Makefile 文件。
+- 变量中的文件名称之间用空格分隔。
+
+### **2. 直接执行 `make` 时的 `MAKEFILE_LIST`**
+
+假设项目里有以下几个文件：
+
+```plaintext
+Makefile
+config.mk
+tools.mk
+```
+
+并且 `Makefile` 中包含这样的内容：
+
+```makefile
+include config.mk
+include tools.mk
+
+all:
+    @echo "MAKEFILE_LIST: $(MAKEFILE_LIST)"
+```
+
+当你直接执行 `make` 时，`MAKEFILE_LIST` 的输出通常是：
+
+```make
+MAKEFILE_LIST: Makefile config.mk tools.mk
+```
+
+这是因为 make 会按照下面的顺序读取文件：
+
+1. 首先读取默认的 Makefile（也就是 `Makefile`）。
+2. 接着读取 `Makefile` 中通过 `include` 指令包含的 `config.mk` 和 `tools.mk`。
+
+### **3. 执行 `sed '…' | make -f -` 时的 `MAKEFILE_LIST`**
+
+当你使用 `sed 's/vitis-run/\/opt\/vitis/g' Makefile | make -f -` 命令时：
+
+- `make -f -` 表示从标准输入读取 Makefile 内容，而不是从文件中读取。
+- 这种情况下，标准输入没有文件名，所以 `MAKEFILE_LIST` 中对应的位置会显示为 `-`（表示标准输入）。
+
+**示例输出**：
+
+```make
+MAKEFILE_LIST: - config.mk tools.mk
+```
+
+**详细说明**：
+
+- 第一个元素 `-` 代表从标准输入读取的 Makefile 内容（也就是经过 `sed` 处理后的内容）。
+- 后续的 `config.mk` 和 `tools.mk` 是通过 `include` 指令包含进来的文件，这和直接执行 `make` 时是一样的。
+
+### **4. 为什么会有这种差异？**
+
+这种差异主要是由 `make -f -` 的工作方式决定的：
+
+- **直接执行 `make`**：make 会读取磁盘上实际存在的 Makefile 文件，所以 `MAKEFILE_LIST` 中记录的是真实的文件名。
+- **使用 `make -f -`**：make 从标准输入读取内容，这些内容没有关联的文件名，因此用 `-` 来表示。
+
+### **5. 实际应用中的影响**
+
+- **相对路径问题**：如果 Makefile 中使用了 `$(dir $(lastword $(MAKEFILE_LIST)))` 这样的表达式来获取 Makefile 所在的目录，在使用 `make -f -` 时会得到 `-`，而不是实际的目录路径，这可能会导致错误。
+- **调试方面**：在调试时，`MAKEFILE_LIST` 中显示 `-` 可以帮助你判断 Makefile 是从标准输入读取的，而不是从文件中读取的。
+
+### **6. 如何验证？**
+
+你可以在 Makefile 中添加一个目标来打印 `MAKEFILE_LIST`：
+
+
+```makefile
+print-makefiles:
+    @echo "MAKEFILE_LIST: $(MAKEFILE_LIST)"
+```
+
+然后分别执行以下两个命令进行验证：
+
+
+```bash
+# 直接执行 make
+make print-makefiles
+
+# 通过 sed 管道执行 make
+sed 's/vitis-run/\/opt\/vitis/g' Makefile | make -f - print-makefiles
+```
+
+### **总结**
+
+|执行方式|`MAKEFILE_LIST` 示例|说明|
+|---|---|---|
+|`make`|`Makefile config.mk tools.mk`|显示实际的文件名|
+|`sed '…' \| make -f -`|`- config.mk tools.mk`|标准输入用 `-` 表示|
+
+这种差异在编写需要依赖 Makefile 路径的 Makefile 时需要特别注意，建议优先使用变量或者环境变量来指定路径，而不是依赖 `MAKEFILE_LIST`。
