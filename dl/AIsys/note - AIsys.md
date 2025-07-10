@@ -48,3 +48,14 @@ NVIDIA Ampere Architecture features the Third-generation Tensor Cores:
 ## Fixed-Point Arithmetic
 ## Hardware Implication
 ## DNN Quantization
+
+
+# 介绍
+
+通俗来讲，机器学习是指从数据中学习出有用知识的技术。以学习模式分类，机器学习可以分为监督学习（Supervised Learning）、无监督学习（Unsupervised Learning）和强化学习（Reinforcement Learning）等。
+
+- 监督学习是已知输入和输出的对应关系下的机器学习场景。比如给定输入图像和它对应的离散标签。
+    
+- 无监督学习是只有输入数据但不知道输出标签下的机器学习场景。比如给定一堆猫和狗的图像，自主学会猫和狗的分类，这种无监督分类也称为聚类（Clustering）。
+    
+- 强化学习则是给定一个学习环境和任务目标，算法自主地去不断改进自己以实现任务目标。比如 AlphaGo围棋就是用强化学习实现的，给定的环境是围棋的规则，而目标则是胜利得分。
