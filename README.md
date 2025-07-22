@@ -1,6 +1,6 @@
 ---
 dateCreated: 2025-02-27
-dateModified: 2025-05-19
+dateModified: 2025-07-22
 ---
 # 📜 A Digital IC Explorer's Atlas | Ongoing Learning Repository
 
@@ -28,22 +28,28 @@ This repository archives my (**not well organized**) learning journey through **
 
 ```bash
 .
-├── CSarch
+├── AIsys
+│   ├── AI 编译器
+│   ├── AIsys
 │   ├── GPU
+│   ├── HPC
+│   ├── ML_notes
+│   ├── job interview
+│   ├── quant
+│   └── typicalModel
+├── CSarch
+│   ├── GPUarch
 │   ├── assets
+│   ├── book - CSAPP
 │   ├── book - SuperScalarProcessor
+│   ├── book - computer architecture
+│   ├── book - cs organization riscv
 │   ├── comp arch paper
 ├── CV
 │   ├── GPUhw
 │   ├── assets
 │   ├── coding
 │   └── rayTracing
-├── DL
-│   ├── AIsys
-│   ├── GPU
-│   ├── ML_notes
-│   ├── quant
-│   └── typicalModel
 ├── IC
 │   ├── DSP
 │   ├── EDA
@@ -52,11 +58,14 @@ This repository archives my (**not well organized**) learning journey through **
 │   ├── STA
 │   ├── asic flow
 │   ├── cgra
+│   ├── jobinterview
 │   ├── program
 │   ├── protocal
 │   ├── sv
 │   └── verification
 ├── SoC
+│   ├── RFFPGA
+│   ├── cache
 │   ├── deep_in_riscv_debug-master
 │   ├── embeded
 │   ├── pulp VLSI
@@ -64,17 +73,20 @@ This repository archives my (**not well organized**) learning journey through **
 ├── algorithm
 │   ├── compression
 │   ├── encryption
-│   └── hdc
-├── development
-│   └── career
+│   ├── hdc
+│   └── 算法
 ├── language
+├── medicine
+│   └── assets
 ├── music
 │   └── assets
 ├── tool
 │   └── assets
 └── ysyx
-    └── assets
-
+    ├── PA 分析
+    ├── assets
+    ├── 程序构造
+    └── 计算机系统基础
 ```
 
 ## 🔐 License Matrix

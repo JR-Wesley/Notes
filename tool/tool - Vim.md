@@ -1,9 +1,13 @@
 ---
 dateCreated: 2024-11-13
-dateModified: 2025-06-03
+dateModified: 2025-07-11
 ---
 
 <a href=" https://devhints.io/vim">cheatsheet vim</a>
+
+vscode
+
+- copilot `<ctrl><shift> p`：开启/禁用自动补全
 
 # Vim 核心使用
 - move
