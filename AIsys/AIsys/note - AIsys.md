@@ -14,7 +14,8 @@ AI 相关大学课程严忻恺：https://www.zhihu.com/people/yan-xin-kai-38/pos
 - https://zhuanlan.zhihu.com/p/616138047
 - <a href="https://zhuanlan.zhihu.com/p/33876622">一天搞懂</a>
 - <a href=" https://zhuanlan.zhihu.com/p/20076957712?utm_psn=1872615359586111488">知乎总结</a>
-- <a href=" https://chenzomi12.github.io/index.html">ZOMI AI 系统</a><img src=" https://chenzomi12.github.io/_images/03Architecture031.png" alt="系统框图">
+- <a href=" https://chenzomi12.github.io/index.html">ZOMI AI 系统</a>
+<img src=" https://chenzomi12.github.io/_images/03Architecture031.png" alt="系统框图">
 - <a ref=" https://openmlsys.github.io/index.html">open ML sys </a>
 - <a href="https://novel.ict.ac.cn/aics/">中科大智能计算系统课程和书</a>
 

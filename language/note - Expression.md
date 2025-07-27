@@ -34,6 +34,9 @@ dateModified: 2025-05-27
 - take with a grain/pinch of salt **对某事物持怀疑态度，不完全相信，有保留地接受**。
 - take at face value（从表面看待，完全相信） believe unconditionally（无条件相信）
 
+# word
+
+- within a similar price and power envelope 价格和功耗相似的**范围**
 #### **爆发式传播**
 
 |表达|语义侧重|例句|

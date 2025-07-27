@@ -2,7 +2,7 @@
 dateCreated: 2025-02-27
 dateModified: 2025-07-22
 ---
-# 📜 A Digital IC Explorer's Atlas | Ongoing Learning Repository
+# 📜 A High Performance Computing Explorer's Atlas | Ongoing Learning Repository
 
 **Status**: Actively Curating (Knowledge lava cooling into crystallized notes)
 
@@ -13,12 +13,13 @@ dateModified: 2025-07-22
 
 ## 📜 Repository Manifesto
 
+> *"Where nanoseconds meet neurons"*
 This repository archives my (**not well organized**) learning journey through **VLSI Digital IC design**, incorporating:
 
-- 🧠 **Conceptual Synthesis**
-- ⚙️ **Verified Code**
-- 🔗 **Toolchain Alchemy**
-- 🚨 **Empirical Truths**
+- 🧠 **Heterogeneous Computing**: GPU/FPGA/CGRA workload partitioning
+- ⚙️ **AI-Tailored Architectures**: Tensor cores to neuromorphic accelerators
+- 🔗 **RISC-V Ecosystem**: Custom extension development (Vector, AI/ML)
+- 🚨 **VLSI-Scale Verification**: Formal methods for billion-gate designs
 
 **Ethical Note**: Contains reconstructed knowledge from cited sources - strictly for educational purposes.
 
@@ -88,6 +89,21 @@ This repository archives my (**not well organized**) learning journey through **
     ├── 程序构造
     └── 计算机系统基础
 ```
+
+## 🛠️ Usage & Navigation
+
+- Highlight
+1. Roadmap of YSYX（一生一芯）
+`Soc/ysys/`
+
+- Recommended Exploration Paths
+
+1. **Hardware Accelerator Design**
+    `IC/CGRA/ → AIsys/GPU/ → algorithm/hdc/`
+2. **Full-Stack System Optimization**
+    `ysyx/PA_analysis/ → SoC/cache/ → AIsys/HPC/`
+3. **Silicon Implementation Flow**
+    `IC/asic_flow/ → IC/STA/ → SoC/pulp_VLSI/`
 
 ## 🔐 License Matrix
 

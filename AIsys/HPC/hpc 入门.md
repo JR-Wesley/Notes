@@ -32,9 +32,7 @@ dateModified: 2025-07-13
 - 链接: [https://pan.baidu.com/s/1NZt1ZW1qenXlOOPt07ZPfA](https://pan.baidu.com/s/1NZt1ZW1qenXlOOPt07ZPfA) 提取码: j69p
 
 
-
-
-# 系统
+# 并行计算系统
 
 系统学习并行计算需要构建一套涵盖**硬件基础、理论模型、编程框架、算法设计、性能优化**的完整知识体系，同时结合实践掌握核心技能。以下是具体的知识体系和需要掌握的理论、技能：
 

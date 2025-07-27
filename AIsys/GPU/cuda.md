@@ -1,40 +1,49 @@
 ---
 dateCreated: 2025-07-03
-dateModified: 2025-07-11
+dateModified: 2025-07-26
 ---
 # 参考
 
+https://shichaoxin.com/tags/
+chen tianqi：DLSYS  https://dlsys.cs.washington.edu/
+## Preofessional CUDA® C Programming
 - [x] CUDA 编程入门极简教程 https://zhuanlan.zhihu.com/p/34587739
+谭升的博客：[https://face2ai.com/program-blog/#GPU编程（CUDA）](https://link.zhihu.com/?target=https%3A//face2ai.com/program-blog/%23GPU%25E7%25BC%2596%25E7%25A8%258B%25EF%25BC%2588CUDA%25EF%25BC%2589)
 
-- **官方文档**：
+https://zhuanlan.zhihu.com/p/690779388
+
+https://github.com/mapengfei-nwpu/ProfessionalCUDACProgramming
+
+参考博客：https://jinbridge.dev/docs/hpc/cuda-programming-101/
+
+CUDA C Programming Guide 解读：https://zhuanlan.zhihu.com/p/53773183
+
+leetgpu
+
+- **官方文档**，主要是两个 Guide：
     - [CUDA Toolkit Documentation](https://docs.nvidia.com/cuda/)：包含编程指南、API 参考等。
     - [NVIDIA Developer](https://developer.nvidia.com/)：提供教程、示例代码和白皮书。
-    - [CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)
-    - NVIDIA CUDA C++ Programming Guide [https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html](https://link.zhihu.com/?target=https%3A//docs.nvidia.com/cuda/cuda-c-programming-guide/index.html)：这是英伟达官方的 CUDA 编程教程，很多细节没讲，有一定的跳跃性。
-    - CUDA C++ Best Practices Guide  [https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html](https://link.zhihu.com/?target=https%3A//docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html) 侧重点在实践方面，比如如何编程才能最大化利用 GPU 特性提升性能，建议基础打好之后再来看这个。
+    - NVIDIA CUDA C++ Programming Guide [https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html](https://link.zhihu.com/?target=https%3A//docs.nvidia.com/cuda/cuda-c-programming-guide/index.html)：基础编程教程，很多细节没讲，有一定的跳跃性。
+    - CUDA C++ Best Practices Guide  [https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html](https://link.zhihu.com/?target=https%3A//docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html) 侧重点在实践方面，比如如何编程才能最大化利用 GPU 特性提升性能，需要一定基础。
 - **书籍**：
-    - 《CUDA C 编程权威指南》：全面介绍 CUDA 编程模型与优化技巧。
-    - 《GPU 高性能编程 CUDA 实战》：通过案例学习 CUDA 并行编程。
+    - 《CUDA C 编程权威指南》Professional CUDA C Programming：全面介绍 CUDA 编程模型与优化技巧。
+    - 《GPU 高性能编程 CUDA 实战》：通过案例学习 CUDA 并行编程。《CUDA by Example》（CUDA 编程入门经典）
+    - 《高性能 CUDA 应用设计与开发》（深入优化）
 - **在线课程**：
     - Coursera《GPU 计算基础》（NVIDIA 官方课程）。
     - Udemy《CUDA 并行编程实战》：结合项目实践。
+    - https://people.maths.ox.ac.uk/~gilesm/cuda/ ：该课程每天约有3小时的讲座和4小时的实践课。课程目标是，在课程结束时，你将能够编写相对简单的程序，并且有信心、有能力通过学习英伟达在GitHub上提供的CUDA代码示例继续学习。
+    - https://tschmidt23.github.io/cse599i/
+    - Coursera: [GPU Programming for Science and Engineering](https://www.coursera.org/learn/gpu-programming)
+    - Udemy: [CUDA C++ High Performance Parallel Programming](https://www.udemy.com/course/cuda-c-programming/)
     - 《CUDA 高性能编程：GPU 编程实战》
     - 《GPU 高性能编程 CUDA 实战》
 1. **性能优化指南**
     - [NVIDIA Performance Guide](https://developer.nvidia.com/performance-guides)
-2. **官方文档**：
-    - [CUDA Toolkit Documentation](https://docs.nvidia.com/cuda/)
-3. **书籍**：
-    - 《CUDA by Example》（CUDA 编程入门经典）
-    - 《高性能 CUDA 应用设计与开发》（深入优化）
-4. **在线课程**：
-    - Coursera: [GPU Programming for Science and Engineering](https://www.coursera.org/learn/gpu-programming)
-    - Udemy: [CUDA C++ High Performance Parallel Programming](https://www.udemy.com/course/cuda-c-programming/)
-5. **实战案例**：
     - [NVIDIA Code Examples](https://github.com/NVIDIA/cuda-samples)
     - [CUDA Optimization Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/)
 
-CUDA 在实际应用中的整体结构层次如上图所示。HPC 方向主要需要了解 HPC SDK 等较上层的模块，如何使用。涉及运维、功耗控制等方面时，也会涉及驱动中的 NVML 等模块。下面挑选常用的模块作一些介绍：
+HPC 方向主要需要了解 HPC SDK 等较上层的模块，如何使用。涉及运维、功耗控制等方面时，也会涉及驱动中的 NVML 等模块。下面挑选常用的模块作一些介绍：
 
 - [HPC SDK](https://developer.nvidia.com/hpc-sdk)：其实就是把 HPC 常用的子模块打包到了一起。
     - 分析部分包括 Profiles（Nsight）和 Debugger（cuda-gdb）。
@@ -46,18 +55,26 @@ CUDA 在实际应用中的整体结构层次如上图所示。HPC 方向主要�
 - [CUPTI (Profiling Tools Interface)](https://developer.nvidia.com/cupti)：和上面那个功能类似，允许各种测量和性能检测的 API。
 - [NVML (NVIDIA Management Library)](https://developer.nvidia.com/nvidia-management-library-nvml)：C 语言 API，监控和管理 NVIDIA GPU 设备。API 分为五个模块：初始化和清理、查询、控制、事件处理、错误报告。库文件 `libnvidia-ml.so`，链接参数 `-lnvidia-ml`。
 - [NCCL (NVIDIA Collective Communications Library)](https://developer.nvidia.com/nccl)：C 语言 API，MPI 的替代品。提供多 GPU、多节点通信原语。适用硬件：NVLink、Mellanox Network。
-- [cuBLAS (Basic Linear Algebra)](https://developer.nvidia.com/cublas)：提供科学计算和 AI 有关的扩展 API，符合 BLAS 和 GEMM API。
-- [cuDNN (Deep Neural Network)](https://developer.nvidia.com/cudnn)：C 语言 API，提供 C++ 接口，提供深度神经网络的相关原语。
 
-https://github.com/mapengfei-nwpu/ProfessionalCUDACProgramming
+## **开源代码**
 
-参考：* https://zhuanlan.zhihu.com/p/346910129
+给几个典型的 Transformer 系列的加速代码了。
 
-CUDA C 解读： https://zhuanlan.zhihu.com/p/53773183
+**「地址：」** [https://github.com/bytedance/lightseq](https://link.zhihu.com/?target=https%3A//github.com/bytedance/lightseq)
 
-leetgpu
+这是字节跳动开源的生成模型推理加速引擎，BERT、GPT、VAE 等等全都支持，速度也是目前业界最快的之一。
 
-参考博客： https://jinbridge.dev/docs/hpc/cuda-programming-101/
+**「地址：」** [https://github.com/NVIDIA/DeepLearningExamples/tree/master/FasterTransformer](https://link.zhihu.com/?target=https%3A//github.com/NVIDIA/DeepLearningExamples/tree/master/FasterTransformer)
+
+这是英伟达开源的 Transformer 推理加速引擎。
+
+**「地址：」** [https://github.com/Tencent/TurboTransformers](https://link.zhihu.com/?target=https%3A//github.com/Tencent/TurboTransformers)
+
+这是腾讯开源的 Transformer 推理加速引擎。
+
+**「地址：」** [https://github.com/microsoft/DeepSpeed](https://link.zhihu.com/?target=https%3A//github.com/microsoft/DeepSpeed)
+
+这是微软开源的深度学习分布式训练加速引擎。
 
 # 核心知识提纲
 
@@ -151,15 +168,47 @@ CUDA 编程的核心知识体系可分为**基础语法**、**并行策略**、*
     - Softmax、BatchNorm、注意力机制的 GPU 优化
 
 ### **七、相关生态系统**
-1. **NVIDIA 库**
-    - cuBLAS：基础线性代数子程序
-    - cuDNN：深度学习加速库
-    - cuFFT：快速傅里叶变换库
-2. **高级抽象框架**
-    - PyTorch/TensorFlow：自动生成 CUDA 代码
-    - TVM/Halide：自动算子优化
 
-#### **四、常见问题与避坑指南**
+#### **一、基础计算与核心库（CUDA 生态基础）**
+
+1. **CUDA Runtime API**：CUDA 的核心运行时接口，提供设备初始化、内存管理（如 `cudaMalloc`）、核函数启动等基础操作，是 CUDA 编程的入口。
+2. **CUDA Driver API**：比 Runtime 更底层的驱动接口，需显式加载 CUDA 驱动，支持动态版本适配，常用于需要细粒度控制驱动交互的场景。
+3. **NVRTC**：CUDA 运行时编译库，可在程序运行时动态编译 CUDA 核函数，支持动态生成计算逻辑（如根据输入动态调整算子）。
+4. **CUDA Math Library (cuMath)**：CUDA 内置的数学函数库，包含基础算术、三角函数、指数函数等，已针对 GPU 架构优化。
+
+#### **二、线性代数与矩阵计算**
+
+1. **cuBLAS**：NVIDIA 优化的线性代数库，支持 dense 矩阵的乘法（GEMM）、向量 - 矩阵运算等，是深度学习和科学计算的基础依赖（如 PyTorch/TensorFlow 底层调用）。
+2. **cuSPARSE**：稀疏矩阵计算库，支持稀疏矩阵存储（如 CSR、COO 格式）及稀疏 - 稠密矩阵乘法、稀疏线性方程组求解，适用于高稀疏数据场景（如推荐系统）。
+3. **cuSOLVER**：线性代数求解库，基于 cuBLAS 和 cuSPARSE，支持矩阵分解（LU、Cholesky）、特征值求解、最小二乘问题等，面向科学计算和工程仿真。
+4. **cuTENSOR**：张量计算库，支持高维张量（如 3D/4D）的收缩、点积、广播等操作，优化了张量内存布局和并行访问，适配深度学习中的张量运算。
+
+#### **三、深度学习专用库**
+
+1. **cuDNN（CUDA Deep Neural Network library）**：深度学习核心加速库，针对卷积（Conv）、池化（Pooling）、激活函数（如 ReLU）、LSTM 等算子做了极致优化，是 PyTorch/TensorFlow 的必选依赖。
+2. **TensorRT**：深度学习推理优化库，通过模型量化（INT8/FP16）、层融合、内核自动调优等方式加速推理，支持 C++/Python 接口，常用于生产环境部署。
+3. **cuML**：GPU 加速的机器学习库，提供分类（如随机森林）、回归、聚类等算法，兼容 scikit-learn 接口，适合大规模数据集训练。
+4. **cuGraph**：GPU 加速的图计算库，支持图遍历（BFS/DFS）、社区发现、图神经网络（GNN）算子等，适配社交网络、推荐系统等图数据场景。
+
+#### **四、并行算法与数据结构**
+
+1. **Thrust**：基于 CUDA 的并行算法库，接口类似 C++ STL，提供排序（sort）、扫描（prefix_sum）、归约（reduce）等算法，自动优化并行粒度，降低并行编程门槛。
+2. **CUB（CUDA Unbound）**：更底层的并行原语库，包含线程级 / 块级协作的内存访问、数据重组等工具，供开发者手动优化高性能算子（如 cuDNN 内部使用）。
+3. **Moderngpu**：开源并行算法库，专注于高吞吐量的内存密集型操作（如散列、稀疏数据处理），提供可复用的并行模式。
+
+#### **五、信号与图像处理**
+
+1. **cuFFT（CUDA Fast Fourier Transform）**：GPU 加速的快速傅里叶变换库，支持 1D/2D/3D FFT 及逆变换，性能远超 CPU 实现，用于雷达信号处理、图像滤波等。
+2. **NPP（NVIDIA Performance Primitives）**：图像处理与信号处理算子库，提供像素级操作（如 resize、滤波）、视频编解码辅助、直方图计算等，适用于实时视觉系统。
+3. **cuCVD（CUDA Computer Vision Data Structures）**：计算机视觉基础库，提供图像金字塔、特征点匹配等底层数据结构和算子，常与 NPP 配合使用。
+
+#### **六、科学计算与工程仿真**
+
+1. **cuRAND**：GPU 加速的随机数生成库，支持均匀分布、正态分布等多种随机数类型，性能和随机性优于 CPU 实现，用于蒙特卡洛模拟、深度学习初始化等。
+2. **cuSparseX**：cuSPARSE 的扩展，支持更复杂的稀疏矩阵格式（如块稀疏）和高阶运算，面向大规模科学计算（如有限元分析）。
+3. **MAGMA（Matrix Algebra on GPU and Multicore Architectures）**：混合 CPU-GPU 的线性代数库，自动分配 CPU/GPU 计算任务，兼容 LAPACK 接口，适合异构计算场景。
+
+### **常见问题与避坑指南**
 
 1. **线程同步错误**：
     - 避免在 `__syncthreads()` 前后出现条件分支（如 `if` 语句），否则可能导致死锁。

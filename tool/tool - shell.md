@@ -351,7 +351,7 @@ tar -tf   filename            ### 只查看 filename 归档中的文件，不解
 
 在 windows wsl 2 下 `df -h`：
 
-![](../ysyx/assets/df.png)
+![](../SoC/ysyx/assets/df.png)
 
 1. **Filesystem**: 显示文件系统的类型或挂载来源。
 2. **Size**: 文件系统的总大小。
