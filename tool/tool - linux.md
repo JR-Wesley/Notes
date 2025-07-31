@@ -923,3 +923,7 @@ https://codezhangborui.com/2024/06/solve-china-arch-linux-install-yay-network-is
     - Windows：`ipconfig /flushdns`
     - MacOS：`sudo killall -HUP mDNSResponder`
     - Linux：`sudo systemd-resolve --flush-caches`
+
+# yarn
+
+https://www.cnblogs.com/qubernet/p/17900506.html

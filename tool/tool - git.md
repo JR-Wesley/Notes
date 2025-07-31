@@ -1,6 +1,6 @@
 ---
 dateCreated: 2025-04-02
-dateModified: 2025-04-02
+dateModified: 2025-07-27
 ---
 # Git
 
@@ -49,6 +49,7 @@ git push -u origin main
 `git config --global url.ssh://git@github.com/.insteadOf https://github.com/` 把默认 htpps 改成 ssh。<a href="https://stackoverflow.com/questions/11200237/how-do-i-get-git-to-default-to-ssh-and-not-https-for-new-repositories">参考</a>
 
 ![](assets/tool%20-%20git.assets/image-20250711135233407.png)
+
 ## 检出仓库
 
 执行如下命令以创建一个本地仓库的克隆版本：
@@ -80,6 +81,7 @@ git branch -M main
 ```
 
 除非你将分支推送到远端仓库，不然该分支就是 _不为他人所见的_：
+
 ## 查看
 
 - `git log`: 以扁平化的形式显示提交历史日志
@@ -87,6 +89,7 @@ git branch -M main
 - `git diff <filename>`: 显示工作区中的文件相对于暂存区的改动
 - `git diff <revision> <filename>`: 显示一个文件在不同快照（版本）之间的差异
 - `git checkout <revision>`: 更新 HEAD 指针（如果检出的是一个分支，则同时切换当前分支）
+
 ## 更新与合并
 
 要更新你的本地仓库至最新改动，执行：
@@ -123,6 +126,7 @@ git branch -M main
 - `git merge <revision>`: 将指定的分支/版本合并到当前所在的分支
 - `git mergetool`: 启动一个图形化工具来帮助解决合并冲突
 - `git rebase`: 将一系列提交（补丁）应用到另一个新的基底上（变基）
+
 ## 替换本地改动
 
 假如你操作失误（当然，这最好永远不要发生），你可以使用如下命令替换掉本地改动：
@@ -140,6 +144,7 @@ git branch -M main
 - `git commit --amend`: 修改最后一次提交的内容或提交信息
 - `git reset HEAD <file>`: 将文件移出暂存区（Unstage）
 - `git checkout -- <file>`: 丢弃在工作区中对某个文件的所有修改 `
+
 ## 忽视
 
 <a href=" https://blog.csdn.net/m0_63230155/article/details/134471033">通过 `. gitignore` 忽视指定文件</a>
@@ -152,3 +157,8 @@ Default path for the global config file:
 
 - Linux: `~/.config/lazygit/config.yml
 关闭 `autoFetch`
+
+```shell
+git:
+  autoFetch: false
+```

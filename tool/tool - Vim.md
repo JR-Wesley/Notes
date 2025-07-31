@@ -1,6 +1,6 @@
 ---
 dateCreated: 2024-11-13
-dateModified: 2025-07-11
+dateModified: 2025-07-27
 ---
 
 <a href=" https://devhints.io/vim">cheatsheet vim</a>
@@ -285,10 +285,6 @@ Vim 允许在一个窗口中分割显示多个文件或多个部分，使用以�
 
 `:ALEInfo` 显示 ALE 的配置和状态信息
 
-## Mini. Align
-
-定制化的对齐功能。<a href=" https://github.com/echasnovski/mini.align/blob/main/doc/mini-align.txt">详细功能</a>
-
 ## Vim/ Neovim
 
 https://www.bilibili.com/video/BV1y4411C7pE/?spm_id_from=333.999.0.0&vd_source=bc07d988d4ccb4ab77470cec6bb87b69
@@ -326,3 +322,5 @@ noice 将提示、消息、命令都显示为独立的命令框
 ### Nvim-ufo 折叠相关的插件
 
 nvim 中的 copilot 插件
+
+现代 nvim 配置：https://zhuanlan.zhihu.com/p/382092667
