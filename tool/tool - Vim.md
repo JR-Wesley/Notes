@@ -1,6 +1,6 @@
 ---
 dateCreated: 2024-11-13
-dateModified: 2025-07-27
+dateModified: 2025-08-03
 ---
 
 <a href=" https://devhints.io/vim">cheatsheet vim</a>
@@ -322,5 +322,108 @@ noice 将提示、消息、命令都显示为独立的命令框
 ### Nvim-ufo 折叠相关的插件
 
 nvim 中的 copilot 插件
+
+# 复制
+
+在 WSL 环境下使用 Neovim (nvim) 时，复制粘贴需要处理 WSL 与 Windows 系统剪贴板的交互问题。出现类似错误通常是因为剪贴板工具配置不兼容 WSL 环境，解决方法如下：
+
+### 1. 安装必要工具
+
+WSL 中需要通过特殊工具桥接 Windows 剪贴板，推荐安装 `win32yank` 或使用 WSL 自带的剪贴板工具：
+
+```bash
+# 对于Debian/Ubuntu系WSL
+sudo apt install xsel xclip  # 基础剪贴板工具
+
+# 或者安装win32yank（更推荐，专为WSL设计）
+curl -sLo /tmp/win32yank.zip https://github.com/equalsraf/win32yank/releases/latest/download/win32yank-x64.zip
+unzip -q /tmp/win32yank.zip -d /tmp
+chmod +x /tmp/win32yank.exe
+sudo mv /tmp/win32yank.exe /usr/local/bin/
+```
+
+### 2. 配置 Neovim 剪贴板
+
+在你的 Neovim 配置文件（通常是 `~/.config/nvim/init.vim` 或 `init.lua`）中添加以下配置，让 nvim 正确识别 WSL 环境的剪贴板：
+
+**对于 Vimscript (init.vim)：**
+
+```vim
+" 启用系统剪贴板集成
+set clipboard=unnamedplus
+
+" 配置WSL专用剪贴板工具
+let g:clipboard = {
+  \   'name': 'WSLClipboard',
+  \   'copy': {
+  \      '+': 'win32yank.exe -i --crlf',
+  \      '*': 'win32yank.exe -i --crlf',
+  \   },
+  \   'paste': {
+  \      '+': 'win32yank.exe -o --lf',
+  \      '*': 'win32yank.exe -o --lf',
+  \   },
+  \   'cache_enabled': 0,
+  \ }
+```
+
+**对于 Lua (init.lua)：**
+
+```lua
+-- 启用系统剪贴板集成
+vim.opt.clipboard = "unnamedplus"
+
+-- 配置WSL剪贴板
+vim.g.clipboard = {
+  name = "WSLClipboard",
+  copy = {
+    ["+"] = "win32yank.exe -i --crlf",
+    ["*"] = "win32yank.exe -i --crlf"
+  },
+  paste = {
+    ["+"] = "win32yank.exe -o --lf",
+    ["*"] = "win32yank.exe -o --lf"
+  },
+  cache_enabled = 0
+}
+```
+
+### 3. 替代方案（不依赖 win32yank）
+
+如果不想安装额外工具，可以直接使用 WSL 内置的 Windows 命令（`clip.exe` 和 `powershell`）：
+
+**Vimscript 配置：**
+
+```vim
+set clipboard=unnamedplus
+
+let g:clipboard = {
+  \   'copy': {
+  \      '+': 'clip.exe',
+  \      '*': 'clip.exe',
+  \   },
+  \   'paste': {
+  \      '+': 'powershell.exe -command "Get-Clipboard | Write-Output"',
+  \      '*': 'powershell.exe -command "Get-Clipboard | Write-Output"',
+  \   },
+  \ }
+```
+
+### 4. 测试验证
+
+重启 Neovim 后测试：
+
+- 在 nvim 中用 `y` 复制内容，尝试粘贴到 Windows 应用（如记事本）
+- 在 Windows 中复制内容，尝试在 nvim 中用 `p` 粘贴
+
+如果仍有问题，检查：
+
+- WSL 版本是否为 WSL2（WSL1 兼容性较差）
+- 确保 WSL 与 Windows 系统时间同步（可运行 `sudo hwclock -s` 同步）
+- 尝试更新 Neovim 到最新版本：`sudo apt update && sudo apt upgrade neovim`
+
+通过以上配置，Neovim 就能在 WSL 环境下正常与 Windows 剪贴板交互了。
+
+# 一个发行版
 
 现代 nvim 配置：https://zhuanlan.zhihu.com/p/382092667

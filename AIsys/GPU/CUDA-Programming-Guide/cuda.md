@@ -1,12 +1,41 @@
 ---
 dateCreated: 2025-07-03
-dateModified: 2025-07-26
+dateModified: 2025-08-02
 ---
-# 参考
+
+本目录基于 https://docs.nvidia.com/cuda/cuda-c-programming-guide/contents.html v12.9 整理。
+
+# 推荐资源
+
+- **官方文档**，主要是两个 Guide：
+    - [CUDA Toolkit Documentation](https://docs.nvidia.com/cuda/)：包含编程指南、API 参考等。
+    - [NVIDIA Developer](https://developer.nvidia.com/)：提供教程、示例代码和白皮书。
+    - NVIDIA CUDA C++ Programming Guide [https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html](https://link.zhihu.com/?target=https%3A//docs.nvidia.com/cuda/cuda-c-programming-guide/index.html)
+	    - 基础教程，但是讲的很宽泛，也缺乏细节，有一定的跳跃性。前 7 章是比较核心的内容。
+    - CUDA C++ Best Practices Guide  [https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html](https://link.zhihu.com/?target=https%3A//docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html)
+	    - 主要从理论上给出了一些性能优化的方法，如何最大化利用 GPU 特性提升性能。需要掌握一些上面教程的基本概念。
+- **在线课程**：
+    - 【【精译⚡GPU 计算】贝鲁特美国大学•CMPS224•2021】https://www.bilibili.com/video/BV1Rx4y147Dp/?p=5&share_source=copy_web&vd_source=fd37be71d17f708cc53476cbd29e590f
+	    - 基于 Programming Massively Parallel Processors A Hands-on Approach 4th Edition 的 GPU 课程，老师的讲解很深入有见解，PPT 可以见 https://www.elsevier.com/books-and-journals/book-companion/9780323912310。
+- **开源项目**：
+	- leetgpu
+	- [https://github.com/bytedance/lightseq](https://link.zhihu.com/?target=https%3A//github.com/bytedance/lightseq)
+		- 字节跳动开源的生成模型推理加速引擎，BERT、GPT、VAE 等等全都支持，速度也是目前业界最快的之一。
+	- [https://github.com/NVIDIA/DeepLearningExamples/tree/master/FasterTransformer](https://link.zhihu.com/?target=https%3A//github.com/NVIDIA/DeepLearningExamples/tree/master/FasterTransformer)
+		- 英伟达开源的 Transformer 推理加速引擎。
+	- [https://github.com/Tencent/TurboTransformers](https://link.zhihu.com/?target=https%3A//github.com/Tencent/TurboTransformers)
+		- 腾讯开源的 Transformer 推理加速引擎。
+	- [https://github.com/microsoft/DeepSpeed](https://link.zhihu.com/?target=https%3A//github.com/microsoft/DeepSpeed)
+		- DeepSpeed 微软开源的深度学习分布式训练加速引擎。
+
+# 其他参考
 
 https://shichaoxin.com/tags/
-chen tianqi：DLSYS  https://dlsys.cs.washington.edu/
+
+chen tianqi：DLSYS https://dlsys.cs.washington.edu/
+
 ## Preofessional CUDA® C Programming
+
 - [x] CUDA 编程入门极简教程 https://zhuanlan.zhihu.com/p/34587739
 谭升的博客：[https://face2ai.com/program-blog/#GPU编程（CUDA）](https://link.zhihu.com/?target=https%3A//face2ai.com/program-blog/%23GPU%25E7%25BC%2596%25E7%25A8%258B%25EF%25BC%2588CUDA%25EF%25BC%2589)
 
@@ -18,13 +47,6 @@ https://github.com/mapengfei-nwpu/ProfessionalCUDACProgramming
 
 CUDA C Programming Guide 解读：https://zhuanlan.zhihu.com/p/53773183
 
-leetgpu
-
-- **官方文档**，主要是两个 Guide：
-    - [CUDA Toolkit Documentation](https://docs.nvidia.com/cuda/)：包含编程指南、API 参考等。
-    - [NVIDIA Developer](https://developer.nvidia.com/)：提供教程、示例代码和白皮书。
-    - NVIDIA CUDA C++ Programming Guide [https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html](https://link.zhihu.com/?target=https%3A//docs.nvidia.com/cuda/cuda-c-programming-guide/index.html)：基础编程教程，很多细节没讲，有一定的跳跃性。
-    - CUDA C++ Best Practices Guide  [https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html](https://link.zhihu.com/?target=https%3A//docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html) 侧重点在实践方面，比如如何编程才能最大化利用 GPU 特性提升性能，需要一定基础。
 - **书籍**：
     - 《CUDA C 编程权威指南》Professional CUDA C Programming：全面介绍 CUDA 编程模型与优化技巧。
     - 《GPU 高性能编程 CUDA 实战》：通过案例学习 CUDA 并行编程。《CUDA by Example》（CUDA 编程入门经典）
@@ -32,7 +54,7 @@ leetgpu
 - **在线课程**：
     - Coursera《GPU 计算基础》（NVIDIA 官方课程）。
     - Udemy《CUDA 并行编程实战》：结合项目实践。
-    - https://people.maths.ox.ac.uk/~gilesm/cuda/ ：该课程每天约有3小时的讲座和4小时的实践课。课程目标是，在课程结束时，你将能够编写相对简单的程序，并且有信心、有能力通过学习英伟达在GitHub上提供的CUDA代码示例继续学习。
+    - https://people.maths.ox.ac.uk/~gilesm/cuda/：该课程每天约有 3 小时的讲座和 4 小时的实践课。课程目标是，在课程结束时，你将能够编写相对简单的程序，并且有信心、有能力通过学习英伟达在 GitHub 上提供的 CUDA 代码示例继续学习。
     - https://tschmidt23.github.io/cse599i/
     - Coursera: [GPU Programming for Science and Engineering](https://www.coursera.org/learn/gpu-programming)
     - Udemy: [CUDA C++ High Performance Parallel Programming](https://www.udemy.com/course/cuda-c-programming/)
@@ -56,31 +78,9 @@ HPC 方向主要需要了解 HPC SDK 等较上层的模块，如何使用。涉�
 - [NVML (NVIDIA Management Library)](https://developer.nvidia.com/nvidia-management-library-nvml)：C 语言 API，监控和管理 NVIDIA GPU 设备。API 分为五个模块：初始化和清理、查询、控制、事件处理、错误报告。库文件 `libnvidia-ml.so`，链接参数 `-lnvidia-ml`。
 - [NCCL (NVIDIA Collective Communications Library)](https://developer.nvidia.com/nccl)：C 语言 API，MPI 的替代品。提供多 GPU、多节点通信原语。适用硬件：NVLink、Mellanox Network。
 
-## **开源代码**
-
-给几个典型的 Transformer 系列的加速代码了。
-
-**「地址：」** [https://github.com/bytedance/lightseq](https://link.zhihu.com/?target=https%3A//github.com/bytedance/lightseq)
-
-这是字节跳动开源的生成模型推理加速引擎，BERT、GPT、VAE 等等全都支持，速度也是目前业界最快的之一。
-
-**「地址：」** [https://github.com/NVIDIA/DeepLearningExamples/tree/master/FasterTransformer](https://link.zhihu.com/?target=https%3A//github.com/NVIDIA/DeepLearningExamples/tree/master/FasterTransformer)
-
-这是英伟达开源的 Transformer 推理加速引擎。
-
-**「地址：」** [https://github.com/Tencent/TurboTransformers](https://link.zhihu.com/?target=https%3A//github.com/Tencent/TurboTransformers)
-
-这是腾讯开源的 Transformer 推理加速引擎。
-
-**「地址：」** [https://github.com/microsoft/DeepSpeed](https://link.zhihu.com/?target=https%3A//github.com/microsoft/DeepSpeed)
-
-这是微软开源的深度学习分布式训练加速引擎。
-
-# 核心知识提纲
+# CUDA 核心知识提纲
 
 CUDA 编程的核心知识体系可分为**基础语法**、**并行策略**、**内存优化**、**高级技术**四个递进层次。
-
-以下是 CUDA 的**核心知识体系提纲**，涵盖从基础到高级的完整脉络，帮助你系统掌握 CUDA 编程与优化：
 
 ### **一、CUDA 基础架构**
 

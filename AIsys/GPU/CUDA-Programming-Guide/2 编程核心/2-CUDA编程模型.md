@@ -1,7 +1,10 @@
 ---
 dateCreated: 2025-07-05
-dateModified: 2025-07-26
+dateModified: 2025-08-03
 ---
+
+对应 [https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html](https://link.zhihu.com/?target=https%3A//docs.nvidia.com/cuda/cuda-c-programming-guide/index.html) 第 5 章
+
 # 2. 编程模型
 
 - [Programming Interface](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#programming-interface) 中给出了对 CUDA C++ 的广泛描述。
@@ -224,7 +227,7 @@ dim3 block(5, 3);
 kernel_fun<<< grid, block >>>(prams…);
 ```
 
-![](../assets/cuda.assets/image-20250703144820059.png)
+![](两层线程结构.png)
 
 Kernel 上的两层线程组织结构（2-dim）
 
@@ -474,7 +477,7 @@ CUDA assumes a host (e.g., CPU) and a separate device (e.g., GPU) with distinct 
 
 "Unified Memory" simplifies this by creating a single coherent memory space accessible to all CPUs/GPUs, reducing explicit data management. Serial code runs on the host; parallel kernels run on the device.
 
-# 基础：CUDA 模型总结
+# 基础概念：CUDA 模型总结
 
 CUDA（Compute Unified Device Architecture）的基础架构是支撑 GPU 并行计算的底层硬件与软件抽象的结合，其设计核心是通过硬件层面的并行计算单元和软件层面的编程模型，实现高效的通用计算。以下从**硬件模型**和**编程模型**两方面详细说明：
 
@@ -648,25 +651,25 @@ cudaStreamDestroy(stream2);
 
 - **计算与传输重叠**
     通过 `cudaMemcpyAsync` 和流，可实现：
-
     1. 主机向 GPU 传输数据 A（流 1）
     2. 同时 GPU 执行内核处理数据 B（流 2）
     3. 同时主机接收 GPU 处理完的数据 C（流 3）
+
 - **事件（Event）同步**
 
-    ```cuda
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    
-    cudaEventRecord(start, stream);  // 记录事件
-    kernel<<<grid, block, 0, stream>>>(d_data, d_result);
-    cudaEventRecord(stop, stream);
-    
-    cudaEventSynchronize(stop);  // 等待事件完成
-    float milliseconds = 0;
-    cudaEventElapsedTime(&milliseconds, start, stop);  // 计算耗时
-    ```
+```cuda
+cudaEvent_t start, stop;
+cudaEventCreate(&start);
+cudaEventCreate(&stop);
+
+cudaEventRecord(start, stream);  // 记录事件
+kernel<<<grid, block, 0, stream>>>(d_data, d_result);
+cudaEventRecord(stop, stream);
+
+cudaEventSynchronize(stop);  // 等待事件完成
+float milliseconds = 0;
+cudaEventElapsedTime(&milliseconds, start, stop);  // 计算耗时
+```
 
 ### **四、实战优化建议**
 

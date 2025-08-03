@@ -1,9 +1,9 @@
 ---
 dateCreated: 2025-07-05
-dateModified: 2025-07-25
+dateModified: 2025-08-02
 ---
 
-来源：https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html
+对应 [https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html](https://link.zhihu.com/?target=https%3A//docs.nvidia.com/cuda/cuda-c-programming-guide/index.html) 第 1-4 章
 
 # 1. CUDA 简介
 
@@ -52,13 +52,13 @@ CUDA 并行程序模型主要为克服这一挑战而设计，其对于程序员
 
 GPU 并不是一个独立运行的计算平台，而需要与 CPU 协同工作，可以看成是 CPU 的协处理器，因此当我们在说 GPU 并行计算时，其实是指的基于 CPU+GPU 的异构计算架构。在异构计算架构中，GPU 与 CPU 通过 [PCIe总线](https://zhida.zhihu.com/search?content_id=6024941&content_type=Article&match_order=1&q=PCIe%E6%80%BB%E7%BA%BF&zhida_source=entity) 连接在一起来协同工作，CPU 所在位置称为为主机端（host），而 GPU 所在位置称为设备端（device），如下图所示。CPU 起控制作用，一般称为主机 host，GPU 看作 CPU 协处理器，一般称为设备 device，主机和设备之间内存访问一般通过 PCIe 总线链接。
 
-![](../assets/cuda.assets/image-20250703133704601.png)
+![](CPU+GPU.png)
 
 基于 CPU+GPU 的异构计算. 来源：Preofessional CUDA® C Programming
 
 可以看到 GPU 包括更多的运算核心，其特别适合数据并行的计算密集型任务，如大型矩阵运算，而 CPU 的运算核心较少，但是其可以实现复杂的逻辑运算，因此其适合控制密集型任务。另外，CPU 上的线程是重量级的，上下文切换开销大，但是 GPU 由于存在很多核心，其线程是轻量级的。因此，基于 CPU+GPU 的异构计算平台可以优势互补，CPU 负责处理逻辑复杂的串行程序，而 GPU 重点处理数据密集型的并行计算程序，从而发挥最大功效。
 
-![](../assets/cuda.assets/image-20250703133738512.png)
+![](CPU+GPU异构计算.png)
 
 基于 CPU+GPU 的异构计算应用执行逻辑. 来源：Preofessional CUDA® C Programming
 
@@ -81,8 +81,6 @@ CUDA’s programming model enables automatic scalability: compiled programs run 
 
 # 安装
 
-
-
 ## Driver Toolkit
 
 https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&Distribution=WSL-Ubuntu&target_version=2.0&target_type=runfile_local
@@ -94,8 +92,6 @@ https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&D
 ```
 
 路径下找到一些样例程序。deviceQuery 将输出 CUDA 的相关信息。CUDA 的各种特性：纹理内存 (texture memory)、常量内存 (constant memory)、共享内存 (shared memory)、块 (block)、线程 (thread)、统一寻址 (unified addressing) 都包含在以上信息中。了解这些特性是进行 CUDA C/C++ 编程的基础。
-
-
 
 # GPU 性能指标
 

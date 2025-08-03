@@ -1221,7 +1221,7 @@ LZMA 中使用的概率变量组包括：
 
 与解压缩格式情况类似，除了以下文本中尝试的编码技术外，似乎不存在 [7-zip](https://en.wikipedia.org/wiki/7-zip) 或 [xz](https://en.wikipedia.org/wiki/XZ_Utils) 编码技术的完整自然语言规范。
 
-下面的描述是基于 Lasse Collin 的 XZ for Java 编码器[[12\]](https://www.cnblogs.com/tigerzyj/p/15334782.html#cite_note-12)，它似乎是使用相同算法对原始 7-zip 的几次重写中最易读的： 同样，虽然引用源代码作为参考并不理想，但任何程序员都应该能够通过几个小时的工作来检查下面的声明。
+下面的描述是基于 Lasse Collin 的 XZ for Java 编码器[[../../AIsys/GPU/PMPP/2-Parallel-Patterns/12]](https://www.cnblogs.com/tigerzyj/p/15334782.html#cite_note-12)，它似乎是使用相同算法对原始 7-zip 的几次重写中最易读的： 同样，虽然引用源代码作为参考并不理想，但任何程序员都应该能够通过几个小时的工作来检查下面的声明。
 
 ### range encoder
 
