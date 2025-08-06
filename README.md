@@ -1,6 +1,6 @@
 ---
 dateCreated: 2025-02-27
-dateModified: 2025-07-22
+dateModified: 2025-08-06
 ---
 # 📜 A High Performance Computing Explorer's Atlas | Ongoing Learning Repository
 
@@ -8,6 +8,9 @@ dateModified: 2025-07-22
 
 > *"Standing on the shoulders of giants and occasionally peeking through their notes"*
 > — An evolving handbook for hardware-centric learning
+
+> Recommended to use Git shallow clone:
+> `git clone --depth=1 https://github.com/JR-Wesley/Notes`
 
 ---
 
@@ -29,79 +32,64 @@ This repository archives my (**not well organized**) learning journey through **
 
 ```bash
 .
-├── AIsys
-│   ├── AI 编译器
-│   ├── AIsys
-│   ├── GPU
-│   ├── HPC
-│   ├── ML_notes
-│   ├── job interview
-│   ├── quant
-│   └── typicalModel
-├── CSarch
-│   ├── GPUarch
-│   ├── assets
-│   ├── book - CSAPP
-│   ├── book - SuperScalarProcessor
-│   ├── book - computer architecture
-│   ├── book - cs organization riscv
-│   ├── comp arch paper
-├── CV
-│   ├── GPUhw
-│   ├── assets
-│   ├── coding
-│   └── rayTracing
-├── IC
-│   ├── DSP
-│   ├── EDA
-│   ├── FPGA
-│   ├── IP
-│   ├── STA
-│   ├── asic flow
-│   ├── cgra
-│   ├── jobinterview
-│   ├── program
-│   ├── protocal
-│   ├── sv
-│   └── verification
-├── SoC
-│   ├── RFFPGA
-│   ├── cache
-│   ├── deep_in_riscv_debug-master
-│   ├── embeded
-│   ├── pulp VLSI
-│   └── riscv
-├── algorithm
-│   ├── compression
-│   ├── encryption
-│   ├── hdc
-│   └── 算法
-├── language
-├── medicine
-│   └── assets
-├── music
-│   └── assets
-├── tool
-│   └── assets
-└── ysyx
-    ├── PA 分析
-    ├── assets
-    ├── 程序构造
-    └── 计算机系统基础
+├── AISystem
+│   ├── AICompiler
+│   ├── AISysReview
+│   ├── GPU
+│   ├── HPC
+│   ├── 'job interview'
+│   ├── LLM
+│   ├── ML_notes
+│   ├── Model
+│   ├── quant
+│   ├── 加速器
+│   ├── 编程接口
+│   └── 训练推理框架
+├── Algorithm
+│   ├── BasicAlgorithm
+│   ├── compression
+│   ├── CV
+│   ├── encryption
+│   └── hdc
+├── ComputerScience
+│   ├── CSarch
+│   ├── OS
+│   └── programming
+├── IntegratedCircuit
+│   ├── 'asic flow'
+│   ├── cgra
+│   ├── DSP
+│   ├── EDA
+│   ├── FPGA
+│   ├── IP
+│   ├── jobinterview
+│   ├── program
+│   ├── protocal
+│   ├── SoC
+│   ├── STA
+│   ├── sv
+│   └── verification
+├── SelfDevelopment
+│   ├── career
+│   ├── language
+│   ├── medicine
+│   ├── Reading
+│   └── recreation
+└── ToolKit
+    └── assets
 ```
 
 ## 🛠️ Usage & Navigation
 
 - Highlight
-1. Roadmap of YSYX（一生一芯）
-`Soc/ysys/`
+1. Roadmap of YSYX（一生一芯）: `Soc/ysys/`
 
 - Recommended Exploration Paths
 
-1. **Hardware Accelerator Design**
+1. **AI Full-Stack System Optimization**
+    `ysyx/PA_analysis/ -> SoC/cache/ → AIsys/HPC/`
+2. **Hardware Accelerator Design**
     `IC/CGRA/ → AIsys/GPU/ → algorithm/hdc/`
-2. **Full-Stack System Optimization**
-    `ysyx/PA_analysis/ → SoC/cache/ → AIsys/HPC/`
 3. **Silicon Implementation Flow**
     `IC/asic_flow/ → IC/STA/ → SoC/pulp_VLSI/`
 

@@ -38,10 +38,10 @@ A Programmable Hyper-Dimensional Processor Architecture for Human-Centric IoT
 # 具体应用
 
 A Programmable Hyper-Dimensional Processor Architecture for Human-Centric IoT
-![[benchmark suite.png]]
+![[img/benchmark suite.png]]
 
 Hyper-Dimensional Computing Challenges and Opportunities for AI Applications
-![[summary.png]]
+![[img/summary.png]]
 
 ### 目前有的数据集和实验
 

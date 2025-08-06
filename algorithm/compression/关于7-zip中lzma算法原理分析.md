@@ -652,7 +652,7 @@ px_void PX_HuffmanBuildFixedSymbolTable(px_dword code_table[288], px_dword code_
 
 我们根据一个二进制树来进行前缀编码。两边的非叶子结点依次的标上0,1，而叶子结点则一个一人的标记上字母表中的字符。这样，每个字符的编码就是一个从根结点到叶子结点的0,1的序列了，如：
 
-![bin_tree](bin_tree.png)
+![bin\_tree](bin_tree.png)
 
  解码器可以解码输入的内容：让输入的流从这个树的根结点走到叶子结点，每次的前进都选择与流中下一位相同的一边。
 
@@ -817,7 +817,7 @@ LEN是该块中数据字节的数量，NLEN是LEN的补码
 
 块中的两个字母表的huffman编码在头比特之后，在实际压缩数据前，首先是字面值/长度编码然后是距离编码。每个编码都由一串长度编码序列定义，如3.2.2所示。对于更紧密的情况，长度序列本身使用huffman编码压缩，编码长度的字母表如下：
 
-![code_length](code_length.png)
+![code\_length](code_length.png)
 
 编码长度0代表对应的字面值/长度或距离的符号不会出现在block中，不应该参与之前说的huffman编码构建算法。如果仅使用了一个距离编码，它用一比特编码而非零个；这种情况下有单独一个编码长度一个未使用的码。零比特的一个就码表示没有没有使用距离码（数据就是所有的字面值）
 
@@ -2387,7 +2387,7 @@ static int parseLzmaHeader (const uint8_t *p_src, uint8_t *p_lc, uint8_t *p_lp, 
 }
 ```
 
-![ex_lzma](ex_lzma.png)
+![ex\_lzma](ex_lzma.png)
 
 ![			](ex_dec.png)
 
