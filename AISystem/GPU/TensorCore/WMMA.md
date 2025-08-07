@@ -2,6 +2,9 @@
 dateCreated: 2025-08-06
 dateModified: 2025-08-06
 ---
+
+参考： https://zhuanlan.zhihu.com/p/1906775725278737888
+
 # WMMA 和 MMA 对比
 
 在 CUDA 中，**WMMA**（Warp Matrix Multiply-Accumulate）和 **MMA**（Matrix Multiply-Accumulate）是两种不同的接口/指令，均用于利用 GPU 的 **Tensor Core** 进行高效的矩阵计算。它们的主要区别在于抽象层级、灵活性和适用场景。以下是详细对比：
@@ -177,8 +180,7 @@ fragment<accumulator, 16, 16, 16, float> acc_frag;
 
 #### 数据加载：`load_matrix_sync`
 
-
-将全局内存或共享内存中的矩阵数据加载到 fragment中，自动处理内存布局到片段格式的转换（如对齐、维度适配）。
+将全局内存或共享内存中的矩阵数据加载到 fragment 中，自动处理内存布局到片段格式的转换（如对齐、维度适配）。
 
 **函数原型**：
 
@@ -191,6 +193,7 @@ int ldm,                   // 输入：矩阵的领先维度（内存中每行/�
 nvcuda::wmma::layout_t layout = FragmentType::layout  // 输入：内存布局
 );
 ```
+
  - 支持 `row_major` 或 `col_major` 布局。
  - **示例**：从全局内存加载 A 矩阵到片段：
 
@@ -205,10 +208,7 @@ load_matrix_sync(a_frag, A_global, K, row_major);
 load_matrix_sync(b_frag, B_global, K, col_major);
 ```
 
-
-
 #### 数据存储：`store_matrix_sync`
-
 
 将片段中的计算结果（如累加后的矩阵 D）存储回全局内存或共享内存，转换为常规布局（如行优先）。
 
@@ -238,12 +238,10 @@ store_matrix_sync(C_global, acc_frag, N, row_major);
 
 #### 核心乘加：`mma_sync`
 
-
 WMMA 的核心函数，执行矩阵块乘加操作：C=A×B+C，其中 A、B 是输入片段，C 是累加片段（输入输出两用）。
 
 - **`mma_sync`**：执行 `acc = A * B + acc` 操作。
 - **函数原型**：
-
 
 ```cpp
 template <typename AccumulatorFragment, typename MatrixAFragment, typename MatrixBFragment>
@@ -262,12 +260,12 @@ const AccumulatorFragment& c_initial  // 输入：初始C矩阵（通常与c相�
 nvcuda::wmma::mma_sync(c_frag, a_frag, b_frag, c_frag);  // c_frag = a_frag × b_frag + c_frag
 mma_sync(acc_frag, a_frag, b_frag, acc_frag);
 ```
+
 #### 片段初始化：`fill_fragment`
 
 初始化累加器片段（如填充 0），作为 `mma_sync` 的初始值（避免未定义行为）。
 
 - **函数原型**：
-
 
 ```cpp
 template <typename FragmentType>
@@ -278,6 +276,7 @@ const typename FragmentType::element_type& value  // 输入：初始值
 ```
 
 - **示例**：初始化累加器片段为 0：
+
 ```cpp
 FragC c_frag;
 nvcuda::wmma::fill_fragment(c_frag, 0.0f);  // 累加器初始值为0
@@ -477,17 +476,14 @@ nvcc -arch=sm_70 wmma_kernel.cu
    - 合理设计线程块和网格，避免资源争用。
    - 利用共享内存减少全局内存访问。
 
-
-
-1. **矩阵尺寸限制**：WMMA 仅支持固定尺寸（如 16x16x16、32x8x16 等），具体取决于 GPU 架构：
+2. **矩阵尺寸限制**：WMMA 仅支持固定尺寸（如 16x16x16、32x8x16 等），具体取决于 GPU 架构：
 
 - Volta（Sm70）：仅支持 16x16x16。
 - Ampere（Sm80+）：支持 16x16x16、32x8x16、8x32x16 等。
 larger 矩阵需手动分块（如 1024x1024 矩阵分为 64 个 16x16 子块）。
-2. **线程映射**：一个 warp（32 线程）必须完整处理一个片段，核函数的线程块大小需为 32 的倍数（如 32、64 等）。
-3. **内存对齐**：输入矩阵的内存地址需按数据类型对齐（如 fp16 对齐到 2 字节，bf16 对齐到 2 字节），否则会导致未定义行为。
-4. **数据类型组合**：不同架构支持的类型组合不同（如 Hopper 支持 fp8 输入），需参考 CUDA 文档确认兼容性。
-
+1. **线程映射**：一个 warp（32 线程）必须完整处理一个片段，核函数的线程块大小需为 32 的倍数（如 32、64 等）。
+2. **内存对齐**：输入矩阵的内存地址需按数据类型对齐（如 fp16 对齐到 2 字节，bf16 对齐到 2 字节），否则会导致未定义行为。
+3. **数据类型组合**：不同架构支持的类型组合不同（如 Hopper 支持 fp8 输入），需参考 CUDA 文档确认兼容性。
 
 ---
 
@@ -508,11 +504,9 @@ WMMA API 是直接操作 Tensor Core 的强大工具，适合需要精细控制�
 
 CUDA 的 WMMA API 是基于 Tensor Core 的核心矩阵操作接口，通过 “片段” 抽象封装了矩阵加载、乘加、存储等流程，适合在 warp 级别实现高性能矩阵运算。使用时需遵循 “定义片段→加载数据→执行乘加→存储结果” 的流程，并注意尺寸限制和线程协作。对于大多数场景，推荐优先使用 CUTLASS（基于 WMMA）以降低开发成本；若需定制特殊逻辑，则可直接使用 WMMA。
 
-
 # MMA API
 
 在 CUDA 中，**MMA（Matrix Multiply-Add，矩阵乘加）** 是一类针对矩阵块运算的硬件加速接口，主要通过 GPU 的**Tensor Core**（从 Volta 架构引入的专用矩阵运算单元）实现高效的矩阵乘法与累加操作。这些接口是高性能线性代数计算（如 GEMM、卷积等）的核心基础，直接映射到硬件指令，能显著提升计算密集型任务的效率。
-
 
 ### 核心配套 API 分类与功能
 

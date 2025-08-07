@@ -755,18 +755,15 @@ CUTLASS 提供多种参数用于性能调优，需根据硬件和应用场景调
 
 - **融合操作**：
 
-    cpp
 
-    深色版本
-
-- ```
-    using Epilogue = cutlass::epilogue::thread::LinearCombination<
-        ElementOutput,    // 输出数据类型
-        128 / sizeof(ElementOutput),  // 向量长度
-        ElementAccumulator,  // 累加器类型
-        ElementCompute      // 计算类型（如 float）
-    >;
-    ```
+```cpp
+using Epilogue = cutlass::epilogue::thread::LinearCombination<
+ElementOutput,    // 输出数据类型
+128 / sizeof(ElementOutput),  // 向量长度
+ElementAccumulator,  // 累加器类型
+ElementCompute      // 计算类型（如 float）
+>;
+```
 
 ---
 

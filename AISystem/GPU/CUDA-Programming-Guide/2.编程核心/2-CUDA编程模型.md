@@ -1,6 +1,6 @@
 ---
 dateCreated: 2025-07-05
-dateModified: 2025-08-03
+dateModified: 2025-08-06
 ---
 
 对应 [https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html](https://link.zhihu.com/?target=https%3A//docs.nvidia.com/cuda/cuda-c-programming-guide/index.html) 第 5 章

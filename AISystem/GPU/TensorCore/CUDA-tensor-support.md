@@ -3,7 +3,7 @@ dateCreated: 2025-08-06
 dateModified: 2025-08-06
 ---
 
-参考：https://www.zhihu.com/question/451127498
+参考： https://www.zhihu.com/question/451127498
 
 # Tensor Core 支持
 
