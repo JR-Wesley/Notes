@@ -10,6 +10,10 @@ dateModified: 2025-08-06
 
 [项目简介与总体架构 | NVIDIA/cutlass - KoalaWiki]([https://opendeep.wiki/NVIDIA/cutlass/introduction](https://opendeep.wiki/NVIDIA/cutlass/introduction))
 
+https://zhuanlan.zhihu.com/p/353208013
+
+https://zhuanlan.zhihu.com/p/620185229
+
 # CuTe 解析
 
 CuTe（CUDA Tensor Templates）是 CUTLASS 库的**底层核心组件**，是支撑 CUTLASS 实现高性能线性代数运算的 “骨架”。简单来说，CuTe 为 CUTLASS 提供了**通用的张量（tensor）抽象、索引与布局管理、硬件无关的并行操作原语**，而 CUTLASS 则基于 CuTe 构建了更高层的线性代数运算（如 GEMM、卷积等），并针对特定 GPU 硬件（如 Tensor Core）进行了深度优化。

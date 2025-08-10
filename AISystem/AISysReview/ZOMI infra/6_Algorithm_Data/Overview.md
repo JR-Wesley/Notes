@@ -1,0 +1,29 @@
+---
+dateCreated: 2025-08-09
+dateModified: 2025-08-09
+---
+# 大模型算法与数据概述
+
+[](https://github.com/Infrasys-AI/AIInfra/blob/main/06AlgoData/README.md#大模型算法与数据概述)
+
+大模型作为生成式人工智能技术如 ChatGPT 的核心基础，正迅速改变产业布局，并开始塑造一种全新的用户互动模式，形成舆论引导、社会治理、信息服务等方面的不对称优势。自 2020 年 GPT-3 推出到 2022 年 ChatGPT、2023 年 GPT-4 及 2024 年 Google Gemini 和 Claude 3 的快速迭代，目前大模型方向已沉淀出关键算法与重要技术，如 Transformer 算法及改进架构、Scaling Laws、超大规模预训练、模型对齐、原生多模态、超长文本等。因此在本节将会重点讨论大模型相关的算法和对应的数据工程！
+
+## 课程简介
+
+[](https://github.com/Infrasys-AI/AIInfra/blob/main/06AlgoData/README.md#课程简介)
+
+- [**01. Transformer 架构**](https://github.com/Infrasys-AI/AIInfra/blob/main/06AlgoData/01Basic)：Transformer 作为自注意力机制的 AI 架构，广泛应用于 NLP 任务。摒弃了传统的循环神经网络（RNN）和卷积神经网络（CNN），完全依赖注意力机制来捕捉输入序列中的全局依赖关系。Transformer 由编码器和解码器组成，每层包含多头自注意力机制和前馈神经网络。本节重点打开自注意力机制通过计算序列中每个元素与其他元素的相关性，动态分配权重，从而捕捉长距离依赖。
+
+- [**02. MoE 算法架构**](https://github.com/Infrasys-AI/AIInfra/blob/main/06AlgoData/02MoE)：MoE（Mixture of Experts）架构，即专家混合架构，是一种通过多个专家模块并行处理不同子任务，由门控网络依据输入数据动态分配，决定各专家模块参与度，以实现更高效、灵活处理复杂任务，提升模型表现与泛化能力的技术。
+
+- [**03 大模型新架构**](https://github.com/Infrasys-AI/AIInfra/blob/main/06AlgoData/03NewArch)：大模型新架构如 SSM、MMAMA、Linear Transformer、RKWV 在多个方面进行了创新与优化。它通过更高效的并行计算策略，提升了模型训练和推理的速度；采用新的网络结构设计，增强了模型对复杂数据的理解能力；同时引入了更灵活的参数共享机制，在不降低性能的前提下降低了计算资源消耗。此外，新架构还注重与实际应用场景的结合，能够更好地适应不同任务需求，为 AI 的广泛应用提供了更强大的技术支撑。
+
+- [**04. 向量数据库**](https://github.com/Infrasys-AI/AIInfra/blob/main/06AlgoData/04VectorDB)：向量数据库 Vector DB 是一种专为存储和检索高维向量数据而设计的数据库系统。通过高效的索引技术，如倒排索引、树结构或近似最近邻搜索算法，快速处理大规模向量数据的相似性查询，能够快速找到与目标向量最接近的其他向量。这种数据库广泛应用于机器学习、计算机视觉、自然语言处理等领域，例如在图像检索中快速找到相似图片，在文本处理中快速检索语义相似的文本，极大地提升了数据检索效率和应用性能，为智能应用的高效运行提供了关键支持。
+
+- [**05. 数据工程**](https://github.com/Infrasys-AI/AIInfra/blob/main/06AlgoData/05DataEngine)：大模型的数据工程 Data Engine 是大模型训练和应用的关键环节，主要涉及数据的收集、清洗、存储、优化和管理。其核心目标是为大模型提供高质量、高效率的数据支持，确保模型训练的高效性和推理的准确性。数据工程通过高效的数据接入与预处理机制，优化数据存储和传输效率。同时，通过数据治理减少偏差和偏见，保障模型的公平性和合规性。此外，数据工程还注重优化数据生命周期管理，提升数据利用效率，降低存储和计算成本。
+
+- [**06. ChatGPT 解读**](https://github.com/Infrasys-AI/AIInfra/blob/main/06AlgoData/06ChatGPT)：ChatGPT 是由 OpenAI 开发的一种基于 GPT（生成式预训练变换器）架构的大型语言模型，，通过大规模数据预训练和微调，能够理解和生成连贯、上下文相关的文本，广泛应用于问答、内容创作、代码生成等场景。其的核心优势在于其强大的上下文理解能力和生成多样性，同时支持多轮对话和复杂任务处理。尽管在准确性和逻辑一致性上仍有改进空间，但它代表了当前对话式 AI 的前沿水平，推动了人机交互的智能化发展。
+
+- [**07. DeepSeek**](https://github.com/Infrasys-AI/AIInfra/blob/main/06AlgoData/07DeepSeek)：解读幻方量化最新的技术，幻方以基础模型研究为核心，大语言模型、多模态模型全部开源，旨在推动 AI 技术的普惠和生态发展，而不是单纯以商业盈利为首要目标。从 2023 年建立以来发布了 DeepSeek V1/V2/V3/R1 基础大模型，还有 Janus/Janus-Flow/Janus-Pro 多模态大模型等。
+
+- [**08. 新算法解读**](https://github.com/Infrasys-AI/AIInfra/blob/main/06AlgoData/08NewModel)：解读最新不同创业公司和互联网大厂发布的大模型算法。例如重点解读以 Meta 的 Llama 系列，Llama-3 在架构上进行的多项优化。因为，多模态融合成为重要趋势，语言塔与视觉塔的协同架构在图文理解任务中表现突出，因此也会重点进行算法解读。同时，强化学习被引入模型训练，如 OpenAI 的 o1 模型通过强化学习和思维链技术提升了逻辑推理能力。

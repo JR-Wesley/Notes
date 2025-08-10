@@ -1,6 +1,6 @@
 ---
 dateCreated: 2025-02-27
-dateModified: 2025-08-06
+dateModified: 2025-08-09
 ---
 # 📜 A High Performance Computing Explorer's Atlas | Ongoing Learning Repository
 
@@ -80,6 +80,8 @@ This repository archives my (**not well organized**) learning journey through **
 ```
 
 ## 🛠️ Usage & Navigation
+
+See Also <a href="https://www.zhihu.com/people/turing-48-20/columns">Zhihu columns</a>.
 
 - Highlight
 1. Roadmap of YSYX（一生一芯）: `Soc/ysys/`

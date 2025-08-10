@@ -1,13 +1,19 @@
 ---
 dateCreated: 2025-02-11
-dateModified: 2025-08-06
+dateModified: 2025-08-08
 ---
 
 相关资源推荐：https://zhuanlan.zhihu.com/p/20076957712
 
 AI 相关大学课程严忻恺：https://www.zhihu.com/people/yan-xin-kai-38/posts
 
+https://www.mlsysbook.ai/
+
 个人博客：https://shichaoxin.com/
+
+https://mlsys-learner-resources.github.io/Awesome-MLSys-Blogger/
+
+https://hao-ai-lab.github.io/cse234-w25/
 
 https://goodcucumber.github.io/x40paraguide/x40.html
 
@@ -21,7 +27,6 @@ https://github.com/ForceInjection/AI-fundermentals/tree/main
 - <a href="https://zhuanlan.zhihu.com/p/33876622">一天搞懂</a>
 - <a href=" https://zhuanlan.zhihu.com/p/20076957712?utm_psn=1872615359586111488">知乎总结</a>
 - <a href=" https://chenzomi12.github.io/index.html">ZOMI AI 系统</a>
-<img src=" https://chenzomi12.github.io/_images/03Architecture031.png" alt="系统框图">
 - <a ref=" https://openmlsys.github.io/index.html">open ML sys </a>
 - <a href="https://novel.ict.ac.cn/aics/">中科大智能计算系统课程和书</a>
 
@@ -462,86 +467,147 @@ NVIDIA Ampere Architecture features the Third-generation Tensor Cores:
 ### **1. LLM 模型基础与核心技术**
 
 （算法层：理解模型本质，是系统优化的前提）
+
 ├── LLM 核心原理
+
 │ ├── Transformer 架构细节（注意力机制、FFN、位置编码）
+
 │ ├── 预训练技术（数据清洗、tokenization、训练目标如 MLM）
+
 │ ├── 微调与对齐（LoRA、RLHF、DPO 等参数高效微调方法）
+
 │ └── 多模态扩展（LLaVA、GPT-4V 等跨模态融合机制）
+
 ├── LLM 模型优化算法
+
 │ ├── 量化技术（INT4/8、AWQ、GPTQ 等量化方法与精度恢复）
+
 │ ├── 剪枝与稀疏化（结构化 / 非结构化剪枝、动态稀疏训练）
+
 │ ├── 模型压缩（知识蒸馏、MoE 架构设计与路由优化）
+
 │ └── 长上下文扩展（FlashAttention、RoPE 扩展、窗口注意力等）
 
 ### **2. AI 系统软件栈（LLM Infra 核心）**
 
 （系统层：连接模型与硬件的桥梁，决定部署效率）
+
 ├── 训练框架与调度
+
 │ ├── 分布式训练框架（PyTorch Distributed、DeepSpeed、Megatron-LM）
+
 │ ├── 并行策略（数据并行、模型并行、张量并行、流水线并行）
+
 │ ├── 训练调度（ZeRO 优化、内存高效训练技巧、混合精度训练）
+
 │ └── checkpoint 管理与训练中断恢复
+
 ├── 推理框架与优化
+
 │ ├── 推理引擎（vLLM、TensorRT-LLM、ONNX Runtime、FasterTransformer）
+
 │ ├── 推理优化（KV 缓存管理、批处理调度、连续批处理（Continuous Batching））
+
 │ ├── 动态请求处理（多用户请求调度、优先级机制、推理延迟优化）
+
 │ └── 多模态推理管线（文本 - 图像 / 语音的联合推理流程）
+
 ├── AI 编译器与中间表示
+
 │ ├── 编译器架构（TVM、MLIR、XLA 的 IR 设计与优化流程）
+
 │ ├── 算子优化（LLM 核心算子（如 attention）的自动代码生成与调优）
+
 │ ├── 硬件感知编译（针对 GPU/ASIC 的算子映射与指令选择）
+
 │ └── 动态形状处理（LLM 变长输入场景的编译器适配）
 
 ### **3. AI 硬件加速与架构设计**
 
 （硬件层：系统性能的物理基础，需理解硬件特性以做协同优化）
+
 ├── 通用加速硬件
+
 │ ├── GPU 架构与 LLM 适配（NVIDIA Hopper/Ampere 的 Tensor Core、共享内存优化）
+
 │ ├── 数据中心级 AI 芯片（如 AMD MI300、寒武纪思元、特斯拉 D1 的架构特点）
+
 │ └── 内存与存储架构（HBM 带宽优化、NVLink/PCIe 通信效率、存储墙突破）
+
 ├── 专用 AI 加速芯片（ASIC）
+
 │ ├── LLM 专用加速器设计（如 Google TPU v4、Graphcore IPU 的架构目标）
+
 │ ├── 计算单元设计（ systolic array 、向量单元在 LLM 算子中的效率）
+
 │ └── 片上网络（NoC）与多芯片互联（针对分布式 LLM 的通信优化）
+
 ├── 边缘与低功耗硬件
+
 │ ├── 移动端 LLM 加速（如 Qualcomm NPU、苹果 Neural Engine 的部署限制与优化）
+
 │ └── RISC-V 架构在 AI 加速中的应用（自定义指令集、向量扩展与 LLM 适配）
 
 ### **4. LLM 训练与推理工程实践**
 
 （工程层：将技术落地的核心能力，覆盖全流程工具与问题解决）
+
 ├── 训练工程
+
 │ ├── 超大规模集群搭建（节点配置、网络拓扑、GPU 集群调度）
+
 │ ├── 训练稳定性保障（梯度爆炸 / 消失处理、NaN 检测与恢复、容错机制）
+
 │ └── 训练效率指标（TFLOPS 利用率、内存占用优化、千卡级集群调优）
+
 ├── 推理部署工程
+
 │ ├── 云原生部署（Kubernetes 调度 LLM 服务、容器化优化、资源隔离）
+
 │ ├── 服务化架构（API 设计、负载均衡、弹性扩缩容、多模型服务编排）
+
 │ ├── 边缘部署（模型裁剪适配、低功耗模式、本地推理延迟优化）
+
 │ └── 性能监控与调优（ latency/P99 指标、吞吐量优化、瓶颈定位工具）
 
 ### **5. 跨层协同与系统优化**
 
 （核心竞争力：突破 “硬件 - 软件 - 模型” 的孤岛，实现端到端效率）
+
 ├── 软硬件协同设计
+
 │ ├── 算子与硬件特性匹配（如将 attention 映射到 Tensor Core 的最佳策略）
+
 │ ├── 内存层级优化（寄存器→L1→HBM 的数据 locality 设计）
+
 │ └── 编译时与运行时协同（静态优化 + 动态调度的混合策略）
+
 ├── 模型 - 系统协同优化
+
 │ ├── 模型结构与推理效率适配（如设计更 “硬件友好” 的 LLM 变体）
+
 │ ├── 量化与硬件计算精度协同（如 INT4 计算单元与模型量化的误差补偿）
+
 │ └── 动态请求与资源分配协同（根据输入长度动态调整计算 / 存储资源）
 
 ### **6. 工具链与前沿研究**
 
 （辅助层：提升效率的工具与跟踪技术演进）
+
 ├── 开源工具与生态
+
 │ ├── LLM 开发工具（Hugging Face 生态、vLLM/TensorRT-LLM 实践）
+
 │ ├── 性能分析工具（NVIDIA NSight、TensorBoard Profiler、PerfDog）
+
 │ └── 硬件仿真与验证工具（Gem5、Xcelium 在 AI 加速芯片验证中的应用）
+
 ├── 前沿方向跟踪
+
 │ ├── 下一代 AI 加速架构（存算一体、光计算在 LLM 中的潜力）
+
 │ ├── LLM 能效优化（低比特训练、绿色 AI 计算框架）
+
 │ └── 去中心化 LLM（联邦学习、分布式推理的安全与效率平衡）
 
 ### 体系特点

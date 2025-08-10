@@ -93,11 +93,6 @@ PyTorch 的底层核心完全用 C++ 实现，确保高性能计算。核心组�
 - **示例**：
 
 
-    python
-
-
-
-    深色版本
 
 - ```
     x = torch.tensor([2.0], requires_grad=True)
@@ -212,19 +207,12 @@ PyTorch 和 Torch 是两个密切相关的深度学习框架，但它们的核�
     - 在 PyTorch 中，`torch` 是其主包名，因此代码中 `import torch` 实际上是导入 PyTorch 的模块。
 - **关键区别**：
 
-
     |**特性**|**Torch (Lua)**|**PyTorch (Python)**|
-
     |---|---|---|
-
     |**编程语言**|Lua|Python|
-
     |**计算图机制**|静态图（早期版本）|动态图（即时执行，Eager Execution）|
-
     |**生态和社区**|Lua 生态较小，社区活跃度较低|Python 生态强大，社区活跃度高|
-
     |**易用性**|Lua 语言较冷门，学习曲线陡峭|Python 语言更易学，API 更直观|
-
     |**应用场景**|较少用于现代研究，逐渐被 PyTorch 取代|主流研究和工业应用框架|
 
 ---
