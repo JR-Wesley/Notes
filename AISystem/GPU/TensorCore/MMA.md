@@ -1,9 +1,161 @@
 ---
 dateCreated: 2025-08-06
-dateModified: 2025-08-06
+dateModified: 2025-08-11
 ---
 
-参考： https://zhuanlan.zhihu.com/p/1906775725278737888
+参考：https://zhuanlan.zhihu.com/p/1906775725278737888
+
+# MMA 使用
+
+根据 NVIDIA 官方的最新技术路线图和开发者文档，**MMA（Matrix Multiply-Accumulate）和 WMMA（Warp Matrix Multiply-Accumulate）** 的地位和使用方式已经发生了显著变化，以下是详细分析：
+
+---
+
+### **1. MMA 与 WMMA 的现状**
+#### **(1) MMA（Tensor Core 指令）**
+- **核心地位**：
+  MMA 是 NVIDIA Tensor Core 的底层指令，**仍然是当前及未来 GPU 架构（如 Hopper、Ada）的核心计算单元**。
+  - **Hopper 架构**（H 100）引入了 **FP 8 和 BF 16 支持**，进一步扩展了 MMA 的适用范围。
+  - **Ada 架构**（RTX 40 系列）增强了对 **DLSS 3 和光线追踪** 的支持，MMA 在 AI 推理和图形计算中仍然关键。
+- **推荐使用方式**：
+  - **通过 CUTLASS 3. x 或 cuTENSOR**：NVIDIA 推荐使用更高层的库（如 CUTLASS 3. x）来封装 MMA 操作，而非直接调用底层指令。
+  - **FP 8 支持**：Hopper 的 MMA 指令支持 FP 8，能显著提升大模型训练和推理的吞吐量（如 LLM 和扩散模型）。
+
+#### **(2) WMMA（Warp-Level Matrix Multiply-Accumulate）**
+- **历史背景**：
+  - **Volta/Turing 架构**（如 V 100、T 4）中，WMMA 是 Warp 级的矩阵乘法指令，用于加速小规模矩阵运算（如 GEMV）。
+  - **局限性**：WMMA 的 tile 大小固定（如 16 x 16 x 16），灵活性较低，且不支持最新的 FP 8 数据类型。
+- **当前状态**：
+  - **NVIDIA 已逐步弃用 WMMA**，推荐开发者使用 **CUTLASS 2. x/3. x** 或 **Triton** 来替代。
+  - **新架构（如 Hopper）不再支持 WMMA**，仅保留对旧架构的兼容性。
+
+---
+
+### **2. 是否可以继续使用 MMA 和 WMMA？**
+#### **(1) MMA 可以继续使用，但需升级方式**
+- **推荐做法**：
+  - **使用 CUTLASS 3. x + CuTe**：通过 `cutlass::gemm::threadblock::Mma` 和 `cuTe::Shape` 抽象分块逻辑，自动适配不同架构（如 Hopper 的 FP 8）。
+  - **FP 8 支持**：在 Hopper 上利用 MMA 的 FP 8 指令，显著提升大模型训练效率（如 Mamba-MoE 架构）。
+  - **cuTENSOR**：对于张量计算（如卷积、矩阵分解），使用 cuTENSOR 库可自动优化 MMA 调度。
+- **示例代码（CUTLASS 3. x）**：
+
+  ```cpp
+  using MMA = cutlass::gemm::threadblock::Mma<
+      cutlass::gemm::GemmShape<128, 128, 32>,  // Tile shape
+      cutlass::gemm::GemmShape<32, 32, 8>,     // Warp shape
+      cutlass::gemm::GemmShape<16, 16, 4>,     // Instruction shape (MMA micro-tile)
+      float, float, float,                    // Data types
+      cutlass::arch::OpClassTensorOp,         // Use Tensor Core
+      cutlass::arch::Sm90                       // Target Hopper architecture
+  >;
+  ```
+
+#### **(2) WMMA 不推荐继续使用**
+- **原因**：
+  - **性能瓶颈**：WMMA 的 tile 大小固定（如 8 x 8 x 4），无法适配现代大模型的计算需求（如 128 x 128 x 32 的 tile）。
+  - **缺乏新特性支持**：不支持 FP 8、混合精度等新数据类型。
+  - **兼容性问题**：Hopper 架构已移除对 WMMA 的支持。
+- **替代方案**：
+  - **Triton**：通过 Python 编写内核，自动调度 MMA 指令（如 [Triton 的矩阵乘法](https://triton-lang.org/main/getting-started/tutorials/01-matrix-multiplication.html)）。
+  - **CUTLASS 3. x**：通过模板化配置生成高效的 MMA 内核。
+
+---
+
+### **3. 更高效的方法：NVIDIA 的推荐方向**
+#### **(1) 使用 CUTLASS 3. X + CuTe**
+- **优势**：
+  - **多级分块抽象**：通过 `cuTe::Shape` 和 `cuTe::Stride` 定义灵活的 tile 布局，适配不同硬件（如 Hopper 的 16 x 16 x 4 微块）。
+  - **自动优化**：CUTLASS 3. x 能根据硬件特性（如寄存器数、共享内存大小）自动调整 tile 大小。
+  - **支持 FP 8/BF 16**：Hopper 的 FP 8 MMA 指令可显著降低内存带宽需求（如 LLM 推理中每个 token 的计算量减少 50%）。
+- **示例（FP 8 支持）**：
+
+  ```cpp
+  using ElementA = cutlass::float8_t;
+  using ElementB = cutlass::float8_t;
+  using ElementC = float;
+  using MMA = cutlass::gemm::threadblock::Mma<
+      cutlass::gemm::GemmShape<128, 128, 32>,
+      cutlass::gemm::GemmShape<32, 32, 8>,
+      cutlass::gemm::GemmShape<16, 16, 4>,
+      ElementA, ElementB, ElementC,
+      cutlass::arch::OpClassTensorOp,
+      cutlass::arch::Sm90
+  >;
+  ```
+
+#### **(2) 使用 Triton**
+- **优势**：
+  - **Python 编写，C++ 性能**：通过高级语言定义计算逻辑，Triton 自动编译为高效的 CUDA 代码。
+  - **动态 tile 分块**：支持运行时调整 tile 大小，适应不同输入维度。
+  - **集成 FP 8 支持**：Triton 2.0 已支持 Hopper 的 FP 8 MMA 指令。
+- **示例（Triton 矩阵乘法）**：
+
+  ```python
+  import triton
+  import triton.language as tl
+
+  @triton.jit
+  def matmul_kernel(A, B, C, M, N, K, BLOCK_SIZE: tl.constexpr):
+      pid = tl.program_id(0)
+      num_pid_m = tl.cdiv(M, BLOCK_SIZE)
+      num_pid_n = tl.cdiv(N, BLOCK_SIZE)
+      pid_m = pid // num_pid_n
+      pid_n = pid % num_pid_n
+      rm = pid_m * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
+      rn = pid_n * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
+      rk = tl.arange(0, BLOCK_SIZE)
+      # Load A and B tiles
+      a = tl.load(A + rm[:, None] * K + rk[None, :])
+      b = tl.load(B + rk[:, None] * N + rn[None, :])
+      # Compute C tile
+      c = tl.dot(a, b)
+      # Store C tile
+      tl.store(C + rm[:, None] * N + rn[None, :], c)
+  ```
+
+#### **(3) 使用 cuTENSOR**
+- **适用场景**：
+  - **张量分解**（如 Tucker 分解）、**卷积**、**张量核函数**。
+  - cuTENSOR 会自动选择最优的 MMA 配置（如 tile 大小、数据布局）。
+- **示例**：
+
+  ```cpp
+  #include <cute/tensor.hpp>
+  #include <cute/algorithm/gemm.hpp>
+
+  using namespace cute;
+  using LayoutA = Layout<Shape<_128, _128>, Stride<_128, _1>>;
+  using LayoutB = Layout<Shape<_128, _128>, Stride<_1, _128>>;
+  Tensor A = make_tensor<LayoutA>(...);
+  Tensor B = make_tensor<LayoutB>(...);
+  Tensor C = gemm(A, B);  // 自动调用 MMA 指令
+  ```
+
+---
+
+### **4. 总结：是否继续使用 MMA/WMMA？**
+
+| **技术** | **是否推荐** | **原因** | **替代方案** |
+|----------|--------------|----------|--------------|
+| **MMA**（Tensor Core） | ✅ **推荐** | 现代 GPU 架构的核心指令，支持 FP 8/BF 16。 | 通过 CUTLASS 3. x、Triton 或 cuTENSOR 使用。 |
+| **WMMA**（Warp-Level） | ❌ **不推荐** | 固定 tile 大小，性能落后于 MMA，Hopper 不再支持。 | 使用 CUTLASS 3. x 或 Triton 替代。 |
+
+---
+
+### **5. 最佳实践建议**
+1. **选择目标架构**：
+   - 如果使用 **Hopper（H 100）**，优先使用 **FP 8 MMA** 和 **CUTLASS 3. x**。
+   - 如果使用 **Ampere（A 100）**，可继续使用 **FP 16 MMA**，但避免 WMMA。
+
+2. **避免手动调用底层指令**：
+   - 通过 **CUTLASS 3. x** 或 **Triton** 抽象分块逻辑，自动适配硬件特性（如寄存器数、共享内存大小）。
+
+3. **关注 NVIDIA 官方文档**：
+   - [CUTLASS 3.x 文档](https://docs.nvidia.com/cuda/cutlass/)
+   - [Triton 官方教程](https://triton-lang.org/main/getting-started/tutorials/01-matrix-multiplication.html)
+   - [Hopper 架构白皮书](https://www.nvidia.com/content/dam/en-zz/Solutions/data-center/ai-enterprise/hopper-architecture-whitepaper.pdf)
+
+通过上述方法，您可以充分利用 NVIDIA 最新的硬件特性（如 FP 8 和 Hopper MMA），同时避免因使用过时技术（如 WMMA）导致的性能瓶颈。
 
 # WMMA 和 MMA 对比
 

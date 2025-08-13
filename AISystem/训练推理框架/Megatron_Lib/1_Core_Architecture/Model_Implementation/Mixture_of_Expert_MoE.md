@@ -1,6 +1,6 @@
 ---
 dateCreated: 2025-08-09
-dateModified: 2025-08-09
+dateModified: 2025-08-10
 ---
 
 This document covers the Mixture of Experts (MoE) implementation in Megatron-Core, including the routing mechanisms, token dispatching strategies, expert architectures, and parallelism approaches. MoE enables scaling model capacity while maintaining computational efficiency by routing tokens to a subset of specialized expert networks.
@@ -118,9 +118,9 @@ Sources:[](https://github.com/NVIDIA/Megatron-LM/blob/bbb4c5fb/megatron/core/tra
 
 MoE models require load balancing mechanisms to prevent expert collapse and ensure efficient utilization.
 
-###
+### Auxiliary Loss Functions
 
-![](assets/Mixture_of_Expert_MoE.assets/image-20250809151330712.png)
+![](assets/Mixture_of_Expert_MoE.assets/Auxiliary%20Loss%20Functions.png)
 
 ### Load Balancing Strategies
 
