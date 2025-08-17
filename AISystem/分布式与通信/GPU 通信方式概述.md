@@ -1,7 +1,19 @@
 ---
 dateCreated: 2025-08-07
-dateModified: 2025-08-07
+dateModified: 2025-08-15
 ---
+
+卡间通信
+
+PCIe、NVLink、Infinity Fabric、以太网、InfiniBand、RoCE（RDMA over Converged Ethernet）等
+
+1. p2p enable access intranode
+2. IPC intranode
+3. NCCL gpu device
+4. nvshmem spmd 跨 node/kernel 发起
+
+RDMA/ GDR/
+
 # 通信硬件支持
 
 要理解 `NVLink`、`RDMA`、`InfiniBand` 以及它们与 `MPI`、`NCCL` 在多 GPU 通信中的关联，需要从**硬件互连**和**软件通信库**两个层面梳理：

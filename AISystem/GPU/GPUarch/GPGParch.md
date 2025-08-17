@@ -1,11 +1,590 @@
 ---
 dateCreated: 2025-02-26
-dateModified: 2025-05-05
+dateModified: 2025-08-15
 ---
 
 General-Purpose Graphics Processor Architecture 书翻译 https://zhuanlan.zhihu.com/p/510690054
 
 青花瓷计算平台：https://gpgpuarch.org/
+
+# 问题整理
+
+ch 目录
+
+- [一、Workload描述]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-%E4%B8%80%E3%80%81Workload%E6%8F%8F%E8%BF%B0](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-%E4%B8%80%E3%80%81Workload%E6%8F%8F%E8%BF%B0))
+- [0. Hopper架构]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-0.Hopper%E6%9E%B6%E6%9E%84](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-0.Hopper%E6%9E%B6%E6%9E%84))
+- [1. 输入]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-1.%E8%BE%93%E5%85%A5](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-1.%E8%BE%93%E5%85%A5))
+- [2. Tile]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-2.Tile](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-2.Tile))
+- [3. UT interface]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-3.UTinterface](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-3.UTinterface))
+- [4. cutlass3.0 hierarchy]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-4.cutlass3.0hierarchy](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-4.cutlass3.0hierarchy))
+- [二、kernel schedule]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-%E4%BA%8C%E3%80%81kernelschedule](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-%E4%BA%8C%E3%80%81kernelschedule))
+- [0. TiledMma - 公共]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-0.TiledMma-%E5%85%AC%E5%85%B1](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-0.TiledMma-%E5%85%AC%E5%85%B1))
+- [1. KernelTma]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-1.KernelTma](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-1.KernelTma))
+- [2. KernelTmaWarpSpecialized]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-2.KernelTmaWarpSpecialized](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-2.KernelTmaWarpSpecialized))
+- [3. KernelTmaWarpSpecializedPingpong]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-3.KernelTmaWarpSpecializedPingpong](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-3.KernelTmaWarpSpecializedPingpong))
+- [4.KernelTmaWarpSpecializedCooperative]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-4.KernelTmaWarpSpecializedCooperative](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-4.KernelTmaWarpSpecializedCooperative))
+- [三、TileSchedule]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-%E4%B8%89%E3%80%81TileSchedule](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-%E4%B8%89%E3%80%81TileSchedule))
+- [1. PersistentTileSchedulerSm90]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-1.PersistentTileSchedulerSm90](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-1.PersistentTileSchedulerSm90))
+- [(1) underlying_arguments() – before launch kernel]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-\(1\)underlying_arguments\(\)%E2%80%93beforelaunchkernel](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-%5C\(1%5C\)underlying_arguments%5C\(%5C\)%E2%80%93beforelaunchkernel))
+- [(2) Initial TileSchedule use params.schuedule]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-\(2\)InitialTileScheduleuseparams.schuedule](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-%5C\(2%5C\)InitialTileScheduleuseparams.schuedule))
+- [(3) advance_to_next_work()]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-\(3\)advance_to_next_work\(\)](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-%5C\(3%5C\)advance_to_next_work%5C\(%5C\)))
+- [2. PersistentTileSchedulerSm90StreamK]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-2.PersistentTileSchedulerSm90StreamK](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-2.PersistentTileSchedulerSm90StreamK))
+- [(1) underlying_arguments()]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-\(1\)underlying_arguments\(\)](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-%5C\(1%5C\)underlying_arguments%5C\(%5C\)))
+- [四、Pipeline in KernelSchedule (Kernel)]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-%E5%9B%9B%E3%80%81PipelineinKernelSchedule\(Kernel\)](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-%E5%9B%9B%E3%80%81PipelineinKernelSchedule%5C\(Kernel%5C\)))
+- [1. KernelTmaWarpSpecializedPingpong]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-1.KernelTmaWarpSpecializedPingpong](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-1.KernelTmaWarpSpecializedPingpong))
+- [五、pipeline in Collective]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-%E4%BA%94%E3%80%81pipelineinCollective](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-%E4%BA%94%E3%80%81pipelineinCollective))
+- [1. sm90_mma_tma_gmma_rs_warpspecialized]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass\(2\)Hopper-1.sm90_mma_tma_gmma_rs_warpspecialized](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%282%29+Hopper#Gemmkernelincutlass%5C\(2%5C\)Hopper-1.sm90_mma_tma_gmma_rs_warpspecialized))
+
+## 一、Workload 描述
+
+cutlass/examples/49_hopper_gemm_with_collective_builder/49_collective_builder.cu
+
+### 0. Hopper 架构
+
+**(1) Cluster**
+
+Grid/Cluster/CTA（cooperative thread arrays，软件概念）/Thread
+
+**(2) TMA & mcast**
+
+- TMA 全称 Tensor Memory Access，使用 Tensor 和 coord 实现加载
+- mcast 是指 Cluster 中多个 CTA 部署在多个 SM(一个 GPC 内)，SM 间可以 multicast
+
+**(3) Distribute shared memory**
+
+Cluster 内 CTA 的 Smem 可以通过映射 互相访问
+
+**(4) MBarrier**
+
+位于 Shared memory 中的 Barrier，实现 CTA 或 Cluster 同步
+
+struct {
+
+pending_count = x
+
+pending_transaction = x
+
+phase = x
+
+}
+
+(5) wgmma (warpgroup mma)
+
+A **warpgroup** is a set of **four contiguous warps** such that the warp-rank of the **first warp is a multiple of 4.**
+
+wgmma: m64nNk16
+
+- A: Rmem/Smem
+- B: Smem
+- C: Rmem
+
+### 1. 输入
+
+|2048|2048|2048|1|
+
+### 2. Tile
+
+- TileShape_MNK=<128, 128, 64>
+- ClusterShape_MNK=<2, 1, 1>
+
+ElementA/B/C/D = fp16, accumulator=FP32
+
+### 3. UT Interface
+
+**cutlass3 gemm interface** 展开源码
+
+### 4. Cutlass3.0 Hierarchy
+
+[cutlass/media/docs/gemm_api_3x.md at main · NVIDIA/cutlass · GitHub]([https://github.com/NVIDIA/cutlass/blob/main/media/docs/gemm_api_3x.md](https://github.com/NVIDIA/cutlass/blob/main/media/docs/gemm_api_3x.md))
+
+![]([https://conf01.birentech.com/download/attachments/131588570/image2024-1-19_15-3-59.png?version=1&modificationDate=1705647839000&api=v2](https://conf01.birentech.com/download/attachments/131588570/image2024-1-19_15-3-59.png?version=1&modificationDate=1705647839000&api=v2))
+
+![]([https://conf01.birentech.com/download/attachments/131588570/image2024-1-19_15-8-35.png?version=1&modificationDate=1705648115000&api=v2](https://conf01.birentech.com/download/attachments/131588570/image2024-1-19_15-8-35.png?version=1&modificationDate=1705648115000&api=v2))
+
+各个 level 重要的设计
+
+- Kernel: **kernel schedules**:
+- copyAsync
+- tma
+- tma_ws
+- tma_ws_pinpong
+- tma_ws_cooperative
+- Collective: dispatch for gpu arch
+- e.g. **sm90_mma_tma_gmma_rs_warpspecialize** / sm90_mma_tma_gmma_ss_warpspecialized / …
+- 处理大小一般为 CTA_tile * k_loop: (128, 128, 64) * k_loop
+- TiledMMA/TiledCopy: CTA_Tile mma, 基于 cute 实现
+- Atom: instruction mma, 基于 cute 实现
+
+辅助部分：**TileSchedule**计算各 CTA/Cluster 起始偏移
+
+## 二、kernel Schedule
+
+**cutlass/include/cutlass/gemm/dispatch_policy.hpp**
+
+| |
+
+
+|---|
+
+|`//`<br><br>`// Kernel schedule policies (the base class tags, one for each kernel layer file)`<br><br>`//`<br><br>`struct` `KernelMultistage { };`<br><br>`struct` `KernelCpAsyncWarpSpecialized { };`<br><br>`struct` `KernelCpAsyncWarpSpecializedPingpong { };`<br><br>`struct` `KernelCpAsyncWarpSpecializedCooperative { };`<br><br>`struct` `KernelTma { };`<br><br>`struct` `KernelTmaWarpSpecialized { };`<br><br>`struct` `KernelTmaWarpSpecializedPingpong { };`<br><br>`struct` `KernelTmaWarpSpecializedCooperative { };`|
+
+### 0. TiledMma - 公共
+
+这里体现**hopper wgmma 的指令粒度选择与参数**
+
+- wgmma 执行单位是 warpgroup=128 threads(contiguous)
+
+**sm90_gmma_builder.inl**
+
+| | |
+
+|---|---|
+
+|1<br><br>2<br><br>3<br><br>4<br><br>5<br><br>6<br><br>7<br><br>8|`// GMMA_TMA_WS_RS`<br><br>`…`<br><br> `// 判断是否是warp cooperative，决定TileMMA = Mma_Atom * AtomlayoutMNK`<br><br> `using` `AtomLayoutMNK = cute::conditional_t<cute::is_same_v<KernelScheduleType, KernelTmaWarpSpecializedCooperative>,`<br><br> `Layout<Shape<_2,_1,_1>>, Layout<Shape<_1,_1,_1>>>;`<br><br> `using` `TiledMma = decltype(cute::make_tiled_mma(cute::GMMA::rs_op_selector<`<br><br> `MmaElementA, MmaElementB, ElementAccumulator, TileShape_MNK, GMMA::Major::K, GMMA::Major::K>(), AtomLayoutMNK{}));`|
+
+**cutlass/include/cute/atom/mma_atom.hpp** 展开源码
+
+关于 Thread/Threadblock(CTA)/cluster/grid: PTX 2.2.1 节
+
+- 代码: cutlass/include/cute/arch/cluster_sm90.hpp
+
+### 1. KernelTma
+
+(1) cluster/block 划分
+
+**gemm/kernel/sm90_gemm_tma.hpp**
+
+| | |
+
+|---|---|
+
+|124<br><br>125<br><br>126<br><br>127<br><br>128<br><br>129<br><br>130<br><br>131<br><br>132<br><br>133<br><br>134<br><br>135<br><br>136<br><br>137<br><br>138<br><br>139<br><br>140|`static` `constexpr uint32_t MaxThreadsPerBlock = size(TiledMma{});`<br><br> `static` `constexpr uint32_t MinBlocksPerMultiprocessor = 1;`<br><br> `static` `dim3`<br><br> `get_block_shape() {`<br><br> `return` `dim3(MaxThreadsPerBlock, 1, 1);`<br><br> `}`<br><br> `static` `dim3`<br><br> `get_grid_shape(Params` `const``& params) {`<br><br> `auto cluster_shape = ClusterShape{};`<br><br> `auto tile_shape = TileShape{};`<br><br> `auto problem_shape_MNKL = append<4>(params.problem_shape, Int<1>{});`<br><br> `return` `TileScheduler::get_tiled_cta_shape_mnl(`<br><br> `problem_shape_MNKL, tile_shape, cluster_shape);`<br><br> `}`<br><br>`// E.g (16, 16, 1)`|
+
+(2) mcast in cluster
+
+**gemm/collective/sm90_mma_tma_gmma_ss.hpp** 展开源码
+
+(3) cluster / block 示意图
+
+(4) 特点
+
+- warpgroup 即做 load，也做 mma，采用 multistage 策略。不做 warp specialize
+- cluster 内 block TMA 可以 mcast
+
+### 2. KernelTmaWarpSpecialized
+
+(1) cluster/block 划分
+
+**gemm/kernel/sm90_gemm_tma_warpspecialized.hpp**
+
+| | |
+
+|---|---|
+
+|124<br><br>125<br><br>126<br><br>127<br><br>128<br><br>129<br><br>130<br><br>131<br><br>132<br><br>133<br><br>134<br><br>135<br><br>136<br><br>137<br><br>138<br><br>139<br><br>140<br><br>141<br><br>142<br><br>143<br><br>144<br><br>145<br><br>146<br><br>147<br><br>148<br><br>149<br><br>150<br><br>151|`static` `constexpr uint32_t NumLoadWarpGroups = 1;`<br><br> `static` `constexpr uint32_t NumMmaWarpGroups = 1;`<br><br> `static` `constexpr uint32_t MaxThreadsPerBlock = size(TiledMma{}) + (NumLoadWarpGroups * NumThreadsPerWarpGroup);`<br><br> `static` `constexpr uint32_t MinBlocksPerMultiprocessor = 1;`<br><br> `static` `dim3`<br><br> `get_grid_shape(Params` `const``& params) {`<br><br> `auto cluster_shape = ClusterShape{};`<br><br> `auto tile_shape = TileShape{};`<br><br> `auto problem_shape_MNKL = append<4>(params.problem_shape, Int<1>{});`<br><br> `return` `TileScheduler::get_tiled_cta_shape_mnl(`<br><br> `problem_shape_MNKL, tile_shape, cluster_shape);`<br><br> `}`<br><br> `// E.g (16, 16, 1)`<br><br> `// 此函数处理block_id_in_cluster, block中warpgroup role …etc`<br><br> `void` `operator() (…) {`<br><br> `enum` `class` `WarpGroupRole {`<br><br> `Producer = 0,`<br><br> `Consumer = 1,`<br><br> `};`<br><br> `enum` `class` `ProducerWarpRole {`<br><br> `MainloopEpilogue = 0,`<br><br> `Warp1 = 1,`<br><br> `Warp2 = 2,`<br><br> `Warp3 = 3`<br><br> `};`<br><br>`}`|
+
+(2) mcast in cluster
+
+same with 2.1.
+
+(3) cluster / block 示意图
+
+(4) get grid_shape
+
+| |
+
+
+|---|
+
+||
+
+(4) 特点
+
+- block 内 2 个 warp，1 for TMA load, 1 for mma consumer. That is, warp specialize
+- cluster 内 TMA mcast
+
+### 3. KernelTmaWarpSpecializedPingpong
+
+(1) cluster/block 划分
+
+**/gemm/kernel/sm90_gemm_tma_warpspecialized_pingpong.hpp**
+
+| | |
+
+|---|---|
+
+|108<br><br>109<br><br>110<br><br>111<br><br>112<br><br>113<br><br>114<br><br>115<br><br>116<br><br>117<br><br>118<br><br>119<br><br>120<br><br>121<br><br>122<br><br>123<br><br>124<br><br>125<br><br>126<br><br>127<br><br>128<br><br>129<br><br>130<br><br>131<br><br>132<br><br>133<br><br>134<br><br>135<br><br>136|`static` `constexpr uint32_t NumLoadWarpGroups = 1;`<br><br> `static` `constexpr uint32_t NumMmaWarpGroups = 2;`<br><br> `static` `constexpr uint32_t MaxThreadsPerBlock = size(TiledMma{}) + (NumMmaWarpGroups * NumThreadsPerWarpGroup);`<br><br> `static` `constexpr uint32_t MinBlocksPerMultiprocessor = 1;`<br><br>`static` `dim3`<br><br> `get_grid_shape(Params` `const``& params) {`<br><br> `…`<br><br> `return` `TileScheduler::get_grid_shape(params.problem_shape, TileShape{}, ClusterShape{}, params.hw_info, args);`<br><br>`}`<br><br>`// E.g (2, 66, 1)`<br><br> `/// Register requirement for Load and Math WGs`<br><br> `static` `constexpr uint32_t LoadRegisterRequirement = 40;`<br><br> `static` `constexpr uint32_t MmaRegisterRequirement = 232;`<br><br> `void` `operator() (…) {`<br><br> `enum` `class` `WarpGroupRole {`<br><br> `Producer = 0,`<br><br> `Consumer0 = 1,`<br><br> `Consumer1 = 2`<br><br> `};`<br><br> `enum` `class` `ProducerWarpRole {`<br><br> `Mainloop = 0,`<br><br> `Warp1 = 1,`<br><br> `Epilogue = 2,`<br><br> `Warp3 = 3`<br><br> `};`<br><br>`}`|
+
+(2) mcast in cluster
+
+same with 2.1.
+
+(3) cluster / block 示意图
+
+SM/CTA parallelization
+
+- Output-oriented: Data parallel decomposition (one CTA per output tile)
+- 1 CTA: 1 x LoadWG, 2 x MmaWG
+- WG2 should advance_to_next_work() to ping-pong with WG1 at kernel prologue
+- While loop for WG1/WG2 if work_tile is valid
+- Example: 20 CTA problem_blocks are scheduled in 4 SMs. Every loop iterator, 4 SMs perform 4 CTA (8 problem blocks); and iterator++ for next loop
+
+(4) TileSchedulerType
+
+cutlass/include/cutlass/gemm/kernel/sm90_gemm_tma_warpspecialized_pingpong.hpp:101 "Ping-pong kernel does not currently support stream-K scheduler."
+
+此处以默认**PersistentScheduler**为例 (cutlass/include/cutlass/gemm/kernel/sm90_tile_scheduler.hpp)
+
+Details in 3.1
+
+(5) 特点
+
+### 4.KernelTmaWarpSpecializedCooperative
+
+(1) cluster/block 划分
+
+**gemm/kernel/sm90_gemm_tma_warpspecialized_cooperative.hpp**
+
+| | |
+
+|---|---|
+
+|107<br><br>108<br><br>109<br><br>110<br><br>111<br><br>112<br><br>113<br><br>114<br><br>115<br><br>116<br><br>117<br><br>118<br><br>119<br><br>120<br><br>121<br><br>122<br><br>123<br><br>124<br><br>125<br><br>126<br><br>127<br><br>128<br><br>129<br><br>130<br><br>131<br><br>132<br><br>133<br><br>134<br><br>135<br><br>136|`static` `constexpr uint32_t NumLoadWarpGroups = 1;`<br><br> `static` `constexpr uint32_t NumMmaWarpGroups = size(TiledMma{}) / NumThreadsPerWarpGroup;`<br><br> `static` `constexpr uint32_t MaxThreadsPerBlock = size(TiledMma{}) + (NumLoadWarpGroups * NumThreadsPerWarpGroup);`<br><br> `static` `constexpr uint32_t MinBlocksPerMultiprocessor = 1;`<br><br>`static` `dim3`<br><br> `get_grid_shape(Params` `const``& params) {`<br><br> `…`<br><br> `return` `TileScheduler::get_grid_shape(params.problem_shape, TileShape{}, ClusterShape{}, params.hw_info, args);`<br><br>`}`<br><br>`// E.g (2, 66, 1)`<br><br> `/// Register requirement for Load and Math WGs`<br><br> `static` `constexpr uint32_t LoadRegisterRequirement = 40;`<br><br> `static` `constexpr uint32_t MmaRegisterRequirement = 232;`<br><br> `void` `operator()(…) {`<br><br> `/* In the Cooperative kernel, Consumer0 and Consumer1 collaborate on the same tile */`<br><br> `enum` `class` `WarpGroupRole {`<br><br> `Producer = 0,`<br><br> `Consumer0 = 1,`<br><br> `Consumer1 = 2`<br><br> `};`<br><br> `enum` `class` `ProducerWarpRole {`<br><br> `Mainloop = 0,`<br><br> `Warp1 = 1,`<br><br> `Epilogue = 2,`<br><br> `Warp3 = 3`<br><br> `};`<br><br> `}`|
+
+(2) mcast in cluster
+
+same with 2.1.
+
+(3) cluster / block 示意图
+
+(4) 特点
+
+## 三、TileSchedule
+
+### 1. PersistentTileSchedulerSm90
+
+代码路径: cutlass/include/cutlass/gemm/kernel/sm90_tile_scheduler.hpp
+
+#### (1) underlying_arguments() – Before Launch Kernel
+
+在 examples 中，执行分两步:
+
+- gemm_op.initialize(arguments, workspace.get()) // initial workspace; calculate launch params
+- gemm_op.run();
+
+进一步地，会调用 GemmKernel(device_level, e.g GemmUniversal)::to_underlying_arguments → Mainloop/Epilogue/**TileSchedule** ::to_underlying_arguments(), 会调到此处。
+
+设入参: **problem_shape_mnkl=(2048, 2048, 2048, 1), tile_shape=(128, 128, 64), cluster_shape=(2, 1, 1)**
+
+| |
+
+
+|---|
+
+|`// TileSchedule::to_underlying_arguments`<br><br>`to_underlying_arguments (){`<br><br> `dim3 problem_blocks = get_tiled_cta_shape_mnl(problem_shape_mnkl, tile_shape, cluster_shape);`<br><br> `Params params;`<br><br> `params.initialize(`<br><br> `problem_blocks,`<br><br> `to_gemm_coord(cluster_shape),`<br><br> `hw_info,`<br><br> `arguments.max_swizzle_size,`<br><br> `arguments.raster_order`<br><br> `);`<br><br>`}`|
+
+第一步计算 problem_blocks = (16, 16, 1)
+
+**01_calc_problem_block** 展开源码
+
+第二步，initialize param
+
+**02_initialize_param** 展开源码
+
+**result of initial**
+
+| | |
+
+|---|---|
+
+|1<br><br>2<br><br>3<br><br>4<br><br>5|`blocks_per_problem_ = 256`<br><br>`log_swizzle_size_ = 0`<br><br>`raster_order_ = AlongN`<br><br>`divmod_batch_ = {divisor = 256, multiplier = 0, shift_right = 8, round_up = 0}`<br><br>`…`|
+
+get_grid_shape, 以 example_49::"Ping-pong warp-specialized TMA schedule with automatically-selected stage count" 为例 debug，M2048xN2048xK2048xL1
+
+**get_grid_shape** 展开源码
+
+#### (2) Initial TileSchedule Use params.schuedule
+
+**TileSchedule constructor** 展开源码
+
+#### (3) advance_to_next_work()
+
+Q: Why `work_id+=total_grid_size*count` ? It will be overflow blockIdx(invalid)!
+
+A: If use TileSchedule::get_grid_shape() and problem_blocks > sm_count, cutlass will launch grid_size=sm_count. So total_grid_size may less equal than problem_blocks.
+
+(4) siwzzle
+
+TODO [Heng Liu]([https://conf01.birentech.com/display/~E01031](https://conf01.birentech.com/display/~E01031))
+
+### 2. PersistentTileSchedulerSm90StreamK
+
+PersistentTileScheduleSm90StreamK+ struct WorkTileInfo{};+ struct Argument{};+ Params schedule_params;+ to_underlying_arguments() {};+ can_implement() {};+ get_current_work() {};+ advance_to_next_work();+ get_grid_shape();+ fixup() {};WorkTileInfo+ int32_t M_idx;+ int32_t N_idx;+ int32_t K_idx;+ int32_t L_idx; + uint32_t k_tile_count;+ uint32_t k_tile_remaining;+ bool is_sep_reduction;+ is_valid() {}+ is_reduction_unit() {};+ …Arguments+ int splits;+ int max_swizzle_size;+ RasterOrder raster_order;+ DecompostionMode d_mode;StreamKParams+ FastDivmodU64 xxx;+ uint32_t splits;+ uint32_t sk_tiles_;+ …;
+
+#### (1) underlying_arguments()
+
+**tile_schedule_streamk.hpp** 展开源码
+
+params.initialize() 比较复杂，主要逻辑是: (可以举例画图说明每一步的拆分计算)
+
+[draw.io](http://draw.io/) …
+
+**StreamKParams init summary**
+
+| |
+
+
+|---|
+
+|`void` `initialize() {`<br><br> `// step1: init undelying params: 初始化和basic tile_schedule_params相同参数`<br><br> `underlying_params.initialize();`<br><br> `unit32_t output_tiles = problem_block_m * problem_blocks_n * problem_blocks_l;`<br><br> `// step2: 分各种情况初始化参数`<br><br> `// 2.1 policy == SplitK && splits > 1`<br><br> `if` `((decompostion_mode == SplitK \| decompostion_mode == Heuristic) && (splits > 1)) {` <br><br> `set_params_basic();`<br><br> `return``;`<br><br> `}`<br><br> `// calc params for next step`<br><br> `uint32_t ctas_per_wave = grid.x * grid.y;`<br><br> `uint32_t sk_tiles = get_num_sk_tiles(output_tiles, ctas_per_wave, cluster_size, k_tiles_per_output_tile, decompostion_mode);`<br><br> `uint32_t dp_tiles = output_tiles - sk_tiles;`<br><br> `uint64_t dp_units = dp_tiles;`<br><br> `uint64_t ctas_per_sk_wave = ctas_per_wave;`<br><br> `uint64_t sk_units = get_num_sk_units(cluster_shape, ctas_per_sk_wave, sk_tiles, k_tiles_per_output_tile);`<br><br> `// 2.2 short circuit to data_parallel`<br><br> `if` `(decomposition_mode == DecompositionMode::DataParallel \|`<br><br> `(decomposition_mode == DecompositionMode::Heuristic && sk_tiles == 0) \| sk_units == 0) {`<br><br> `// Short circuit to basic data-parallel decomposition`<br><br> `set_params_basic(`<br><br> `underlying_params,`<br><br> `problem_blocks_m,`<br><br> `problem_blocks_n,`<br><br> `problem_blocks_l,`<br><br> `/* splits = */` `1,`<br><br> `k_tiles_per_output_tile,`<br><br> `reduction_workspace,`<br><br> `reduction_mode`<br><br> `);`<br><br> `return``;`<br><br> `}`<br><br> `// TODO: calc sk_groups`<br><br> `…`<br><br>`}`|
+
+**get_num_sk_tiles/get)num_sk_units()** 展开源码
+
+**streamKparams.hpp 完整版** 展开源码
+
+(2)
+
+(3)
+
+## 四、Pipeline In KernelSchedule (Kernel)
+
+### 1. KernelTmaWarpSpecializedPingpong
+
+以 TMA_WS_Pingpong 为例，分析 producer/consumer 多 warp 的 pipeline 机制
+
+From: cutlass/include/cutlass/gemm/kernel/sm90_gemm_tma_warpspecialized_pingpong.hpp
+
+(1) Barrier 资源
+
+| |
+
+
+|---|
+
+|`// 1 stage ordered sequence between mainloop and epilogue producer load threads`<br><br>`using` `LoadWarpOrderBarrier = cutlass::OrderedSequenceBarrier<1,2>;`<br><br>`// Order Sequence barrier with two stages: one for Mainloop and one for Epilogue`<br><br>`static` `constexpr uint32_t StagesPerMathWarpGroup = 2;`<br><br>`using` `MathWarpGroupOrderBarrier = cutlass::OrderedSequenceBarrier<`<br><br> `StagesPerMathWarpGroup, NumMmaWarpGroups>;`<br><br>`// producer and consumer wg`<br><br>`using` `MainloopPipeline = cutlass::PipelineTmaAsync<`<br><br> `DispatchPolicy::Stages,`<br><br> `typename` `DispatchPolicy::ClusterShape>;`|
+
+(2) MathWarpGroup pipeline
+
+This OrderedSequenceBarrier is used to Order two Math WG's MMA one after the other, helps hide Epilogue
+
+- Order_barrier.arrive(): (group) signal to (group + 1), so mmawarp0.arrive() to start mmawarp1 (2 warpgroup sync)
+- Order_barrier.arrive(): it will pipelineState++, stage goto stage + 1, and epilogue will start. (2 stage for main/epi)
+
+(3) LoadWarpGroup pipeline
+
+From NV
+
+![]([https://conf01.birentech.com/download/attachments/131588570/image2024-1-22_19-16-37.png?version=1&modificationDate=1705922198000&api=v2](https://conf01.birentech.com/download/attachments/131588570/image2024-1-22_19-16-37.png?version=1&modificationDate=1705922198000&api=v2))
+
+## 五、pipeline In Collective
+
+### 1. sm90_mma_tma_gmma_rs_warpspecialized
+
+# Am
+
+- [一、Workload描述]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass\(1\)Ampere-%E4%B8%80%E3%80%81Workload%E6%8F%8F%E8%BF%B0](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass%5C\(1%5C\)Ampere-%E4%B8%80%E3%80%81Workload%E6%8F%8F%E8%BF%B0))
+- [1. 输入]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass\(1\)Ampere-1.%E8%BE%93%E5%85%A5](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass%5C\(1%5C\)Ampere-1.%E8%BE%93%E5%85%A5))
+- [2. TileShape]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass\(1\)Ampere-2.TileShape](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass%5C\(1%5C\)Ampere-2.TileShape))
+- [二、整体框架]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass\(1\)Ampere-%E4%BA%8C%E3%80%81%E6%95%B4%E4%BD%93%E6%A1%86%E6%9E%B6](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass%5C\(1%5C\)Ampere-%E4%BA%8C%E3%80%81%E6%95%B4%E4%BD%93%E6%A1%86%E6%9E%B6))
+- [1. 组织形式 - Hierarchy]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass\(1\)Ampere-1.%E7%BB%84%E7%BB%87%E5%BD%A2%E5%BC%8F-Hierarchy](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass%5C\(1%5C\)Ampere-1.%E7%BB%84%E7%BB%87%E5%BD%A2%E5%BC%8F-Hierarchy))
+- [2. 任务划分]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass\(1\)Ampere-2.%E4%BB%BB%E5%8A%A1%E5%88%92%E5%88%86](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass%5C\(1%5C\)Ampere-2.%E4%BB%BB%E5%8A%A1%E5%88%92%E5%88%86))
+- [三、Threadblock analysis]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass\(1\)Ampere-%E4%B8%89%E3%80%81Threadblockanalysis](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass%5C\(1%5C\)Ampere-%E4%B8%89%E3%80%81Threadblockanalysis))
+- [1. Mmapipelined]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass\(1\)Ampere-1.Mmapipelined](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass%5C\(1%5C\)Ampere-1.Mmapipelined))
+- [2. MmaMultistage]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass\(1\)Ampere-2.MmaMultistage](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass%5C\(1%5C\)Ampere-2.MmaMultistage))
+- [3. TBD]([https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass\(1\)Ampere-3.TBD](https://conf01.birentech.com/display/BIL/Gemm+kernel+in+cutlass--%281%29+Ampere#Gemmkernelincutlass%5C\(1%5C\)Ampere-3.TBD))
+
+## 一、Workload 描述
+
+examples/14_ampere_tf32_tensorop_gemm/ampere_tf32_tensorop_gemm.cu
+
+### 1. 输入
+
+|1024|512|1024|
+
+### 2. TileShape
+
+ThreadBlockTile: <128, 128, 16>
+
+WarpTile: <64, 64, 16>
+
+MmaTile: <16, 8, 8> (TF32)
+
+## 二、整体框架
+
+### 1. 组织形式 - Hierarchy
+
+device/kernel/threadblock/warp
+
+- 在 gemm::device::Gemm<>中，通过 operator() 重载 launch cuda kernel
+
+| | |
+
+|---|---|
+
+|1|`cutlass::Kernel<GemmKernel><<<grid, block, smem_size, stream>>>(params_);`|
+
+- 在 gemm::kernel::Gemm<>中，通过 operator() 重载，进入 kernel 内部。执行 Mma 和 Epilogue 部分
+
+| | |
+
+|---|---|
+
+|1<br><br>2<br><br>3<br><br>4<br><br>5<br><br>6|`{`<br><br> `// main loop`<br><br> `mma(gemm_k_iterations, accumulators, iterator_A, iterator_B, accumulators);`<br><br> `// epilogue`<br><br> `epilogue(output_op, iterator_D, accumulators, iterator_C);`<br><br>`}`|
+
+- 在 gemm::threadblock::**MmaPipelined**<> / **MmaMultistage**<>中，完成 Mma 计算
+
+**mma_pipelined / multistage**
+
+| | |
+
+|---|---|
+
+|1<br><br>2<br><br>3<br><br>4<br><br>5<br><br>6|`// details in chapter 3.1 / 3.2`<br><br>`void` `operator()(args..) {`<br><br> `prologue();`<br><br> `gemm_wait();` `// __syncthreads()`<br><br> `gemm_iters();`<br><br>`}`|
+
+- 在 gemm::warp::MmaTensorOp<>中，完成 warp 级别 mma PTX 生成，计算粒度为:
+- kM = warp_shape::kM
+- kN = warp_shape::kN
+- kK = mma_shape::kK
+
+**gemm/warp/mma_tensor_op.h** 折叠源码
+
+| | |
+
+|---|---|
+
+|1<br><br>2<br><br>3<br><br>4<br><br>5<br><br>6<br><br>7<br><br>8<br><br>9<br><br>10<br><br>11<br><br>12<br><br>13<br><br>14<br><br>15<br><br>16<br><br>17<br><br>18<br><br>19<br><br>20<br><br>21|`void` `operator()(FragmentC &D, TransformedFragmentA` `const` `&A, TransformedFragmentB` `const` `&B, FragmentC &C){`<br><br> `// loop order: {kVerticalVisit, kHorizontal}`<br><br> `for``(``int` `n=``0``; n < MmaIterations::kColumn; ++n) {`<br><br> `for` `(``int` `m=``0``; n < MmaIterations::kRow; ++m) {`<br><br> `int` `m_serpentine = ((n %` `2``) ? (MmaIterations::kRow -` `1` `- m) : m);`<br><br> `if` `(AccumulatorsInRowMajor) {` `// matrix B is reordered`<br><br> `mma(`<br><br> `ptr_D[n + m_serpentine * MmaIterations::kColumn],`<br><br> `ptr_A[m_serpentine],`<br><br> `ptr_B[n],`<br><br> `ptr_D[n + m_serpentine * MmaIterations::kColumn]);`<br><br> `}` `else` `{`<br><br> `mma(`<br><br> `ptr_D[m_serpentine + n * MmaIterations::kRow],`<br><br> `ptr_A[m_serpentine],`<br><br> `ptr_B[n],`<br><br> `ptr_D[m_serpentine + n * MmaIterations::kRow]);`<br><br> `}`<br><br> `}`<br><br> `}`<br><br>`}`|
+
+### 2. 任务划分
+
+(1) grid.size & block.size
+
+**gemm/device/gemm.h**
+
+| | |
+
+|---|---|
+
+|472<br><br>473<br><br>474<br><br>475<br><br>476<br><br>477|`Status run() {`<br><br> `dim3 grid = threadblock_swizzle.get_grid_shape(params_.grid_tiled_shape);`<br><br> `dim3 block(GemmKernel::kThreadCount, 1, 1);`<br><br> `//…`<br><br> `cutlass::Kernel<GemmKernel><<<grid, block, smem_size, stream>>>(params_);`<br><br>`}`|
+
+其中，grid.size 计算如下：即
+
+> grid.x = problem_size.M / ThreadblockTile::kM
+
+>
+
+> grid.y = problem_size.N / ThreadblockTile::kN
+
+>
+
+> grid.z = split_k_slices
+
+**calc_grid_size** 折叠源码
+
+| | |
+
+|---|---|
+
+|1<br><br>2<br><br>3<br><br>4<br><br>5<br><br>6<br><br>7<br><br>8<br><br>9<br><br>10<br><br>11<br><br>12<br><br>13<br><br>14<br><br>15<br><br>16<br><br>17|`// ./gemm/threadblock/threadblock_swizzle.h`<br><br>`static` `GemmCoord get_tiled_shape(`<br><br> `GemmCoord problem_size,`<br><br> `GemmCoord tile_size,`<br><br> `int` `split_k_slices) {`<br><br> `return` `GemmCoord(`<br><br> `(problem_size.m() + tile_size.m() - 1) / tile_size.m(),`<br><br> `(problem_size.n() + tile_size.n() - 1) / tile_size.n(),`<br><br> `split_k_slices);`<br><br> `}`<br><br>`// ./gemm/device/gemm.h`<br><br>`cutlass::gemm::GemmCoord grid_shape = threadblock_swizzle.get_tiled_shape(`<br><br> `args.problem_size,`<br><br> `{ThreadblockShape::kM, ThreadblockShape::kN, ThreadblockShape::kK},`<br><br> `args.split_k_slices);`|
+
+其中，block.size 计算如下, 即
+
+> block.x = Threadblock::kM / warp::kM
+
+>
+
+> block.y = Threadblock::kN / warp::kN
+
+>
+
+> block.z = Threadblock::kK / warp::kK
+
+**calc_block_size** 折叠源码
+
+| | |
+
+|---|---|
+
+|1<br><br>2<br><br>3<br><br>4<br><br>5<br><br>6<br><br>7<br><br>8|`// ./gemm/threadblock/mma_base.h`<br><br>`// using Shape = ThreadblockShape`<br><br>`// using WarpGemm = WarpShape`<br><br>`using` `WarpCount = GemmShape<Shape::kM / WarpGemm::kM,`<br><br> `Shape::kN / WarpGemm::kN,`<br><br> `Shape::kK / WarpGemm::kK>;`<br><br>`// ./gemm/device/gemm.h`<br><br>`static` `int` `const` `kThreadCount = 32 * WarpCount::kCount;`|
+
+因此 example14 --m=1024 --n=512 --k=1024
+
+Grid size=(8, 4, 1)
+
+Block size = (128, 1, 1)
+
+![]([https://conf01.birentech.com/download/attachments/131582083/image2023-12-13_20-1-47.png?version=1&modificationDate=1702468907000&api=v2](https://conf01.birentech.com/download/attachments/131582083/image2023-12-13_20-1-47.png?version=1&modificationDate=1702468907000&api=v2))
+
+(2) ThreadBlock
+
+ThreadBlock 在 C 做切分，处理大小<ThreadBlock::kM, ThreadBlock::kN>, 在 K 维度做多次迭代 (iterator++) (本例无 split-K)
+
+## 三、Threadblock Analysis
+
+### 1. Mmapipelined
+
+when **kStages == 2**, specialize to use MmaPipelined<>
+
+**mma_pipelined()** 折叠源码
+
+| | |
+
+|---|---|
+
+|1<br><br>2<br><br>3<br><br>4<br><br>5<br><br>6<br><br>7<br><br>8<br><br>9<br><br>10<br><br>11<br><br>12<br><br>13<br><br>14<br><br>15<br><br>16<br><br>17<br><br>18<br><br>19<br><br>20<br><br>21<br><br>22<br><br>23<br><br>24<br><br>25<br><br>26<br><br>27<br><br>28<br><br>29<br><br>30<br><br>31<br><br>32<br><br>33<br><br>34<br><br>35<br><br>36<br><br>37<br><br>38<br><br>39<br><br>40<br><br>41<br><br>42<br><br>43<br><br>44|`void` `prologue(&iterator_A, &iterator_B, &gemm_k_iterations){`<br><br> `iterator_A.load(tb_frag_A);`<br><br> `++iterator_A;`<br><br> `iterator_B.load(tb_frag_B);`<br><br> `++iterator_B;`<br><br> `smem_iter_A.store(transform_A_(tb_frag_A));`<br><br> `smem_iter_B.store(transform_B_(tb_frag_B));`<br><br> `advance_smem_write_stage();`<br><br>`}`<br><br>`void` `gemm_iters(gemm_k_iterations, &accum, &iterator_A, &iterator_B) {`<br><br> `// load warp fragment from share memory`<br><br> `warp_tile_iter_A.load(warp_frag_A[``0``]);`<br><br> `++warp_tile_iter_A;`<br><br> `warp_tile_iter_B.load(warp_frag_B[``0``]);`<br><br> `++warp_tile_iter_A;`<br><br> `// main loop`<br><br> `// kWarpGemmIterations = warp::kK / Mma::kK`<br><br> `for``(; gemm_k_iterations>``0``; --gemm_k_iterations) {`<br><br> `for``(warp_mma_k=``0``; warp_mma_k<kWarpGemmIterations; ++warp_mma_k) {`<br><br> `if` `(warp_mma_k == kWarpGemmIterations-``1``) {`<br><br> `smem_iter_A.store(transform_A_(tb_frag_A));`<br><br> `smem_iter_B.store(transform_B_(tb_frag_B));`<br><br> `advance_smem_stages();`<br><br> `}`<br><br> `warp_tile_iter_A.load(warp_frag_A[(warp_mma_k +` `1``) %` `2``]);`<br><br> `warp_tile_iter_B.load(warp_frag_B[(warp_mma_k +` `1``) %` `2``]);`<br><br> `++warp_tile_iter_A; ++warp_tile_iter_B;`<br><br> `if` `(mma_warp_k ==` `0``) {`<br><br> `iterator_A.load(tb_frag_A);`<br><br> `++;`<br><br> `iterator_B.load(tb_frag_B);`<br><br> `++;`<br><br> `}`<br><br> `warp_mma(accum, warp_frag_A[warp_mma_k %` `2``], warp_frag_B[warp_mma_k %` `2``], accum);`<br><br> `}`<br><br> `}`<br><br>`}`<br><br>`void` `operator()(args..) {`<br><br> `prologue();`<br><br> `gemm_wait();` `// __syncthreads()`<br><br> `gemm_iters();`<br><br>`}`|
+
+数据搬运与 warp 任务分配
+
+**set index: iterator_A/B** 折叠源码
+
+| | |
+
+|---|---|
+
+|241<br><br>242<br><br>243<br><br>244<br><br>245<br><br>246<br><br>247<br><br>248<br><br>249<br><br>250<br><br>251<br><br>252<br><br>253<br><br>254<br><br>255|`typename` `Mma::IteratorA iterator_A(`<br><br> `params.params_A,`<br><br> `params.ref_A.data(),`<br><br> `{params.problem_size.m(), problem_size_k},`<br><br> `thread_idx,`<br><br> `tb_offset_A,`<br><br> `params.gather_A_indices);`<br><br>`typename` `Mma::IteratorB iterator_B(`<br><br> `params.params_B,`<br><br> `params.ref_B.data(),`<br><br> `{problem_size_k, params.problem_size.n()},`<br><br> `thread_idx,`<br><br> `tb_offset_B,`<br><br> `params.gather_B_indices);`|
+
+**set warp index: warp_tile_iterator** 折叠源码
+
+| | |
+
+|---|---|
+
+|189<br><br>190<br><br>191<br><br>192<br><br>193<br><br>194<br><br>195<br><br>196<br><br>197|`int` `warp_idx_mn = warp_idx % (Base::WarpCount::kM * Base::WarpCount::kN);`<br><br>`int` `warp_idx_k = warp_idx / (Base::WarpCount::kM * Base::WarpCount::kN);`<br><br>`int` `warp_idx_m = warp_idx_mn % Base::WarpCount::kM;`<br><br>`int` `warp_idx_n = warp_idx_mn / Base::WarpCount::kM;`<br><br>`// Add per-warp offsets in units of warp-level tiles`<br><br>`this``->warp_tile_iterator_A_.add_tile_offset({warp_idx_m, Base::kWarpGemmIterations * warp_idx_k});`<br><br>`this``->warp_tile_iterator_B_.add_tile_offset({Base::kWarpGemmIterations * warp_idx_k, warp_idx_n});`|
+
+根据 MmaPipeline::gemm_iter() 描述，可得流水排布如下图：
+
+![]([https://conf01.birentech.com/download/attachments/131582083/image2023-12-14_15-46-7.png?version=1&modificationDate=1702539968000&api=v2](https://conf01.birentech.com/download/attachments/131582083/image2023-12-14_15-46-7.png?version=1&modificationDate=1702539968000&api=v2))
+
+### 2. MmaMultistage
+
+**变量含义**
+
+首先，tiling shape 如下
+
+- ThreadBlockTile: <128, 128, 16>
+- WarpTile: <64, 64, 16>
+- MmaTile: <16, 8, 8> (TF32)
+
+因此部分变量含义如下：
+
+- **kGemmWarpIterations**: 单次 warp_mma() 计算粒度 (warp::kM, warp::kN, mma::kK), 因此该变量 = warp_shape::kK / mma_shape::kK。
+- **AsyncCopyIterationsPerStageA**：number of cp.async to load one stage A (warp_shape::kM * warp_shape::kN)
+- **kAccessesPerGroupA**: number of cp.async to load on group of stage A (AsyncCopyIterationsPerStageA / kGemmWarpIterations)
+
+**MmaMultistage** 折叠源码
+
+| | |
+
+|---|---|
+
+|1<br><br>2<br><br>3<br><br>4<br><br>5<br><br>6<br><br>7<br><br>8<br><br>9<br><br>10<br><br>11<br><br>12<br><br>13<br><br>14<br><br>15<br><br>16<br><br>17<br><br>18<br><br>19<br><br>20<br><br>21<br><br>22<br><br>23<br><br>24<br><br>25<br><br>26<br><br>27<br><br>28<br><br>29<br><br>30<br><br>31<br><br>32<br><br>33<br><br>34<br><br>35<br><br>36<br><br>37<br><br>38<br><br>39<br><br>40<br><br>41<br><br>42<br><br>43<br><br>44<br><br>45<br><br>46<br><br>47<br><br>48<br><br>49<br><br>50<br><br>51<br><br>52<br><br>53<br><br>54<br><br>55<br><br>56<br><br>57<br><br>58<br><br>59<br><br>60<br><br>61<br><br>62<br><br>63<br><br>64<br><br>65<br><br>66<br><br>67<br><br>68<br><br>69<br><br>70<br><br>71<br><br>72<br><br>73<br><br>74<br><br>75<br><br>76<br><br>77<br><br>78<br><br>79<br><br>80<br><br>81<br><br>82<br><br>83<br><br>84<br><br>85<br><br>86<br><br>87|`void` `prologue(&iterator_A, &iterator_B, &gemm_k_iterations) {`<br><br> `for``(``int` `stage=0; stage < kStages - 1; ++stage, --gemm_k_iterations) {`<br><br> `// Async Copy for operand A`<br><br> `for` `(``int` `j=0, j < AsyncCopyIterationsPerStageA; ++j) {`<br><br> `cp_async_zfill();`<br><br> `}`<br><br> `// Async Copy for operand B`<br><br> `…`<br><br> `advance_smem_write_stage();`<br><br> `cp_async_fence();` `// cp.async.commit_group`<br><br> `}`<br><br> `// optional clear remaing stages of smem.`<br><br>`}`<br><br>`void` `gemm_wait() {`<br><br> `cp_async_wait<Base::kStages - 2>();`<br><br> `__syncthreads();`<br><br>`}`<br><br>`void` `mac_loop_iter(&pipe_state, &accum, &iterator_A, &iterator_B, &gemm_k_iterations) {`<br><br> `for``(``int` `warp_mma_k=0; warp_mma_k < kWarpGemmIterations; ++warp_mma_k) {`<br><br> `warp_tile_iter_A.load(warp_frag_A[(warp_mma_k + 1) % 2]);`<br><br> `++warp_tile_iter_A;`<br><br> `warp_tile_iter_B.load(warp_frag_B[(warp_mma_k + 1) % 2]);`<br><br> `++warp_tile_iter_B;` <br><br> `// transform, except first warp-tile`<br><br> `…`<br><br> `warp_mma(accum, warp_transformed_frag_A[warp_mma_k % 2], warp_transformed_frag_B[warp_mma_k % 2], accum);`<br><br> `// Except last warp-tile, cp.async: kAccessPerGroup`<br><br> `if``(warp_mma_k < kWarpGemmIterations - 1) {`<br><br> `int` `group_start_iteration_A = warp_mma_k * kAccessPerGroupA;`<br><br> `int` `group_start_iteration_B = warp_mma_k * kAccessPerGroupB;`<br><br> `copy_tiles_and_advance(iterator_A, iterator_B, group_start_iteration_A, group_start_iteration_B);`<br><br> `}`<br><br> `// The second-to-last warp-tile also cp.async per group, async.wait_group, and move next global fetch stage`<br><br> `if``(warp_mma_k + 2 == kWarpGemmIteration) {`<br><br> `int` `group_start_iteration_A = (warp_mma_k + 1) * kAccessPerGroupA;`<br><br> `int` `group_start_iteration_B = (warp_mma_k + 1) * kAccessPerGroupB;`<br><br> `copy_tiles_and_advance(iterator_A, iterator_B, group_start_iteration_A, group_start_iteration_B);`<br><br> `cp_async_fence();` `//cp.async.commit_group`<br><br> `gemm_wait();` `// cp.async.wait_group 2; __syncthreads();`<br><br> `advance_smem_write_stage();`<br><br> `advance_smem_read_stage();`<br><br> `// disable global fetch when load_iterations done`<br><br> `--gemm_k_iterations;`<br><br> `iteration_A.clear_mask(gemm_k_iterations==0);`<br><br> `iteration_B.clear_mask(gemm_k_iterations==0);`<br><br> `}`<br><br> `// last warp-tile transform for next iterations's first-tile`<br><br> `…`<br><br> `}`<br><br>`}`<br><br>`void` `gemm_iters(gemm_k_iterations, &accum, &iterator_A, &iterator_B) {`<br><br> `// load warp fragment from share memory`<br><br> `warp_tile_iter_A.load(warp_frag_A[0]);`<br><br> `++warp_tile_iter_A;`<br><br> `warp_tile_iter_B.load(warp_frag_B[0]);`<br><br> `++warp_tile_iter_A;`<br><br> `// Transform, if necessary`<br><br> `warp_mma.transform(`<br><br> `pipe_state.warp_transformed_frag_A_[0],`<br><br> `pipe_state.warp_transformed_frag_B_[0],`<br><br> `pipe_state.warp_loaded_frag_A_[0],`<br><br> `pipe_state.warp_loaded_frag_B_[0]);`<br><br> `// Main loop`<br><br> `for``(; gemm_k_iterations > (-Base::kStages + 1);) {`<br><br> `mac_loop_iter(pipe_state, accum, iterator_A, iterator_B, gemm_k_iterations);`<br><br> `}`<br><br> `// if staged accumulation`<br><br> `…`<br><br> `cp_async_fence();`<br><br> `cp_async_wait<0>();`<br><br> `__syncthreads();`<br><br>`}`<br><br>`void` `operator()(args..) {`<br><br> `prologue();`<br><br> `gemm_wait();` `// cp.async.wait_group 2; __syncthreads()`<br><br> `gemm_iters();`<br><br>`}`|
+
+kStages = 4 时的流水排布图
+
+==================================12.15 分割线==================================
+
+### 3. TBD
+
+Maybe smem bank-conflict-free, output transpose?
 
 # GPGPU
 

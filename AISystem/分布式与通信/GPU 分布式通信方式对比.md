@@ -1,8 +1,9 @@
 ---
 dateCreated: 2025-08-11
-dateModified: 2025-08-11
+dateModified: 2025-08-15
 ---
 # MPI/NCCL/NVSHMEM
+
 MPI、NCCL 和 NVSHMEM 是三种不同的通信库，分别针对不同的应用场景和硬件架构进行优化。以下是它们的核心区别总结：
 
 ---

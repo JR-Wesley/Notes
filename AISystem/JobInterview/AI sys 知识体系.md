@@ -1,6 +1,6 @@
 ---
 dateCreated: 2025-07-08
-dateModified: 2025-08-13
+dateModified: 2025-08-15
 ---
 
 https://zhuanlan.zhihu.com/p/1907536883430437857
@@ -16,6 +16,22 @@ https://zhuanlan.zhihu.com/p/672836957
 https://zhuanlan.zhihu.com/p/678602674
 
 CUDA 手撕：https://zhuanlan.zhihu.com/p/12661298743
+
+[AccumulateMore/CV: ✔（已完结）最全面的 深度学习 笔记【土堆 Pytorch】【李沐 动手学深度学习】【吴恩达 深度学习】](https://github.com/AccumulateMore/CV)
+
+Paper: [[https://arxiv.org/pdf/1909.08053.pdf](https://arxiv.org/pdf/1909.08053.pdf)]([https://arxiv.org/pdf/1909.08053.pdf](https://arxiv.org/pdf/1909.08053.pdf))
+
+GTC viedeo: [GTC 2020: Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism | NVIDIA Developer]([https://developer.nvidia.com/gtc/2020/video/s21496](https://developer.nvidia.com/gtc/2020/video/s21496))
+
+[isocpp/CppCoreGuidelines: The C++ Core Guidelines are a set of tried-and-true guidelines, rules, and best practices about coding in C++]([https://github.com/isocpp/CppCoreGuidelines](https://github.com/isocpp/CppCoreGuidelines))
+
+[C++ Core Guidelines]([https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines))
+
+[https://developer.nvidia.com/deep-learning-performance-training-inference](https://developer.nvidia.com/deep-learning-performance-training-inference)
+
+genesis framewokr
+
+cppcon
 
 # AIsys
 
@@ -213,6 +229,51 @@ https://zhuanlan.zhihu.com/p/608318764?share_code=6kgRiae9U4sA&utm_psn=192640805
 
 https://zhuanlan.zhihu.com/p/608318764?share_code=6kgRiae9U4sA&utm_psn=1926408052585793087
 
+# 技能与掌握水平
+
+满分五星：精通该复制从 算子库 SLO 任职能力和资格矩阵领域，可完全独立负责该领域的工作，并具备指导他人完成工作的能力
+
+3~4 星：非常熟悉该能力，可以与他人合作完成该工作，并且很熟练可以上手，短期内可以达到独立负责的状态
+
+2 星：了解概念，可以说出所以然，且已经动手实践过
+
+1 星：了解概念，可以说出所以然，但没有动手实践过
+
+零分零星：未入门，没有该领域知识，也未参与相关工作
+
+| 大类                                                                                            | 小类                                                                          |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 大类                                                                                            | 小类                                                                          |
+| 硬件架构基础                                                                                        | TCore                                                                       |
+| VCore                                                                                         |                                                                             |
+| Mem(L0/L1/L1.5/L1.75/L2/HBM, Layout, memory arch)                                             |                                                                             |
+| ISA                                                                                           |                                                                             |
+| SPC 关键模块数据流                                                                                    |                                                                             |
+| Key interface outstanding queue                                                               |                                                                             |
+| NOC                                                                                           |                                                                             |
+| 软硬件协同编程，性能优化基础                                                                                | 基于 HW Top(SPEC) 性能评估，分析和建模能力 RR（Rough Roof）|
+| 基于 HW Micro Arch 性能评估，分析和建模能力 UB（Up Bound）|                                                                             |
+| 基于软件栈 +HW 硬件微架构的性能评估分析和建模能力（Realistic Evaluation）|                                                                             |
+| 运用 BR 性能分析工具分析算子端到端瓶颈<br<br>(参考 BR 性能工具大表，包括但不限于：BRTracer/Perfectto, SuProfiler, Dr. Perf, suPTI) |                                                                             |
+| 基于 suLib/codegen 写算子的能力 (包括在 Cmodel, Zebu/PLD 上调试功能 -hang, mismatch, assertion), 汇编/反汇编，指令 cycle 计算  |                                                                             |
+| Jtag 调试 Hang 问题                                                                                  |                                                                             |
+| Wave/PFC analysis 能力                                                                          |                                                                             |
+| 软件异步编程基础                                                                                      | SUPA 异构编程能力（包括 GDB, Print ISA, 编译器优化控制选项，TCI-P，Template，Cwarp, GPGPU coding 等) |
+| BIRENSUPA 工具链使用与调试能力                                                                           |                                                                             |
+| suDNN API 理解和使用                                                                                |                                                                             |
+| C++ 编程和软件工程能力                                                                                  |                                                                             |
+| Host 端分析工具 valgrind/callgrind/Vtune                                                             |                                                                             |
+| NV 等竞对对标与分析能力                                                                                  | Nsight compute/system tool                                                  |
+| Model key data and OP strategy analysis                                                       |                                                                             |
+| nv 算子实现及优化分析能力                                                                                |                                                                             |
+| 框架基础能力                                                                                        | Pytorch 框架基础和端到端性能分析                                                         |
+| Pytorch 模型算子接入                                                                                 |                                                                             |
+| 其他框架基础 PD, TF                                                                                  |                                                                             |
+| 算法与模型                                                                                         | 关键算子实现（算法）|
+| LLM                                                                                           |                                                                             |
+| NLP                                                                                           |                                                                             |
+| CV                                                                                            |                                                                             |
+
 # 知识体系
 
 - 计算机
@@ -362,7 +423,7 @@ https://zhuanlan.zhihu.com/p/608318764?share_code=6kgRiae9U4sA&utm_psn=192640805
 
 构建这一领域的知识体系需遵循 “**理论筑基→工具精通→项目实战→行业落地**” 的路径，重点关注**软硬件协同优化**与**国产替代趋势**。建议通过开源项目积累差异化竞争力，同时保持对技术前沿的敏感度（如全自动芯片设计、量子 AI 融合）。在求职时，突出**量化成果**与**复杂问题解决能力**，选择技术壁垒高、生态合作广泛的企业，在国产替代浪潮中抢占先机。
 
-![](assets/AI%20sys%20笔试面试.assets/image-20250813222055263.png)
+![](assets/AI%20sys%20知识体系.assets/image-20250813222055263.png)
 
 # AI Sys
 
@@ -768,5 +829,3 @@ AI HPC 框架是支撑大模型训练和推理的核心基础设施，其核心�
 针对您的背景，建议优先提升 C++ 高级编程能力和并行计算理论，然后深入学习 AI 芯片架构和高速网络技术，最后掌握分布式训练框架和推理加速框架的实现原理与实践方法。在学习过程中，建议结合开源框架 (Megatron-LM、vLLM) 和国产工具链 (昇腾 Can、MindSpore) 进行实践，通过实际项目积累经验，解决分布式高性能计算中的实际问题。
 
 未来 AI HPC 框架将向更高效、更灵活、更开放的方向发展，推动 AI 技术的广泛应用和创新突破。**掌握 AI HPC 框架的知识体系，不仅有助于理解 AI 技术的底层原理，还能为实际应用和创新提供坚实基础**，帮助您在这一快速发展的领域中保持竞争力。
-
-说明：报告内容由通义 AI 生成，仅供参考。

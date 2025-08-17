@@ -2,9 +2,97 @@
 dateCreated: 2023-01-15
 dateModified: 2025-07-27
 ---
-重载 operator<
+# 友元
 
-如果需要对 vector\<A\>使用 find，需要重载 operator==
+在 C++ 中，友元（Friend）机制是一种特殊的访问权限控制方式，它允许特定的函数或类访问另一个类中的私有（private）和保护（protected）成员，打破了类的封装性限制。
+
+### 友元的主要形式
+
+1. **友元函数**：一个非成员函数被声明为某个类的友元后，可以访问该类的私有和保护成员。
+
+```cpp
+class MyClass {
+private:
+	int privateData;
+public:
+	MyClass(int data) : privateData(data) {}
+	// 声明友元函数
+	friend void printData(MyClass obj);
+};
+
+// 友元函数定义
+void printData(MyClass obj) {
+	// 可以直接访问私有成员
+	cout << "Private data: " << obj.privateData << endl;
+}
+```
+
+2. **友元类**：一个类被声明为另一个类的友元后，该类的所有成员函数都能访问对方类的私有和保护成员。   
+    ```cpp
+    class A {
+    private:
+        int value;
+    public:
+        A(int v) : value(v) {}
+        // 声明B为A的友元类
+        friend class B;
+    };
+    
+    class B {
+    public:
+        void showA(A a) {
+            // B类可以访问A的私有成员
+            cout << "A's value: " << a.value << endl;
+        }
+    };
+```
+
+2. **类的成员函数作为友元**：一个类的特定成员函数被声明为另一个类的友元。
+
+    ```cpp
+    class B; // 前向声明
+    
+    class A {
+    public:
+        void showB(B b);
+    };
+    
+    class B {
+    private:
+        int secret;
+    public:
+        B(int s) : secret(s) {}
+        // 声明A类的showB函数为友元
+        friend void A::showB(B b);
+    };
+    
+    // 实现友元成员函数
+    void A::showB(B b) {
+        cout << "B's secret: " << b.secret << endl;
+    }
+    ```
+
+### 友元的特点
+
+- **单向性**：若 A 是 B 的友元，B 不一定是 A 的友元，除非显式声明
+- **不可传递**：若 A 是 B 的友元，B 是 C 的友元，A 不会自动成为 C 的友元
+- **不可继承**：友元关系不能被派生类继承
+
+### 友元的使用场景
+
+- 操作符重载（如`<<`、`>>`）
+- 实现某些设计模式（如工厂模式）
+- 需要跨类共享数据但又不希望公开接口的场景
+
+### 注意事项
+
+- 友元机制会破坏类的封装性，应谨慎使用
+- 过多使用友元会降低代码的可维护性和安全性
+- 通常建议优先使用公共接口，仅在必要时才使用友元
+
+
+友元机制提供了一种灵活的访问控制方式，但也带来了封装性的削弱，实际开发中应在灵活性和封装性之间寻找平衡。
+
 
 # 输出格式
 
