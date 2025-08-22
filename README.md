@@ -81,6 +81,9 @@ This repository archives my (**not well organized**) learning journey through **
 
 ## 🛠️ Usage & Navigation
 
+I've arraged my notes into 6 parts:
+
+
 See Also <a href="https://www.zhihu.com/people/turing-48-20/columns">Zhihu columns</a>.
 
 - Highlight

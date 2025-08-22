@@ -1151,7 +1151,7 @@ int main() {
 
 1. **查找算法**：`std::find`（线性查找）、`std::binary_search`（二分查找，需先排序）
 
-	```cpp
+```cpp
 
 #include <vector>
 
@@ -1159,15 +1159,15 @@ int main() {
 
 int main() {
 
-	std::vector<int> nums = {1, 3, 5, 7};
+std::vector<int> nums = {1, 3, 5, 7};
 
-	// 线性查找
+// 线性查找
 
-	auto it = std::find(nums.begin(), nums.end(), 3); // 找到3，返回迭代器
+auto it = std::find(nums.begin(), nums.end(), 3); // 找到3，返回迭代器
 
-	// 二分查找（需先排序）
-	bool has_5 = std::binary_search(nums.begin(), nums.end(), 5);  // true
-	return 0;
+// 二分查找（需先排序）
+bool has_5 = std::binary_search(nums.begin(), nums.end(), 5);  // true
+return 0;
 
 }
 
@@ -1300,7 +1300,7 @@ int main() {
 
 ### 其他库
 
-> 多线程与并发见 [多线程](多线程.md)
+> 多线程与并发见 [多线程](ComputerScience/Programming/现代C++/多线程.md)
 > `<memory>` 见内存管理
 
 - **`<utility>`**：包含 `std::pair`（键值对）、`std::swap`（交换）、`std::move`（移动语义）等基础工具。

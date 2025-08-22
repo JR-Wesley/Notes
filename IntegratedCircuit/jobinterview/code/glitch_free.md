@@ -14,7 +14,7 @@ part3是两个时钟源为异步时钟的关系
 
 **有毛刺的时钟切换电路**
 
-![有毛刺的时钟切换电路](../pics/glitch_free_part1.png)
+![有毛刺的时钟切换电路](glitch_free_part1.png)
 
 ```verilog
 // --------------------------
@@ -36,7 +36,7 @@ endmodule
 
 **相关时钟源的毛刺保护**
 
-![相关时钟源的毛刺保护](../pics/glitch_free_part2.png)
+![相关时钟源的毛刺保护](glitch_free_part2.png)
 
 ```verilog
 // --------------------------
@@ -85,7 +85,7 @@ endmodule
 
 **针对无关时钟源的毛刺保护**
 
-![针对无关时钟源的毛刺保护](../pics/glitch_free_part3.png)
+![针对无关时钟源的毛刺保护](glitch_free_part3.png)
 
 ```verilog
 // --------------------------

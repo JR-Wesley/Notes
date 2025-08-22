@@ -1,0 +1,7 @@
+{
+	"nodes":[
+		{"id":"402676ccd1a8bdf9","x":-159,"y":-284,"width":250,"height":60,"type":"text","text":""},
+		{"id":"646f7511051bc205","type":"text","text":"AI Infra","x":-180,"y":-580,"width":250,"height":60,"color":"1"}
+	],
+	"edges":[]
+}

@@ -1,7 +1,3 @@
----
-dateCreated: 2025-08-15
-dateModified: 2025-08-15
----
 # MoE Fused OP
 
 ```python

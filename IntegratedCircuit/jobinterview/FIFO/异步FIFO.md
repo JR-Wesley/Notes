@@ -49,7 +49,7 @@ always @ (gray)
 
 异步 FIFO 原理如下图所示：
 
-![](async_fifo.png)
+![](IntegratedCircuit/JobInterview/FIFO/async_fifo.png)
 
 为了区分空满标志，读写指针增加 1bit。异步 FIFO 空满标志的判定：
 

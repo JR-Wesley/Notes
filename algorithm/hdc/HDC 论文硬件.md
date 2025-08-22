@@ -162,7 +162,7 @@ precision
 
 recall
 
-![[img/summary.png]]
+![[summary.png]]
 
 ## Future Works
 - the sensitivity of the HDC model
@@ -410,7 +410,7 @@ suitable for sensor-based IoT applications
 ML techniques require more memory or operations.
 2. For an arbitrary prediction problem: a hybrid system of HDC and ML/deep-learning algorithm is perhaps superior to either approach separately
 application:
-![[img/benchmark suite.png]]
+![[benchmark suite.png]]
 It is also balanced overall: MNIST, FACE and ISOLET represent the fact that known HDC algorithms alone applied on raw features cannot compare to ML for even simple speech and vision problems.
 
 ## IV. PROFILING ON CONVENTIONAL ARCHITECTURES

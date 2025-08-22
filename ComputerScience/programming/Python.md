@@ -1,6 +1,6 @@
 ---
 dateCreated: 2021-10-26
-dateModified: 2025-08-16
+dateModified: 2025-08-17
 ---
 # 现代 Python 3 整理
 
@@ -83,6 +83,8 @@ dateModified: 2025-08-16
 
 > 重点在于**类与对象的设计**、**三大特性（封装、继承、多态）** 及 Python 特有的实现方式
 
+### 基础
+
    - **类与对象**
 	   - **类（Class）**：是对一类事物的抽象模板，定义了该类对象共有的属性（数据）和方法（行为）。
 	   - **对象（Object）**：是类的具体实例，通过类创建。
@@ -132,6 +134,66 @@ dateModified: 2025-08-16
 		- `__repr__`：定义 `repr(obj)` 时的字符串表示（调试优先，应尽量完整）。
 		- `__add__`：定义 `obj1 + obj2` 时的行为。
 		- `__len__`：定义 `len(obj)` 时的返回值。
+
+### 类方法（@classmethod）
+
+绑定到类本身，第一个参数为 `cls`（代表类），用于操作类属性（所有实例共享的数据）。
+
+```python
+class Person:
+	count = 0  # 类属性：记录实例数量
+	
+	def __init__(self, name):
+		self.name = name
+		Person.count += 1  # 每次实例化，计数+1
+	
+	@classmethod
+	def get_count(cls):  # 类方法：访问类属性
+		return f"Total instances: {cls.count}"
+
+p1 = Person("Alice")
+p2 = Person("Bob")
+print(Person.get_count())  # 调用类方法 → "Total instances: 2"
+```
+
+### 静态方法（@staticmethod）
+
+不绑定到类或实例，无默认参数（既没有 `self` 也没有 `cls`），更像 “类的命名空间中的普通函数”，用于实现与类相关但不依赖类 / 实例属性的功能。
+
+```python
+class MathUtils:
+	@staticmethod
+	def add(a, b):  # 静态方法：与类/实例属性无关
+		return a + b
+
+print(MathUtils.add(2, 3))  # 直接通过类调用 → 5
+```
+
+### 抽象类（abc 模块）
+
+抽象类是**包含抽象方法（未实现的方法）的类**，不能被实例化，只能作为父类被继承，强制子类实现抽象方法（定义接口规范）。
+
+- 实现方式：通过 `abc` 模块的 `ABC` 类和 `abstractmethod` 装饰器。
+
+    ```python
+    from abc import ABC, abstractmethod
+    
+    class Shape(ABC):  # 抽象类（继承 ABC）
+        @abstractmethod  # 抽象方法（必须被子类实现）
+        def area(self):
+            pass  # 不实现具体逻辑
+    
+    class Circle(Shape):
+        def __init__(self, radius):
+            self.radius = radius
+        
+        def area(self):  # 必须实现父类的抽象方法
+            return 3.14 * self.radius **2
+    
+    # s = Shape()  # 报错：抽象类不能实例化
+    c = Circle(2)
+    print(c.area())  # 正确：实现了抽象方法 → 12.56
+    ```
 
 ---
 
@@ -303,7 +365,129 @@ print(list(even_generator))  # [4]（剩余元素）
 ---
 
 ## 函数高级功能
-### 1. 匿名函数（`lambda`）
+
+### 嵌套函数（nested function）
+
+嵌套函数的核心价值是**将函数的作用域限制在外部函数内部**，避免全局命名空间污染，同时可以访问外部函数的变量和参数。这种用法主要用于封装逻辑、实现闭包、简化代码结构等。常见用法包括：
+
+#### 1. 封装内部辅助逻辑
+
+当某个函数只需要在外部函数内部使用（作为 “工具函数”）时，可将其定义为嵌套函数，避免暴露在全局作用域中。
+
+```python
+def calculate_statistics(data):
+    # 嵌套函数：仅用于内部计算平均值
+    def mean():
+        return sum(data) / len(data) if data else 0
+    
+    # 嵌套函数：仅用于内部计算标准差
+    def std_dev():
+        m = mean()
+        return (sum((x - m)**2 for x in data) / len(data))** 0.5 if data else 0
+    
+    # 外部函数使用内部函数
+    return {
+        "mean": mean(),
+        "std_dev": std_dev()
+    }
+
+stats = calculate_statistics([1, 2, 3, 4, 5])
+print(stats)  # 输出: {'mean': 3.0, 'std_dev': 1.4142…}
+```
+
+这里 `mean()` 和 `std_dev()` 仅为 `calculate_statistics()` 服务，无需暴露给外部，增强了代码的封装性。
+
+#### 2. 实现闭包（Closure）
+
+嵌套函数可以 “捕获” 外部函数的变量（即使外部函数执行完毕，这些变量仍能被嵌套函数访问），这种机制称为**闭包**。闭包常用于保留状态或实现 “函数工厂”（动态生成函数）。
+
+- 嵌套函数中，内层函数引用外层函数的变量，且外层函数返回内层函数。
+- 作用：封装私有变量、实现数据持久化（变量不会随外层函数结束而销毁）：
+
+示例：实现一个计数器（保留计数状态）
+
+```python
+def make_counter():
+    count = 0  # 外部函数的变量，被内部函数捕获
+    
+    def counter():
+        nonlocal count  # 声明修改外部函数的变量
+        count += 1
+        return count
+    
+    return counter  # 返回嵌套函数
+
+# 创建两个独立的计数器（状态互不干扰）
+counter1 = make_counter()
+counter2 = make_counter()
+
+print(counter1())  # 1
+print(counter1())  # 2
+print(counter2())  # 1（counter2的状态独立）
+```
+
+这里 `counter()` 捕获了 `make_counter()` 中的 `count` 变量，每次调用 `counter1()` 或 `counter2()` 时，会分别维护自己的 `count` 状态。
+
+#### 3. 实现装饰器（Decorator）
+
+装饰器是 Python 的高级特性，本质是 “接收函数并返回新函数的函数”，其核心实现依赖嵌套函数。装饰器用于给函数动态添加功能（如日志、计时、权限校验等）。
+
+- 用于在不修改原函数代码的前提下，为函数添加额外功能（如日志、权限验证、缓存）。
+- 本质是 “函数嵌套 + 闭包”，语法用 `@装饰器名` 放在函数定义前：
+
+示例：实现一个计时装饰器
+
+```python
+import time
+
+def timer(func):  # 外部函数：接收被装饰的函数
+    def wrapper(*args, **kwargs):  # 嵌套函数：包装原函数
+        start = time.time()
+        result = func(*args, **kwargs)  # 调用原函数
+        end = time.time()
+        print(f"{func.__name__} 耗时: {end - start:.2f}秒")
+        return result  # 返回原函数结果
+    
+    return wrapper  # 返回嵌套函数（包装后的函数）
+
+# 使用装饰器
+@timer
+def slow_function():
+    time.sleep(1)  # 模拟耗时操作
+
+slow_function()  # 输出: slow_function 耗时: 1.00秒
+```  
+
+这里 `wrapper()` 是嵌套函数，它捕获了外部函数 `timer()` 的参数 `func`，并在调用 `func` 前后添加了计时逻辑。
+
+进阶：带参数的装饰器（需额外一层函数嵌套）、类装饰器等。
+
+#### 4. 限制变量作用域
+
+嵌套函数只能在外部函数内部被调用（除非被返回），其内部定义的变量不会污染全局或外部作用域，避免命名冲突。
+
+```python
+def outer():
+    x = 10  # 外部函数的局部变量
+    
+    def inner():
+        y = 20  # 嵌套函数的局部变量
+        print(x + y)  # 可访问外部函数的x
+    
+    inner()  # 内部调用嵌套函数
+
+outer()  # 输出: 30
+# inner()  # 报错：全局作用域中无inner
+# print(y)  # 报错：全局作用域中无y
+```
+
+#### 嵌套函数的作用域规则
+
+1. 嵌套函数可以访问外部函数的变量和参数，但默认不能修改（需用 `nonlocal` 声明）。
+2. 若嵌套函数定义了与外部函数同名的变量，则内部变量会 “遮蔽” 外部变量（局部优先）。
+3. 嵌套函数无法直接访问全局变量，除非用 `global` 声明。
+
+### 匿名函数（`lambda`）
 
 - 用 `lambda` 定义简单的单行函数，语法：`lambda 参数: 表达式`（返回表达式结果）。
 - 适用于临时使用的简单逻辑，常配合 `map`、`sorted` 等函数：
@@ -313,48 +497,7 @@ print(list(even_generator))  # [4]（剩余元素）
     sorted([(2, 3), (1, 4)], key=lambda x: x[1])  # 按元组第二个元素排序
     ```
 
-### 2. 装饰器（Decorators）
-
-- 用于在不修改原函数代码的前提下，为函数添加额外功能（如日志、权限验证、缓存）。
-- 本质是 “函数嵌套 + 闭包”，语法用 `@装饰器名` 放在函数定义前：
-
-    ```python
-    # 定义装饰器（记录函数调用日志）
-    def log(func):
-        def wrapper(*args, **kwargs):
-            print(f"调用函数: {func.__name__}")
-            return func(*args, **kwargs)  # 执行原函数
-        return wrapper
-    
-    @log  # 等价于 add = log(add)
-    def add(a, b):
-        return a + b
-    
-    add(1, 2)  # 输出“调用函数: add”，返回3
-    ```
-
-- 进阶：带参数的装饰器（需额外一层函数嵌套）、类装饰器等。
-
-### 3. 闭包（Closures）
-
-- 嵌套函数中，内层函数引用外层函数的变量，且外层函数返回内层函数。
-- 作用：封装私有变量、实现数据持久化（变量不会随外层函数结束而销毁）：
-
-    ```python
-    def counter():
-        count = 0  # 外层函数变量，被内层函数引用
-        def increment():
-            nonlocal count
-            count += 1
-            return count
-        return increment  # 返回内层函数
-    
-    c = counter()
-    c()  # 1
-    c()  # 2（count被持久化）
-    ```
-
-### 4. 生成器函数（`yield`）
+### 生成器函数（`yield`）
 
 - 用 `yield` 关键字返回值，函数调用时返回生成器（可迭代对象），具有 “惰性计算” 特性（按需生成值，节省内存）。
 - 适用于处理大数据流或无限序列：
@@ -370,7 +513,7 @@ print(list(even_generator))  # [4]（剩余元素）
         print(num)
     ```
 
-### 5. 函数式编程工具
+### 函数式编程工具
 
 - **`map(func, iterable)`**：用 `func` 处理可迭代对象的每个元素，返回迭代器：
 
@@ -394,71 +537,7 @@ reduce(lambda a, b: a + b, [1, 2, 3, 4])  # 10（等价于((1+2)+3)+4）
 
 ---
 
-## 类高级用法
-
-### **类方法（@classmethod）**
-
-绑定到类本身，第一个参数为 `cls`（代表类），用于操作类属性（所有实例共享的数据）。
-
-```python
-class Person:
-	count = 0  # 类属性：记录实例数量
-	
-	def __init__(self, name):
-		self.name = name
-		Person.count += 1  # 每次实例化，计数+1
-	
-	@classmethod
-	def get_count(cls):  # 类方法：访问类属性
-		return f"Total instances: {cls.count}"
-
-p1 = Person("Alice")
-p2 = Person("Bob")
-print(Person.get_count())  # 调用类方法 → "Total instances: 2"
-```
-
-### **静态方法（@staticmethod）**
-
-不绑定到类或实例，无默认参数（既没有 `self` 也没有 `cls`），更像 “类的命名空间中的普通函数”，用于实现与类相关但不依赖类 / 实例属性的功能。
-
-```python
-class MathUtils:
-	@staticmethod
-	def add(a, b):  # 静态方法：与类/实例属性无关
-		return a + b
-
-print(MathUtils.add(2, 3))  # 直接通过类调用 → 5
-```
-
-### 抽象类（abc 模块）
-
-抽象类是**包含抽象方法（未实现的方法）的类**，不能被实例化，只能作为父类被继承，强制子类实现抽象方法（定义接口规范）。
-
-- 实现方式：通过 `abc` 模块的 `ABC` 类和 `abstractmethod` 装饰器。
-
-    ```python
-    from abc import ABC, abstractmethod
-    
-    class Shape(ABC):  # 抽象类（继承 ABC）
-        @abstractmethod  # 抽象方法（必须被子类实现）
-        def area(self):
-            pass  # 不实现具体逻辑
-    
-    class Circle(Shape):
-        def __init__(self, radius):
-            self.radius = radius
-        
-        def area(self):  # 必须实现父类的抽象方法
-            return 3.14 * self.radius **2
-    
-    # s = Shape()  # 报错：抽象类不能实例化
-    c = Circle(2)
-    print(c.area())  # 正确：实现了抽象方法 → 12.56
-    ```
-
----
-
-## 优化与加速
+## 并发编程
 
 > 这里不包括并行计算框架或张量编程框架，使用 python 本身调用线程或进程。
 
@@ -562,6 +641,286 @@ print(*nums)  # 输出: 1 2 3
 
 ## 常用包
 
+### 1. 系统与文件操作
+
+#### `os`
+
+用于与操作系统交互，处理文件 / 目录、环境变量等。
+
+```python
+import os
+
+# 获取当前目录
+print(os.getcwd())  
+# 列出目录下所有文件
+print(os.listdir("."))  
+# 创建目录
+os.makedirs("new_dir", exist_ok=True)  
+# 删除文件
+os.remove("file.txt")  # 需确保文件存在
+```
+
+#### `sys`
+
+用于访问 Python 解释器的底层信息和交互，如命令行参数、退出程序等。
+
+```python
+import sys
+
+# 获取命令行参数（第一个元素是脚本名）
+print(sys.argv)  # 如运行 python script.py a b → 输出 ['script.py', 'a', 'b']
+# 退出程序
+sys.exit(0)  # 0表示正常退出，非0表示异常
+```
+
+#### `pathlib`（Python 3.4+）
+
+更直观的路径处理工具，比 `os.path` 更面向对象。
+
+```python
+from pathlib import Path
+
+file = Path("data/report.txt")
+# 检查文件是否存在
+print(file.exists())  
+# 创建父目录（如果不存在）
+file.parent.mkdir(parents=True, exist_ok=True)  
+# 读取文件内容
+if file.is_file():
+    print(file.read_text())
+```
+
+### 2. 数据结构与工具
+
+#### `collections`
+
+提供扩展数据结构，弥补内置类型的不足。
+
+- `defaultdict`：自动初始化缺失键的字典
+- `deque`：高效的双端队列（适合栈 / 队列）
+- `Counter`：计数工具
+
+```python
+from collections import defaultdict, deque, Counter
+
+# defaultdict：避免键不存在的KeyError
+dd = defaultdict(list)
+dd["a"].append(1)  # 直接使用，无需先初始化list
+
+# deque：高效append/pop（两端O(1)）
+dq = deque([1,2,3])
+dq.appendleft(0)  # 左侧添加 → deque([0,1,2,3])
+
+# Counter：统计元素出现次数
+cnt = Counter("abracadabra")
+print(cnt.most_common(2))  # 输出出现次数前2的元素 → [('a', 5), ('b', 2)]
+```
+
+#### `itertools`
+
+提供高效的迭代器工具，用于循环和组合数据。
+
+```python
+import itertools
+
+# 生成1-3的无限迭代器（需手动停止）
+for i in itertools.islice(itertools.count(1), 3):
+    print(i)  # 输出 1,2,3
+
+# 组合两个列表的元素（笛卡尔积）
+for a, b in itertools.product([1,2], ["x","y"]):
+    print(a, b)  # 输出 (1,x), (1,y), (2,x), (2,y)
+```
+
+#### `functools`
+
+提供高阶函数工具，增强函数式编程能力。
+
+- `lru_cache`：缓存函数结果（优化重复计算）
+- `partial`：固定函数部分参数
+
+```python
+from functools import lru_cache, partial
+
+# lru_cache：缓存计算结果（适合递归/重复调用）
+@lru_cache(maxsize=None)
+def fib(n):
+    return n if n < 2 else fib(n-1) + fib(n-2)
+
+print(fib(100))  # 快速计算，无需重复递归
+
+# partial：固定部分参数（如固定加法的第一个参数为2）
+add2 = partial(lambda x, y: x + y, 2)
+print(add2(3))  # 输出 5
+```
+
+### 3. 文本与正则
+
+#### `re`
+
+正则表达式工具，用于文本匹配、提取、替换。
+
+```python
+import re
+
+# 提取所有邮箱
+text = "联系我们：a@example.com 或 b@test.org"
+emails = re.findall(r"\w+@\w+\.\w+", text)
+print(emails)  # 输出 ['a@example.com', 'b@test.org']
+
+# 替换敏感信息（用*掩盖手机号中间4位）
+phone = "13812345678"
+masked = re.sub(r"(\d{3})\d{4}(\d{4})", r"\1****\2", phone)
+print(masked)  # 输出 138****5678
+```
+
+#### `string`
+
+提供字符串常量和工具（如大小写转换、模板）。
+
+```python
+import string
+
+# 字符串常量
+print(string.ascii_letters)  # 所有大小写字母 → 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+print(string.digits)  # 数字 → '0123456789'
+
+# 模板字符串（比f-string更适合动态文本）
+tpl = string.Template("Hello, $name! Your code is $code.")
+print(tpl.substitute(name="Alice", code=123))  # 输出 "Hello, Alice! Your code is 123."
+```
+
+### 4. 日期与时间
+
+#### `datetime`
+
+处理日期和时间的核心模块，比 `time` 更易用。
+
+```python
+from datetime import datetime, timedelta
+
+# 获取当前时间
+now = datetime.now()
+print(now.strftime("%Y-%m-%d %H:%M:%S"))  # 格式化输出 → 2023-10-01 15:30:45
+
+# 计算3天后的日期
+future = now + timedelta(days=3)
+print(future.date())  # 输出 2023-10-04
+```
+
+### 5. 数据格式处理
+
+#### `json`
+
+处理 JSON 数据（序列化 / 反序列化）。
+
+```python
+import json
+
+# 字典转JSON字符串
+data = {"name": "Bob", "age": 30}
+json_str = json.dumps(data, indent=2)  # indent美化格式
+print(json_str)
+
+# JSON字符串转字典
+data2 = json.loads(json_str)
+print(data2["name"])  # 输出 "Bob"
+```
+
+#### `csv`
+
+读写 CSV 文件（表格数据）。
+
+```python
+import csv
+
+# 写入CSV
+with open("data.csv", "w", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(["name", "age"])  # 表头
+    writer.writerow(["Alice", 25])
+
+# 读取CSV
+with open("data.csv", "r") as f:
+    reader = csv.reader(f)
+    for row in reader:
+        print(row)  # 输出 ['name', 'age'] 和 ['Alice', '25']
+```
+
+### 6. 网络与通信
+
+#### `socket`
+
+底层网络编程接口，用于实现 TCP/UDP 通信。
+
+```python
+import socket
+
+# 创建TCP服务器（简单示例）
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.bind(("localhost", 8080))  # 绑定地址和端口
+    s.listen()
+    conn, addr = s.accept()  # 等待客户端连接
+    with conn:
+        print(f"连接来自 {addr}")
+        data = conn.recv(1024)  # 接收数据
+        conn.sendall(b"收到数据：" + data)  # 回复
+```
+
+#### `http.client`
+
+发送 HTTP 请求（基础工具，复杂场景可用第三方库 `requests`）。
+
+```python
+import http.client
+
+conn = http.client.HTTPSConnection("www.baidu.com")
+conn.request("GET", "/")  # 发送GET请求
+response = conn.getresponse()
+print(response.status)  # 输出状态码（如200）
+print(response.read().decode("utf-8"))  # 读取响应内容
+```
+
+### 7. 调试与测试
+
+#### `pdb`
+
+Python 内置调试器，支持断点、单步执行等。
+
+```python
+import pdb
+
+def add(a, b):
+    pdb.set_trace()  # 在此处设置断点
+    return a + b
+
+add(1, 2)  # 运行后进入调试模式，可输入命令（如n下一步，p a查看变量）
+```
+
+#### `unittest`
+
+单元测试框架，用于自动化测试。
+
+```python
+import unittest
+
+class TestMath(unittest.TestCase):
+    def test_add(self):
+        self.assertEqual(1 + 2, 3)  # 断言1+2=3
+
+if __name__ == "__main__":
+    unittest.main()  # 运行测试
+```
+
+### 8. 其他常用包
+
+- `math`：数学运算（如 `math.pi`、`math.sqrt()`）
+- `random`：生成随机数（`random.randint(1,10)` 生成 1-10 随机整数）
+- `logging`：日志记录（比 `print` 更灵活，支持分级、输出到文件）
+- `argparse`：解析命令行参数（快速构建命令行工具）
+
+### 其他包
+
    - **NumPy**
      - 多维数组操作，高效数学计算。
    - **Pandas**
@@ -577,9 +936,6 @@ print(*nums)  # 输出: 1 2 3
      - 多线程/多进程任务管理。
    - **Cython**
      - 将 Python 代码编译为 C 扩展，提升性能。
- - Re 正则表达式
-	 - https://www.runoob.com/python/python-reg-expressions.html
- - Collections 模块之 Counter ()
 
 ---
 
@@ -593,6 +949,215 @@ print(*nums)  # 输出: 1 2 3
  - **代码组织**
 	- **模块化设计**：将功能拆分为独立模块/包。
 	- **虚拟环境**：使用 `venv` 或 `pipenv` 管理依赖。
+
+## 实现数据结构
+
+### 1. 数组（Array）
+
+Python 的内置 `list` 本质上是动态数组，支持随机访问、动态扩容，可直接作为数组使用：
+
+```python
+# 数组的基本操作
+arr = [1, 2, 3, 4, 5]
+print(arr[0])  # 随机访问，O(1)
+arr.append(6)  # 尾部插入，O(1)
+arr.insert(2, 10)  # 中间插入，O(n)
+arr.pop(3)  # 删除元素，O(n)
+```
+
+### 2. 栈（Stack）
+
+栈遵循 " 后进先出（LIFO）"，可用 `list` 实现（append 添加到尾部，pop 从尾部删除）：
+
+```python
+class Stack:
+    def __init__(self):
+        self.stack = []
+    
+    def push(self, item):  # 入栈
+        self.stack.append(item)
+    
+    def pop(self):  # 出栈
+        if not self.is_empty():
+            return self.stack.pop()
+        raise IndexError("栈为空")
+    
+    def peek(self):  # 查看栈顶
+        if not self.is_empty():
+            return self.stack[-1]
+        raise IndexError("栈为空")
+    
+    def is_empty(self):
+        return len(self.stack) == 0
+```
+
+### 3. 队列（Queue）
+
+队列遵循 " 先进先出（FIFO）"，用 `collections.deque` 效率更高（避免 `list.pop(0)` 的 O (n) 开销）：
+
+```python
+from collections import deque
+
+class Queue:
+    def __init__(self):
+        self.queue = deque()
+    
+    def enqueue(self, item):  # 入队
+        self.queue.append(item)
+    
+    def dequeue(self):  # 出队
+        if not self.is_empty():
+            return self.queue.popleft()
+        raise IndexError("队列为空")
+    
+    def front(self):  # 查看队首
+        if not self.is_empty():
+            return self.queue[0]
+        raise IndexError("队列为空")
+    
+    def is_empty(self):
+        return len(self.queue) == 0
+```
+
+### 4. 链表（Linked List）
+
+Python 无内置链表，需自定义节点类实现，常见有单链表、双链表：
+
+```python
+# 单链表节点
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+# 单链表实现
+class LinkedList:
+    def __init__(self):
+        self.head = None  # 头节点
+    
+    def append(self, val):  # 尾部插入
+        new_node = ListNode(val)
+        if not self.head:
+            self.head = new_node
+            return
+        curr = self.head
+        while curr.next:
+            curr = curr.next
+        curr.next = new_node
+    
+    def delete(self, val):  # 删除节点
+        if not self.head:
+            return
+        if self.head.val == val:
+            self.head = self.head.next
+            return
+        curr = self.head
+        while curr.next and curr.next.val != val:
+            curr = curr.next
+        if curr.next:
+            curr.next = curr.next.next
+```
+
+### 5. 二叉树（Binary Tree）
+
+通过节点类实现，每个节点包含左子树、右子树和值：
+
+```python
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left  # 左子节点
+        self.right = right  # 右子节点
+
+# 示例：构建简单二叉树
+root = TreeNode(1)
+root.left = TreeNode(2)
+root.right = TreeNode(3)
+root.left.left = TreeNode(4)
+```
+
+```python
+# 中序遍历（左-根-右）
+def inorder_traversal(node):
+    if not node:
+        return []
+    return inorder_traversal(node.left) + [node.val] + inorder_traversal(node.right)
+
+print(inorder_traversal(root))  # 输出: [4, 2, 1, 3]
+```
+
+### 6. 哈希表（Hash Table）
+
+Python 的 `dict` 本质是哈希表，支持 O (1) 平均复杂度的插入、查找、删除：
+
+```python
+hash_map = {"name": "Alice", "age": 20}
+hash_map["gender"] = "female"  # 插入
+print(hash_map["name"])  # 查找，输出: Alice
+del hash_map["age"]  # 删除
+```
+
+如需自定义哈希逻辑，可重写类的 `__hash__` 和 `__eq__` 方法。
+
+### 7. 堆（Heap）
+
+利用 `heapq` 模块实现最小堆（默认），最大堆可通过取负值实现：
+
+```python
+import heapq
+
+# 最小堆
+min_heap = []
+heapq.heappush(min_heap, 3)
+heapq.heappush(min_heap, 1)
+heapq.heappush(min_heap, 2)
+print(heapq.heappop(min_heap))  # 输出: 1（弹出最小值）
+
+# 最大堆（存入负值）
+max_heap = []
+heapq.heappush(max_heap, -3)
+heapq.heappush(max_heap, -1)
+heapq.heappush(max_heap, -2)
+print(-heapq.heappop(max_heap))  # 输出: 3（弹出最大值）
+```
+
+### 8. 图（Graph）
+
+常用邻接表（字典 + 列表）或邻接矩阵（二维列表）表示，邻接表更省空间：
+
+```python
+# 邻接表表示无向图
+class Graph:
+    def __init__(self):
+        self.adj = {}  # key: 节点，value: 相邻节点列表
+    
+    def add_edge(self, u, v):  # 添加边
+        if u not in self.adj:
+            self.adj[u] = []
+        if v not in self.adj:
+            self.adj[v] = []
+        self.adj[u].append(v)
+        self.adj[v].append(u)  # 无向图双向添加
+    
+    def bfs(self, start):  # 广度优先遍历
+        visited = set()
+        queue = [start]
+        visited.add(start)
+        while queue:
+            node = queue.pop(0)
+            print(node, end=" ")
+            for neighbor in self.adj.get(node, []):
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    queue.append(neighbor)
+
+# 示例
+graph = Graph()
+graph.add_edge(0, 1)
+graph.add_edge(0, 2)
+graph.add_edge(1, 3)
+graph.bfs(0)  # 输出: 0 1 2 3
+```
 
 # 参考资料
 

@@ -243,7 +243,7 @@ sv实现
 2. 最大长度$l_N$
 蒙哥马利算法计算基于这个集合上的运算
 剩余环上重要的运算有简单运算如加减，复杂运算如乘
-![[meng/algAdd.png]]
+![[algAdd.png]]
 对于取模操作，一般有以下几种方法
 1. 根据以下公式，来计算取模操作
 取模运算即为$t-(N*\lfloor t/N\rfloor)$
@@ -263,13 +263,13 @@ sv实现
 ### 1. 除法转换
 计算$x\cdot y$其实是诸位乘法相加
 在十进制下又可以做简化（霍纳法则）
-![[meng/algMul.png]]
+![[algMul.png]]
 例如：
 $x\cdot y = (y_0*x) + 10(y_1*x+10*(y_2*x+10*0))$
 对于$x\cdot y/1000$，也可以类似处理
-![[meng/algMulDiv.png]]
+![[algMulDiv.png]]
 在剩余域下的模如$x\cdot y/1000(mod\ 667)$，其中除于10会有小数，但可以选择一个u，$u\cdot 667 \equiv 0(mod\ 667)$，$u*667+r$可以被10整除
-![[meng/algMulDivMod.png]]
+![[algMulDivMod.png]]
 在某些情况，除于可以转化为进制操作，因此不需要除法
 
 ### 2. 约减转换
@@ -290,7 +290,7 @@ $x\cdot y(mod\ 667) = ((x\cdot 1000)\cdot (y\cdot 1000)/1000)/1000(mod\ 667)$
 
 ## 蒙哥马利约减
 给定整数t，$t\cdot \rho^{-1}(mod\ N)$
-![[meng/algMontRed.png]]
+![[algMontRed.png]]
 约减可以当作模乘当x=1的特例，也可以用来计算模，如将$m\cdot \rho$约减可得$m(mod\ N)$
 ## 蒙哥马利模乘
 
@@ -303,7 +303,7 @@ t = \hat x \cdot \hat y = (x\cdot y)\cdot \rho^2 \\
 \end{matrix}
 $$
 输入参数$\hat x, \hat y$，结果$(x\cdot y)\cdot \rho(mod\ N)$也即$(x\cdot y)\cdot \rho^{-1}(mod\ N)$
-![[meng/algMontMul.png]]
+![[algMontMul.png]]
 ```
 b = 10
 N = 1000
@@ -315,12 +315,12 @@ x = 421; xhat = 123
 y = 422; yhat = 456
 xhat * yhat * p^-1 = 547(mod 667)
 ```
-![[meng/exam.png]]
+![[exam.png]]
 ### 蒙哥马利模幂
 普通幂运算，通过分解，转化为一系列模乘
-![[meng/algExp.png]]
+![[algExp.png]]
 用蒙哥马利做改变：
-![[meng/algMontExp.png]]
+![[algMontExp.png]]
 
 
 
@@ -366,7 +366,7 @@ $Dec(sk, |m|)=\frac{L(|m|^{\lambda}mod\ N^2)}{L(g^{\lambda}mod\ N^2)} mod\ N, L(
 ## B. Use Cases of Paillier Encryption
 1. privacy-preserving computation of SEDs between the user’s query and the service provider’s database
 2. FE that is a new paradigm for encryption that permits the service provider to compute only a specific function
-![[Fig1.png]]
+![[Algorithm/Encryption/Fig1.png]]
 ### Privacy-Preserving SEDs over Encrypted Data
 $$
 \vec Y=(y_0, y_1, ..., y_{n-1})
@@ -406,7 +406,7 @@ SW: the computation of auxiliary operations
 ### A. High-Level HW/SW Codesign
 HW/SW co-design
 3-level Data Memory: L1 is located in each CP core; L2 is shared for all CP cores; L3 is the SW side
-![[Fig2.png]]
+![[Algorithm/Encryption/Fig2.png]]
 #### 1. SW
 controlling all operations in HW and peripherals(DDR3, I/O), computations not supported in HW.
 communication between SW&HW: 4 HP ports for transfering data; 2 GP ports for commands and status transfer
@@ -418,7 +418,7 @@ Data communication between SW/HW is done via HP/AXI DMA; 4 AXI memory interconne
 L2-DMEM contains a single-port RAM and a smart router(round-robin arbiter) for controlling the access of the CP cores to the memory
 
 #### 3. Configuration
-![[Fig3.png]]
+![[Algorithm/Encryption/Fig3.png]]
 
 
 ### B. Cryptography Core

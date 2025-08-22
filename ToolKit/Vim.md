@@ -10,8 +10,7 @@ vscode
 - copilot `<ctrl><shift> p`：开启/禁用自动补全
 
 # Vim 核心使用
-- move
-`h (left)       j (down)       k (up)       l (right)`
+
 - operator
 `a(append) A(append at the end of the line)`
 `i(insert) I (insert at the beginning of the line) `
@@ -27,14 +26,13 @@ vscode
 
 - motion
 `operator   [number]   motion`: repeat a motion a number times
+`h (left)       j (down)       k (up)       l (right)`
 `w(the next word) e(end of the word) b(the previous word)`
 `0(begin) $(end) ^(第一个非空字符)`
 
-`G` moves to the end of the file.
-
-`<num> G` moves to that line number.
-
 `gg` moves to the first line.
+`G` moves to the end of the file.
+`<num> G` moves to that line number.
 
 - search and substitute
 `/(search after cursor) ?(search before cursor)`

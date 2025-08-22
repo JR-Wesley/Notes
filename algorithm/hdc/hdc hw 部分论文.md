@@ -67,7 +67,7 @@ LOSOV 验证方法
 本文有开源：<a href="https://github.com/yuya-isaka/EcoFlexHDP">EcoFlexHDP</a>
 
 ## 项目框架
-![](img/EcoFlex-HDP%20overview.png)
+![](EcoFlex-HDP%20overview.png)
 
-![](img/EcoFlex-HDP%20HD%20core.png)
+![](EcoFlex-HDP%20HD%20core.png)
 
