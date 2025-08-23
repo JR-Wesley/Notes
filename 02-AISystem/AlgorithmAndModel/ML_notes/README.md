@@ -1,0 +1,15 @@
+---
+tags:
+  - Book
+---
+
+```dataview
+LIST "机器学习 周志华"
+FROM ""
+WHERE file.folder = this.file.folder OR startswith(file.folder, this.file.folder + "/")
+SORT file.path
+```
+
+本文为清华大学最新出版的《机器学习》教材的 Learning Notes，书作者是南京大学周志华教授。
+
+本文为周志华《机器学习》的学习笔记，记录了本人在学习这本书的过程中的理解思路以及一些有助于消化书内容的拓展知识，笔记中参考了许多网上的大牛经典博客以及李航《统计学习》的内容，向前辈们和知识致敬！

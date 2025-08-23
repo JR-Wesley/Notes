@@ -2,6 +2,7 @@
 dateCreated: 2025-02-27
 dateModified: 2025-08-09
 ---
+
 # 📜 A High Performance Computing Explorer's Atlas | Ongoing Learning Repository
 
 **Status**: Actively Curating (Knowledge lava cooling into crystallized notes)
@@ -30,73 +31,98 @@ This repository archives my (**not well organized**) learning journey through **
 
 ## 🌐 Knowledge Matrix
 
-```bash
+```shell
 .
-├── AISystem
-│   ├── AICompiler
+├── 01-ComputerScience
+│   ├── Architecture
+│   ├── Network
+│   ├── OperatingSystem
+│   ├── Programming
+│   └── SystemBasics
+├── 02-AISystem
 │   ├── AISysReview
+│   ├── AlgorithmAndModel
+│   ├── Distributed
+│   ├── Framework
 │   ├── GPU
-│   ├── HPC
-│   ├── 'job interview'
-│   ├── LLM
-│   ├── ML_notes
-│   ├── Model
-│   ├── quant
-│   ├── 加速器
-│   ├── 编程接口
-│   └── 训练推理框架
-├── Algorithm
+│   ├── HardwareAndCompiler
+│   ├── HPCBasics
+│   └── JobInterview
+├── 03-Algorithm
 │   ├── BasicAlgorithm
-│   ├── compression
-│   ├── CV
-│   ├── encryption
-│   └── hdc
-├── ComputerScience
-│   ├── CSarch
-│   ├── OS
-│   └── programming
-├── IntegratedCircuit
-│   ├── 'asic flow'
-│   ├── cgra
+│   ├── Compression
+│   ├── Encryption
+│   ├── HDC
+│   └── Vision
+├── 04-IntegratedCircuit
+│   ├── Accelerator
+│   ├── AsicFlow
+│   ├── BasicsAndApplication
 │   ├── DSP
-│   ├── EDA
-│   ├── FPGA
-│   ├── IP
-│   ├── jobinterview
-│   ├── program
-│   ├── protocal
+│   ├── JobInterview
 │   ├── SoC
-│   ├── STA
-│   ├── sv
-│   └── verification
-├── SelfDevelopment
+│   └── StandardAndProtocol
+├── 05-SelfDevelopment
 │   ├── career
 │   ├── language
 │   ├── medicine
 │   ├── Reading
 │   └── recreation
 └── ToolKit
-    └── assets
+    ├── assets
 ```
 
 ## 🛠️ Usage & Navigation
 
+### Highlight
+
 I've arraged my notes into 6 parts:
 
+- 🗂️ [[01-ComputerScience/01-ComputerScience|01-ComputerScience]]: Foundational pillars of computing, from hardware to software.
+- 🗂️ [[02-AISystem/02-AISystem|02-AISystem]]: Deep dive into the architecture and infrastructure powering AI.
+- 🗂️ [[03-Algorithm/03-Algorithm|03-Algorithm]]: Core computational methods and specialized techniques for problem-solving.
+- 🗂️ [[04-IntegratedCircuit/04-IntegratedCircuit|04-IntegratedCircuit]]: Design, flow, and technology behind modern semiconductor chips.
+	- A Guide to RISCV CPU architecture
+	- Roadmap of YSYX（一生一芯）
+- 🗂️ [[05-SelfDevelopment/05-SelfDevelopment|05-SelfDevelopment]]: Resources for personal growth, career, and well-being.
+	- Medicine
+- 🗂️ [[00-ToolKit|00-ToolKit]]: Essential tools, scripts, and assets to boost productivity.
+	- Enabling high efficiency using Linux, shell, etc.
 
 See Also <a href="https://www.zhihu.com/people/turing-48-20/columns">Zhihu columns</a>.
 
-- Highlight
-1. Roadmap of YSYX（一生一芯）: `Soc/ysys/`
+### Recommended Exploration Paths
 
-- Recommended Exploration Paths
-
-1. **AI Full-Stack System Optimization**
-    `ysyx/PA_analysis/ -> SoC/cache/ → AIsys/HPC/`
-2. **Hardware Accelerator Design**
-    `IC/CGRA/ → AIsys/GPU/ → algorithm/hdc/`
-3. **Silicon Implementation Flow**
-    `IC/asic_flow/ → IC/STA/ → SoC/pulp_VLSI/`
+1. **System of Computer Science**
+    1. **Foundation**: Start with `[[01-ComputerScience/SystemBasics]]` for fundamental concepts.
+    2. **Programming**: Apply principles through practical coding in `[[01-ComputerScience/Programming]]`.
+    3. **Architecture**: Deepen understanding of hardware interaction via `[[01-ComputerScience/Architecture]]`.
+    4. **Operating System**: Explore resource management through `[[01-ComputerScience/OperatingSystem]]`.
+    5. **Communication**: Understand data exchange with `[[01-ComputerScience/Network]]`.
+2. **AI Full-Stack System Optimization**
+    1. **Tensor Programming**: Begin with low-level computation in `[[02-AISystem/GPU]]` and `[[03-Algorithm/BasicAlgorithm]]`, focusing on parallel operations.
+    2. **Framework**: Study high-level abstractions and optimization passes in `[[02-AISystem/Framework]]`.
+    3. **Integration**: Analyze full-stack performance, bottlenecks, and co-design principles in `[[02-AISystem/AISysReview]]` and `[[02-AISystem/Distributed]]`.
+3. **Operator or Backend Acceleration**
+    1. **Identify**: Identify core compute-intensive algorithms from `[[03-Algorithm]]` (e.g., `[[03-Algorithm/BasicAlgorithm]]`, `[[03-Algorithm/Vision]]`).
+    2. **Profile**: Study hardware capabilities and constraints in `[[02-AISystem/GPU]]` and `[[04-IntegratedCircuit/Accelerator]]`.
+    3. **Optimize**: Explore efficient implementation techniques and compiler optimizations in `[[02-AISystem/HardwareAndCompiler]]`.
+    4. **Implement**: Design and optimize specific operators leveraging `[[02-AISystem/AlgorithmAndModel]]` insights.
+4. **High Performance CPU Design**
+    1. **Foundation**: Build foundation with `[[04-IntegratedCircuit/BasicsAndApplication]]` and `[[04-IntegratedCircuit/DSP]]`.
+    2. **Paradigms**: Explore specialized compute paradigms in `[[04-IntegratedCircuit/Accelerator]]` and reconfigurable architectures (CGRA).
+    3. **Requirements**: Study AI-specific hardware requirements and dataflow in `[[02-AISystem/AISysReview]]`, `[[02-AISystem/GPU]]`, and `[[02-AISystem/Distributed]]`.
+    4. **Patterns**: Investigate core algorithmic patterns for acceleration, particularly in `[[03-Algorithm/HDC]]`.
+    5. **Synthesize**: Synthesize knowledge to design a high-performance CPU microarchitecture.
+5. **Hardware Accelerator Design**
+    1. **Target**: Identify target application domains and algorithms (e.g., from `[[03-Algorithm/Vision]]`, `[[03-Algorithm/Encryption]]`, `[[02-AISystem/AlgorithmAndModel]]`).
+    2. **Define**: Define accelerator specifications and architecture based on computational needs.
+    3. **Design**: Design the datapath and control logic, leveraging concepts from `[[04-IntegratedCircuit/BasicsAndApplication]]` and `[[01-ComputerScience/Architecture]]`.
+    4. **Integrate**: Explore integration possibilities within larger systems (`[[04-IntegratedCircuit/SoC]]`).
+6. **Silicon Implementation Flow**
+    1. **Flow**: Start with the complete design process in `[[04-IntegratedCircuit/AsicFlow]]`.
+    2. **Timing**: Master timing analysis and closure techniques in `[[04-IntegratedCircuit/AsicFlow]]`.
+    3. **Integration**: Learn system integration and physical design methodologies from `[[04-IntegratedCircuit/SoC]]`, potentially using a case study like `[[SoC/pulp_VLSI]]`.
 
 ## 🔐 License Matrix
 
