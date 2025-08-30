@@ -1,6 +1,8 @@
 ---
 dateCreated: 2025-04-02
 dateModified: 2025-07-27
+tags:
+  - Tool
 ---
 # Git
 
@@ -48,7 +50,7 @@ git push -u origin main
 
 `git config --global url.ssh://git@github.com/.insteadOf https://github.com/` 把默认 htpps 改成 ssh。<a href="https://stackoverflow.com/questions/11200237/how-do-i-get-git-to-default-to-ssh-and-not-https-for-new-repositories">参考</a>
 
-![](image-20250711135233407.png)
+![](Git工作区域.png)
 
 ## 检出仓库
 

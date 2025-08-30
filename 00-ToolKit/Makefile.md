@@ -1,6 +1,8 @@
 ---
 dateCreated: 2023-08-02
 dateModified: 2025-06-18
+tags:
+  - Tool
 ---
 
 <a href=" https://www.gnu.org/software/make/manual/">GNU Make Manual 官方文档</a>

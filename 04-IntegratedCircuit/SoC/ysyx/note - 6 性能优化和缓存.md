@@ -1,7 +1,8 @@
 ---
-banner: "[[../300-以影像之/Vertin.jpg|../../300-以影像之/Vertin.jpg]]"
+banner:
 dateCreated: 2024-11-27
 dateModified: 2025-06-02
+category: Note
 ---
 # 讲义内容
 

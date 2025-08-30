@@ -32,7 +32,7 @@
 
 ## Strong Scaling
 
-在固定问题规模的前提下，增加并行处理器的数量，计算增速也是有限制的 → Amdahl's law ![]([https://conf01.birentech.com/download/thumbnails/197577955/image2025-1-15_16-40-34.png?version=1&modificationDate=1736930434000&api=v2](https://conf01.birentech.com/download/thumbnails/197577955/image2025-1-15_16-40-34.png?version=1&modificationDate=1736930434000&api=v2))
+在固定问题规模的前提下，增加并行处理器的数量，计算增速也是有限制的 → Amdahl's law !
 
 s: 串行部分所占执行时间比例，
 
@@ -41,8 +41,6 @@ p: 可并行部分所占执行时间比例，
 N: 处理器数量
 
 ## MPI Vs NVSHMEM
-
-![]([https://conf01.birentech.com/download/attachments/197577955/image2024-12-31_11-41-31.png?version=1&modificationDate=1735616491000&api=v2](https://conf01.birentech.com/download/attachments/197577955/image2024-12-31_11-41-31.png?version=1&modificationDate=1735616491000&api=v2))
 
 ### MPI 信息交互 (CPU-Initiated Communication)
 
@@ -72,15 +70,9 @@ GPU → interconnect → GPU
 
 → 串行耗时减少
 
-![]([https://conf01.birentech.com/download/attachments/197577955/image2025-1-15_20-31-43.png?version=1&modificationDate=1736944304000&api=v2](https://conf01.birentech.com/download/attachments/197577955/image2025-1-15_20-31-43.png?version=1&modificationDate=1736944304000&api=v2))
-
-ref: [[https://www.cisl.ucar.edu/sites/default/files/2022-07/Multi%20Node%20Multi%20GPU%20Programming.pdf](https://www.cisl.ucar.edu/sites/default/files/2022-07/Multi%20Node%20Multi%20GPU%20Programming.pdf)]([https://www.cisl.ucar.edu/sites/default/files/2022-07/Multi%20Node%20Multi%20GPU%20Programming.pdf](https://www.cisl.ucar.edu/sites/default/files/2022-07/Multi%20Node%20Multi%20GPU%20Programming.pdf)) （地球物理相关）
-
 # Features
 
 ## Symmetric Data Object
-
-![NVSHMEM Memory Model]([https://docs.nvidia.com/nvshmem/api/_images/mem_model.png](https://docs.nvidia.com/nvshmem/api/_images/mem_model.png))
 
 - NVSHMEM 是基于 PE（processing element）操作的，一个 GPU 可以有一个或多个 PE
 
@@ -96,8 +88,6 @@ two-side communication 和 one-side communication 的区别
 
 |one-side|send|symmetric address|
 
-![]([https://conf01.birentech.com/download/attachments/197577955/image2025-1-15_14-29-20.png?version=1&modificationDate=1736922561000&api=v2](https://conf01.birentech.com/download/attachments/197577955/image2025-1-15_14-29-20.png?version=1&modificationDate=1736922561000&api=v2))
-
 # NVSHMEM Example
 
 **ring_broadcast** 展开源码
@@ -112,17 +102,11 @@ DGX 系统的 GPU（A100， H100， H200）通信方式：
 
 - **InfiniBand:** 采用多通道、高速串行连接的开放标准网络技术，支持点对点和多播通信。它通过路由器和交换机连接多个子网，构建起庞大的网络拓扑结构。
 
-![]([https://conf01.birentech.com/download/attachments/197577955/image2025-1-15_20-57-33.png?version=1&modificationDate=1736945854000&api=v2](https://conf01.birentech.com/download/attachments/197577955/image2025-1-15_20-57-33.png?version=1&modificationDate=1736945854000&api=v2))
-
 **总体来说**，NVSHMEM 较轻量级，适合小规模的不规则复杂通信；NCCL 较重量级，适合大规模的规则通信。
 
 ## NVSHMEM Based on NCCL
 
 [[https://developer.nvidia.com/blog/accelerating-nvshmem-2-0-team-based-collectives-using-nccl/](https://developer.nvidia.com/blog/accelerating-nvshmem-2-0-team-based-collectives-using-nccl/)]([https://developer.nvidia.com/blog/accelerating-nvshmem-2-0-team-based-collectives-using-nccl/](https://developer.nvidia.com/blog/accelerating-nvshmem-2-0-team-based-collectives-using-nccl/))
-
-![]([https://conf01.birentech.com/download/attachments/197577955/image2025-1-16_15-6-11.png?version=1&modificationDate=1737011172000&api=v2](https://conf01.birentech.com/download/attachments/197577955/image2025-1-16_15-6-11.png?version=1&modificationDate=1737011172000&api=v2))
-
-![A graph showing the latency of a reduction operation on two GPUs over a range of input data sizes.]([https://developer-blogs.nvidia.com/wp-content/uploads/2020/12/figure-5.png](https://developer-blogs.nvidia.com/wp-content/uploads/2020/12/figure-5.png))
 
 NCCL 可以有 x10 的 speedup。原因在于 NVSHMEM 使用的算法只针对小数据量进行了优化，NCCL 使用的算法不仅对小数据量有优化，都针对大数据量也有优化。
 

@@ -1,5 +1,5 @@
 ---
-banner: "[[../../300-以影像之/Ryo.png]]"
+banner:
 aliases: Ch4 分支预测
 dateCreated: 2024-11-20
 dateModified: 2025-02-25

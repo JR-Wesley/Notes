@@ -1,5 +1,5 @@
 ---
-banner: "[[../../300-以影像之/Clorinde 8205816.jpeg]]"
+banner:
 dateCreated: 2024-11-20
 dateModified: 2025-05-25
 ---

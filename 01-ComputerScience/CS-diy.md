@@ -21,51 +21,52 @@ https://csdiy.wiki/
 
 https://hackway.org/
 
-http://www.why.ink:8080/CPL/2023/
+https://www.learncs.site/
+
+NJU 程序的构造：http://www.why.ink:8080/CPL/2023/
 
 https://zhuanlan.zhihu.com/p/654821469
 
 https://www.zhihu.com/people/lawliet111/posts?page=5
 
-https://njuics-wiki.github.io/ics-wiki/
+NJU OS https://njuics-wiki.github.io/ics-wiki/
 
-- 公开课资源汇总: [CS自学指南](https://link.zhihu.com/?target=https%3A//csdiy.wiki/)
 - 刷题:
-- [力扣 (LeetCode) 全球极客挚爱的技术成长平台](https://link.zhihu.com/?target=https%3A//leetcode.cn/)
-- [代码随想录](https://link.zhihu.com/?target=https%3A//programmercarl.com/)
-- [CodeTop 面试题目总结](https://link.zhihu.com/?target=https%3A//codetop.cc/home)
+	- [力扣 (LeetCode) 全球极客挚爱的技术成长平台](https://link.zhihu.com/?target=https%3A//leetcode.cn/)
+	- [代码随想录](https://link.zhihu.com/?target=https%3A//programmercarl.com/)
+	- [CodeTop 面试题目总结](https://link.zhihu.com/?target=https%3A//codetop.cc/home)
 - 编程语言
-- [Rust 程序设计语言 - Rust 程序设计语言 中文版](https://link.zhihu.com/?target=https%3A//rustwiki.org/zh-CN/book/title-page.html)
-- [Go语言圣经 - Go语言圣经](https://link.zhihu.com/?target=https%3A//golang-china.github.io/gopl-zh/)
-- [序言 现代 C++ 教程: 高速上手](https://link.zhihu.com/?target=https%3A//changkun.de/modern-cpp/zh-cn/00-preface/)
-- [TypeScript 中文手册 - TypeScript 中文手册](https://link.zhihu.com/?target=https%3A//typescript.bootcss.com/)
-- [Java学习笔记](https://link.zhihu.com/?target=https%3A//mrjokersince1997.github.io/My-Notes/%23/)
-- [ES6 入门教程 - ECMAScript 6入门](https://link.zhihu.com/?target=https%3A//es6.ruanyifeng.com/)
+	- [Rust 程序设计语言 - Rust 程序设计语言 中文版](https://link.zhihu.com/?target=https%3A//rustwiki.org/zh-CN/book/title-page.html)
+	- [Go语言圣经 - Go语言圣经](https://link.zhihu.com/?target=https%3A//golang-china.github.io/gopl-zh/)
+	- [序言 现代 C++ 教程: 高速上手](https://link.zhihu.com/?target=https%3A//changkun.de/modern-cpp/zh-cn/00-preface/)
+	- [TypeScript 中文手册 - TypeScript 中文手册](https://link.zhihu.com/?target=https%3A//typescript.bootcss.com/)
+	- [Java学习笔记](https://link.zhihu.com/?target=https%3A//mrjokersince1997.github.io/My-Notes/%23/)
+	- [ES6 入门教程 - ECMAScript 6入门](https://link.zhihu.com/?target=https%3A//es6.ruanyifeng.com/)
 - 数据结构与算法:
-- [Hello 算法](https://link.zhihu.com/?target=https%3A//www.hello-algo.com/)
-- [数据结构算法可视化](https://link.zhihu.com/?target=https%3A//algo.hufeifei.cn/index.html)
-- [Main | CS 61B Spring 2018](https://link.zhihu.com/?target=https%3A//sp18.datastructur.es/)
+	- [Hello 算法](https://link.zhihu.com/?target=https%3A//www.hello-algo.com/)
+	- [数据结构算法可视化](https://link.zhihu.com/?target=https%3A//algo.hufeifei.cn/index.html)
+	- [Main | CS 61B Spring 2018](https://link.zhihu.com/?target=https%3A//sp18.datastructur.es/)
 - 计算机基础
-- 《深入理解计算机系统》
-- [15-213/15-513/14-513 Introduction to Computer Systems](https://link.zhihu.com/?target=https%3A//www.cs.cmu.edu/~213/)
+	- 《深入理解计算机系统》
+	- [15-213/15-513/14-513 Introduction to Computer Systems](https://link.zhihu.com/?target=https%3A//www.cs.cmu.edu/~213/)
 - 计算机组成
-- [Home | CS 61C Fall 2024](https://link.zhihu.com/?target=https%3A//cs61c.org/fa24/)
-- [ETHz: Digital Design and Computer Architecture - CS自学指南](https://link.zhihu.com/?target=https%3A//csdiy.wiki/%25E4%25BD%2593%25E7%25B3%25BB%25E7%25BB%2593%25E6%259E%2584/DDCA/)
-- 《计算机组成与设计硬件和软件接口》
+	- [Home | CS 61C Fall 2024](https://link.zhihu.com/?target=https%3A//cs61c.org/fa24/)
+	- [ETHz: Digital Design and Computer Architecture - CS自学指南](https://link.zhihu.com/?target=https%3A//csdiy.wiki/%25E4%25BD%2593%25E7%25B3%25BB%25E7%25BB%2593%25E6%259E%2584/DDCA/)
+	- 《计算机组成与设计硬件和软件接口》
 - 计算机网络
-- 《计算机网络自顶向下方法》
-- 《Unix 网络编程》
-- 《Linux 高性能服务器编程》
-- 《Linux 多线程服务端编程》
-- 《TCP/IP 网络编程》
+	- 《计算机网络自顶向下方法》
+	- 《Unix 网络编程》
+	- 《Linux 高性能服务器编程》
+	- 《Linux 多线程服务端编程》
+	- 《TCP/IP 网络编程》
 - 操作系统
-- [The Learning&Training Hub of OS Kernel](https://link.zhihu.com/?target=https%3A//github.com/LearningOS)
-- [rCore-Tutorial-Book-v3 3.6.0-alpha.1 文档](https://link.zhihu.com/?target=https%3A//rcore-os.cn/rCore-Tutorial-Book-v3/)
-- [Writing an OS in Rust](https://link.zhihu.com/?target=https%3A//os.phil-opp.com/)
-- [6.S081 / Fall 2021](https://link.zhihu.com/?target=https%3A//pdos.csail.mit.edu/6.S081/2021/schedule.html)
-- [CS 162 — Fall 2024](https://link.zhihu.com/?target=https%3A//cs162.org/)
-- [操作系统：设计与实现 (2023 春季学期)](https://link.zhihu.com/?target=https%3A//jyywiki.cn/OS/2023/index.html)
-- 《操作系统导论》
+	- [The Learning&Training Hub of OS Kernel](https://link.zhihu.com/?target=https%3A//github.com/LearningOS)
+	- [rCore-Tutorial-Book-v3 3.6.0-alpha.1 文档](https://link.zhihu.com/?target=https%3A//rcore-os.cn/rCore-Tutorial-Book-v3/)
+	- [Writing an OS in Rust](https://link.zhihu.com/?target=https%3A//os.phil-opp.com/)
+	- [6.S081 / Fall 2021](https://link.zhihu.com/?target=https%3A//pdos.csail.mit.edu/6.S081/2021/schedule.html)
+	- [CS 162 — Fall 2024](https://link.zhihu.com/?target=https%3A//cs162.org/)
+	- [操作系统：设计与实现 (2023 春季学期)](https://link.zhihu.com/?target=https%3A//jyywiki.cn/OS/2023/index.html)
+	- 《操作系统导论》
 - 数据库
 - [CMU 15-445/645 :: Intro to Database Systems (Fall 2024)](https://link.zhihu.com/?target=https%3A//15445.courses.cs.cmu.edu/fall2024/)
 - [Talent Plan | TiDB 社区](https://link.zhihu.com/?target=https%3A//tidb.net/talent-plan)
@@ -111,7 +112,7 @@ OS: 如果能理解 linux 内核的任意一个子模块，甚至子模块的部
 1. 阅读《计算机网络：自顶向下方法》
 2. 刷 CS 144
 
-> 这里说明一下, 中科大的计算机网络课程也是使用的《计算机网络：自顶向下方法》这本教材, 且更精炼一些, 如果时间不够或者读教材困难, 可以选择直接刷 [中科大的计算机网络视频课](https://link.zhihu.com/?target=https%3A//www.bilibili.com/video/BV1JV411t7ow/%3Fspm_id_from%3D333.337.search-card.all.click)
+> 这里说明一下, 中科大的计算机网络课程也是使用的《计算机网络：自顶向下方法》这本教材, 且更精炼一些, 如果时间不够或者读教材困难, 可以选择直接刷 https://www.bilibili.com/video/BV1JV411t7ow/?spm_id_from=333.337.search-card.all.click&vd_source=bc07d988d4ccb4ab77470cec6bb87b69
 
 同样, 时间不多的同学可以只看一下《计算机网络：自顶向下方法》就可以了, 不需要再去刷公开课的 `Lab`, 反正后面你大概率会通过 C++ 网络编程的学习巩固这些知识
 

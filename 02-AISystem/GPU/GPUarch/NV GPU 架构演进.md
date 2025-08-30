@@ -43,3 +43,7 @@ A 100 架构解析：https://zhuanlan.zhihu.com/p/1908285912053453831
 | **Ada Lovelace** | 2022 年   | 晶体管：760 亿  <br>CUDA 核心：16384  <br>第四代 Tensor Core：512  <br>制程：4 nm             | 第四代 Tensor Core 支持 **FP 8** 精度（AI 推理性能提升 4 倍），第三代 RT Core（光线追踪性能提升 2 倍），并推出 DLSS 3.0（结合光线重建技术）。AV 1 编码加速引擎支持 8 K 视频实时处理，同时 Ada 架构首次在消费级显卡中实现 12 层光追计算，推动影视渲染和虚拟制作进入实时时代。| 8.9      | GeForce RTX 4090  <br>RTX 6000 Ada Generation |
 | **Hopper**       | 2022 年   | 晶体管：800 亿  <br>CUDA 核心：6080  <br>第四代 Tensor Core：608  <br>制程：4 nm              | 第四代 Tensor Core 支持 **Transformer** 引擎（AI 训练速度提升 30 倍），DPX 指令（动态编程加速 40 倍），并引入机密计算（保护数据隐私）。第四代 NVLink 带宽达 900 GB/s，H 100 GPU 首次实现 900 GB/s 显存带宽，成为百亿亿次超算和万亿参数大模型的核心。| 9.0      | H 100 Tensor Core GPU  <br>H 200 NVL            |
 | **Blackwell**    | 2024 年   | 晶体管：2080 亿  <br>CUDA 核心：28160  <br>第五代 Tensor Core：2240  <br>制程：4 nm           | 第二代 Transformer 引擎支持 **FP 4** 精度（AI 算力达 20 PetaFLOPS），第五代 NVLink 带宽达 1.8 TB/s，支持多 GPU 集群无缝互联。新增解压缩引擎（数据库查询加速 5 倍）、RAS 引擎（故障预测与修复），并首次实现芯片级机密计算。GB 200 超级芯片（双 B 200+Grace CPU）推理性能较 H 100 提升 30 倍，成本和能耗降低至 1/25。| 9.6      | B 200 GPU  <br>GB 200 Superchip                 |
+
+# Blackwell
+
+https://resources.nvidia.com/en-us-blackwell-architecture

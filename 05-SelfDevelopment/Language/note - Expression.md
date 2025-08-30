@@ -33,6 +33,10 @@ dateModified: 2025-05-27
 - bear with sb 表示容忍、耐心等待某人
 - take with a grain/pinch of salt **对某事物持怀疑态度，不完全相信，有保留地接受**。
 - take at face value（从表面看待，完全相信） believe unconditionally（无条件相信）
+- taking an inventory: 盘点总结
+- the tip of iceberg: 冰山一角
+- without further/more ado: 毫不迟延；干脆；立即without delaying; immediately
+- in tandem with: 与。。。协同
 
 # word
 

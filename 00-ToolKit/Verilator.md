@@ -1,3 +1,7 @@
+---
+tags:
+  - Tool
+---
 
 # 
 `Verilator` is a tool that compiles `Verilog` and `SystemVerilog` sources to highly optimized (and optionally multithreaded) cycle-accurate `C++` or `SystemC` code. The converted modules can be instantiated and used in a C++ or a SystemC testbench, for verification and/or modelling purposes.

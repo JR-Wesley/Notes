@@ -263,7 +263,6 @@ KeepTopK策略将每个令牌路由到几个选定的专家。这种方法被称
 
 至此，我们关于混合专家模型（Mixture of Experts）的旅程就结束了！希望这篇文章能让你更好地理解这项有趣技术的潜力。既然几乎所有模型组中都至少有一个混合专家模型的变体，感觉它会一直存在下去。 
 
-
 # Resources
 
 Hopefully, this was an accessible introduction to Mixture of Experts. If you want to go deeper, I would suggest the following resources:

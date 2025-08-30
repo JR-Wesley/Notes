@@ -1,5 +1,5 @@
 ---
-banner: "[[../../300-以影像之/bloodborne-the-doll.png]]"
+banner:
 dateCreated: 2024-10-23
 dateModified: 2025-04-11
 ---

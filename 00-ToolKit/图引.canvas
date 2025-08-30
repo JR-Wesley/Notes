@@ -1,0 +1,43 @@
+{
+	"nodes":[
+		{"id":"2fe2870841242531","type":"group","x":-760,"y":-1160,"width":1000,"height":500,"label":"AI Sys"},
+		{"id":"9bca8bdf29cab04f","type":"group","x":-760,"y":-600,"width":1000,"height":440,"label":"CS"},
+		{"id":"6b309f1494d7e1be","type":"group","x":-760,"y":-100,"width":780,"height":340,"label":"IC"},
+		{"id":"8b5940dd43f24aa8","type":"group","x":-300,"y":-1100,"width":520,"height":287,"color":"2","label":"Framework"},
+		{"id":"c4fe68b51d8eb2af","type":"group","x":40,"y":-100,"width":200,"height":340,"label":"Tool"},
+		{"id":"f9cb39dd1615d5e9","type":"text","text":"Digital Circuit","x":-720,"y":156,"width":200,"height":64,"color":"4"},
+		{"id":"a29f7dc5a83f3ef3","type":"text","text":"Super-scalar","x":-700,"y":-48,"width":160,"height":64,"color":"4"},
+		{"id":"f66ead3dbb19c294","type":"text","text":"Pipeline CPU","x":-700,"y":49,"width":160,"height":64,"color":"4"},
+		{"id":"b5507a9d307c9c41","type":"text","text":"Agent","x":-700,"y":-1100,"width":280,"height":97,"color":"2"},
+		{"id":"646f7511051bc205","type":"text","text":"Tensor Lib\n\n> [!Pytorch]\n> Compiler + Backend","x":-700,"y":-900,"width":360,"height":200,"color":"2"},
+		{"id":"d7c34cbf0ecb7997","type":"text","text":"Cluster","x":20,"y":-788,"width":200,"height":88,"color":"2"},
+		{"id":"b020d76aad34abba","type":"text","text":"Programming Model","x":-300,"y":-788,"width":280,"height":88,"color":"2"},
+		{"id":"f9a1d047a32e4ff6","type":"text","text":"Megatron vLLM\n...","x":-220,"y":-1051,"width":280,"height":97,"color":"2"},
+		{"id":"889edb29cd962b2a","type":"text","text":"Simulator\n> [!QEMU KVM]\n> GPUsim CModel","x":-725,"y":-380,"width":251,"height":171},
+		{"id":"30da17f8a6848892","type":"text","text":"Accelerator\n> [!NPU GPU] ","x":-480,"y":-80,"width":200,"height":193,"color":"4"},
+		{"id":"01693e66e1ebe340","type":"text","text":"Semiconductor","x":-480,"y":156,"width":200,"height":64,"color":"4"},
+		{"id":"05fc8d441ebbd1a5","type":"text","text":"Driver","x":-400,"y":-269,"width":200,"height":60},
+		{"id":"9c29c7ae0189b091","type":"text","text":"Physical Layer","x":-180,"y":-269,"width":200,"height":60},
+		{"id":"1c2ab136ab4ce1dc","type":"text","text":"Network","x":-380,"y":-380,"width":280,"height":86},
+		{"id":"f7be50e10e79c58f","type":"text","text":"Compiler","x":-725,"y":-465,"width":285,"height":65},
+		{"id":"930d16664a9a7ef1","type":"text","text":"CS system","x":-725,"y":-560,"width":285,"height":60},
+		{"id":"402676ccd1a8bdf9","type":"text","text":"OS","x":-400,"y":-573,"width":300,"height":153},
+		{"id":"cf11a01f1487550b","type":"text","text":"Physics","x":-180,"y":156,"width":160,"height":64,"color":"4"},
+		{"id":"2a866eedbf2fb159","type":"text","text":"Makefile\nShell\nLinux\nGit","x":80,"y":-71,"width":120,"height":152},
+		{"id":"3e77f5a88c970522","type":"text","text":"IO","x":40,"y":-269,"width":160,"height":60},
+		{"id":"900d607103dc9241","type":"text","text":"Algorithm\nData Structure","x":-60,"y":-384,"width":260,"height":90},
+		{"id":"b4cb3b001a71a722","type":"text","text":"HPC\n> [!MPI CUDA]","x":-80,"y":-580,"width":280,"height":160},
+		{"id":"ff3a7428c2617d4b","type":"text","text":"VLSI + EDA","x":-270,"y":49,"width":250,"height":64,"color":"4"},
+		{"id":"8832bea0d8b224cb","type":"text","text":"SoC\nBus\nDSP\nMemory","x":-220,"y":-80,"width":200,"height":113,"color":"4"}
+	],
+	"edges":[
+		{"id":"e9395df87085df1b","fromNode":"646f7511051bc205","fromSide":"bottom","toNode":"b4cb3b001a71a722","toSide":"top"},
+		{"id":"9c3201965f35b75e","fromNode":"f9a1d047a32e4ff6","fromSide":"bottom","toNode":"646f7511051bc205","toSide":"top"},
+		{"id":"0782047c97d33308","fromNode":"f9a1d047a32e4ff6","fromSide":"bottom","toNode":"b4cb3b001a71a722","toSide":"top"},
+		{"id":"48db3aee7d446fcf","fromNode":"402676ccd1a8bdf9","fromSide":"left","toNode":"889edb29cd962b2a","toSide":"right"},
+		{"id":"4fcec53d596b20ff","fromNode":"889edb29cd962b2a","fromSide":"right","toNode":"05fc8d441ebbd1a5","toSide":"left"},
+		{"id":"1638dba8a3608fbd","fromNode":"b020d76aad34abba","fromSide":"bottom","toNode":"b4cb3b001a71a722","toSide":"top"},
+		{"id":"c925a6d95f0d5af6","fromNode":"ff3a7428c2617d4b","fromSide":"bottom","toNode":"01693e66e1ebe340","toSide":"top"},
+		{"id":"d6ff5176a48ce3ec","fromNode":"01693e66e1ebe340","fromSide":"right","toNode":"cf11a01f1487550b","toSide":"left"}
+	]
+}

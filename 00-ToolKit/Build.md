@@ -1,3 +1,7 @@
+---
+tags:
+  - Tool
+---
 ## 安装新版 gcc/g++/gdb
 https://blog.csdn.net/qq_37700257/article/details/131540737
 

@@ -1,8 +1,3 @@
----
-tags: define, pragma
-dateCreated: 2021-10-31
-dateModified: 2025-08-16
----
 # Gdb
 
 ## 1. 概述

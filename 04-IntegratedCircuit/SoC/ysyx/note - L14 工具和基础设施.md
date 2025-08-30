@@ -1,3 +1,6 @@
+---
+category: Note
+---
 - [x] PPT
 - [x] VIDEO
 - [x] DOC

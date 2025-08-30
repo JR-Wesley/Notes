@@ -1,6 +1,6 @@
 ---
 tags:
-  - Book
+category: Book
 ---
 
 ```dataview

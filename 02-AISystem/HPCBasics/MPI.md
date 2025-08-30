@@ -63,7 +63,9 @@ https://mpitutorial.com/
 - `MPI_Isend` 非阻塞地发送数据。
 - `MPI_Irecv` 非阻塞地接收数据。
 - `MPI_Wait` 用于确保非阻塞操作完成之后再继续执行后续代码。
+
 ---
+
 **MPI 中的数据类型与通讯域/通信子/通讯器：**
 - `MPI_Datatype`：MPI 提供了内置和自定义数据类型，用于定义数据的格式和结构。自定义数据类型允许更复杂的数据组织和传输。
 - `MPI_Comm`：MPI 中的通信域定义了进程的集合，这些进程可以在同一通信域内进行数据交换。MPI 提供了默认通信域和创建自定义通信域的功能，以支持不同的并行计算模式和需求。
@@ -72,13 +74,13 @@ https://mpitutorial.com/
 
 MPI（Message Passing Interface）是并行计算中最流行的编程模型之一，以下是需要掌握的**核心概念**：
 
-### 1. **进程模型（Process Model）**
+## 1. **进程模型（Process Model）**
 
 - **并行方式**：基于多进程（而非多线程）的分布式内存模型。
 - **进程独立性**：每个进程有独立的内存空间，需通过消息传递交换数据。
 - **启动方式**：使用 `mpiexec -n 8./program` 启动 8 个进程实例。
 
-### 2. **通信器（Communicator）**
+## 2. **通信器（Communicator）**
 
 - **定义**：进程组的抽象，隔离通信范围。
 - **预定义通信器**：
@@ -86,7 +88,7 @@ MPI（Message Passing Interface）是并行计算中最流行的编程模型之�
 - `MPI_COMM_SELF`：仅包含当前进程。
 - **自定义通信器**：通过 `MPI_Comm_split` 创建子进程组。
 
-### 3. **进程标识（Rank & Size）**
+## 3. **进程标识（Rank & Size）**
 
 - **Rank**：进程在通信器中的唯一编号（从 0 开始）。
 - **Size**：通信器中的进程总数。
@@ -100,7 +102,7 @@ MPI_Comm_size(comm, &size); // 获取通信器size
 
 ```
 
-### 4. **点到点通信（Point-to-Point）**
+## 4. **点到点通信（Point-to-Point）**
 
 - **阻塞通信**：
 
@@ -126,7 +128,7 @@ MPI_Wait(&request, status); // 等待完成
 
 - **关键参数**：`tag` 用于区分不同类型的消息，`status` 包含接收消息的元信息。
 
-### 5. **集体通信（Collective Communication）**
+## 5. **集体通信（Collective Communication）**
 
 - **广播（Broadcast）**：从一个进程发送数据到所有进程。
 
@@ -151,7 +153,7 @@ MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
 - **全归约（Allreduce）**：聚合数据并将结果分发给所有进程。
 - **同步（Barrier）**：所有进程等待直到全部到达。
 
-### 6. **同步机制**
+## 6. **同步机制**
 
 - **阻塞同步**：
 
@@ -163,20 +165,20 @@ MPI_Barrier(comm); // 所有进程在此等待
 
 - **非阻塞同步**：通过 `MPI_Test` 检查请求是否完成。
 
-### 7. **数据类型（Datatype）**
+## 7. **数据类型（Datatype）**
 
 - **基本类型**：`MPI_INT`, `MPI_FLOAT`, `MPI_DOUBLE` 等。
 - **自定义类型**：通过 `MPI_Type_create_struct` 定义复杂数据结构。
 - **示例**：发送结构体数组时需先注册自定义类型。
 
-### 8. **通信模式**
+## 8. **通信模式**
 
 - **标准模式**：`MPI_Send` 可能缓冲或直接发送。
 - **缓冲模式**：`MPI_Bsend` 使用用户提供的缓冲区。
 - **同步模式**：`MPI_Ssend` 仅在接收方开始接收后返回。
 - **就绪模式**：`MPI_Rsend` 要求接收方已准备好。
 
-### 9. **拓扑结构（Topology）**
+## 9. **拓扑结构（Topology）**
 
 - **定义**：为进程组定义逻辑结构（如网格、环）。
 - **笛卡尔拓扑**：
@@ -193,7 +195,7 @@ MPI_Cart_create(comm, 2, dims, periods, 0, &newcomm);
 
 - **应用**：优化近邻通信（如有限元计算）。
 
-### 10. **错误处理**
+## 10. **错误处理**
 
 - **错误代码**：MPI 函数返回错误码（如 `MPI_SUCCESS`）。
 - **错误处理程序**：
@@ -206,13 +208,13 @@ MPI_Comm_set_errhandler(comm, MPI_ERRORS_RETURN); // 返回错误码而非终止
 
 - **调试工具**：使用 `mpiexec --mca btl self,tcp` 禁用某些网络组件辅助调试。
 
-### 11. **性能优化**
+## 11. **性能优化**
 
 - **减少通信**：合并小消息，避免频繁同步。
 - **非阻塞通信**：重叠计算与通信。
 - **聚合操作**：使用 `MPI_Allreduce` 替代多次发送接收。
 
-### 关键 API 速查表
+## 关键 API 速查表
 
 | 功能 | 函数 |
 
@@ -236,7 +238,7 @@ MPI_Comm_set_errhandler(comm, MPI_ERRORS_RETURN); // 返回错误码而非终止
 
 | 获取进程信息 | `MPI_Comm_rank`, `MPI_Comm_size` |
 
-### 典型应用场景
+## 典型应用场景
 
 - **科学计算**：流体力学、气候模拟。
 - **机器学习**：数据并行训练（如分布式 SGD）。
@@ -246,7 +248,7 @@ MPI_Comm_set_errhandler(comm, MPI_ERRORS_RETURN); // 返回错误码而非终止
 
 在 MPI（Message Passing Interface）编程中，`comm`、`rank` 和 `size` 是三个核心概念，用于实现并行计算中的进程管理和通信：
 
-### 1. **`MPI_Comm`（通信器，Communicator）**
+## 1. **`MPI_Comm`（通信器，Communicator）**
 
 - **定义**：一个进程组和上下文的抽象，用于界定通信范围。
 - **作用**：
@@ -264,7 +266,7 @@ MPI_Comm world = MPI_COMM_WORLD; // 默认包含所有进程的通信器
 - `MPI_COMM_WORLD`：包含所有 MPI 进程。
 - `MPI_COMM_SELF`：仅包含当前进程自身。
 
-### 2. **`rank`（进程编号）**
+## 2. **`rank`（进程编号）**
 
 - **定义**：进程在通信器中的唯一整数标识符（从 0 开始）。
 - **作用**：
@@ -283,7 +285,7 @@ MPI_Comm_rank(MPI_COMM_WORLD, &rank); // 获取当前进程在WORLD中的编号
 - **示例**：
 - 若启动 4 个进程，rank 依次为 0、1、2、3。
 
-### 3. **`size`（进程数量）**
+## 3. **`size`（进程数量）**
 
 - **定义**：通信器中的进程总数。
 - **作用**：
@@ -302,7 +304,7 @@ MPI_Comm_size(MPI_COMM_WORLD, &size); // 获取WORLD中的进程总数
 - **示例**：
 - 若使用 `mpiexec -n 8` 启动 8 个进程，则 `size = 8`。
 
-### 三者关系示例
+## 三者关系示例
 
 假设启动 4 个进程（`size = 4`），各进程的 `rank` 如下：
 
@@ -318,7 +320,7 @@ MPI_Comm_size(MPI_COMM_WORLD, &size); // 获取WORLD中的进程总数
 
 |3|`result = data[rank] * 10;`|
 
-### 关键 API 总结
+## 关键 API 总结
 
 | 函数 | 作用 |
 
@@ -334,7 +336,7 @@ MPI_Comm_size(MPI_COMM_WORLD, &size); // 获取WORLD中的进程总数
 
 | `MPI_Bcast/MPI_Reduce` | 基于通信器进行集体通信 |
 
-### 常见应用场景
+## 常见应用场景
 
 1. **主从模式**（Master-Slave）：
 
@@ -348,7 +350,7 @@ MPI_Comm_size(MPI_COMM_WORLD, &size); // 获取WORLD中的进程总数
 
 - 不同 rank 执行不同类型的任务（例如，rank 0 负责 I/O，其他 rank 负责计算）。
 
-### 注意事项
+## 注意事项
 
 - **通信器隔离**：在不同通信器中，同一物理进程的 rank 可能不同。
 - **集体操作要求**：集体通信（如 `MPI_Bcast`）必须被通信器内的所有进程调用。
@@ -372,9 +374,9 @@ MPI_Send(data, count, MPI_INT, 10, tag, MPI_COMM_WORLD); // 若size=4，rank 10�
 
 MPI（Message Passing Interface）是高性能计算中常用的消息传递标准，下面是几个核心通信 API 的功能和区别：
 
-### **1. 点对点通信**
+## **1. 点对点通信**
 
-#### `MPI_Send` 和 `MPI_Isend`
+### `MPI_Send` 和 `MPI_Isend`
 
 - **功能**：从一个进程向另一个进程发送消息
 - **区别**：
@@ -386,7 +388,7 @@ MPI（Message Passing Interface）是高性能计算中常用的消息传递标�
 
 立即返回控制权，允许发送进程继续执行其他任务。需配合 `MPI_Wait` 或 `MPI_Test` 确认完成。
 
-#### `MPI_Recv` 和 `MPI_Irecv`
+### `MPI_Recv` 和 `MPI_Irecv`
 
 - **功能**：从指定进程接收消息
 - **区别**：
@@ -398,9 +400,9 @@ MPI（Message Passing Interface）是高性能计算中常用的消息传递标�
 
 立即返回控制权，允许接收进程继续执行其他任务。需后续调用 `MPI_Wait` 或 `MPI_Test` 获取数据。
 
-### **2. 广播通信**
+## **2. 广播通信**
 
-#### `MPI_Bcast`
+### `MPI_Bcast`
 
 - **功能**：从一个根进程向所有进程（包括自身）发送相同的数据
 - **流程**：
@@ -413,9 +415,9 @@ MPI（Message Passing Interface）是高性能计算中常用的消息传递标�
 
 分发配置参数、初始条件或全局指令。
 
-### **3. 归约操作**
+## **3. 归约操作**
 
-#### `MPI_Reduce` 和 `MPI_Allreduce`
+### `MPI_Reduce` 和 `MPI_Allreduce`
 
 - **功能**：将所有进程的数据汇总并执行指定操作（如求和、求最大值等）
 - **区别**：
@@ -435,9 +437,9 @@ MPI（Message Passing Interface）是高性能计算中常用的消息传递标�
 
 `MPI_SUM`, `MPI_PROD`, `MPI_MAX`, `MPI_MIN`, 等。
 
-### **4. 数据分发与收集**
+## **4. 数据分发与收集**
 
-#### `MPI_Scatter` 和 `MPI_Gather`
+### `MPI_Scatter` 和 `MPI_Gather`
 
 - **功能**：
 - **`MPI_Scatter`**：
@@ -456,9 +458,9 @@ MPI（Message Passing Interface）是高性能计算中常用的消息传递标�
 
 数据量必须能被进程数整除，否则需使用 `MPI_Scatterv` 和 `MPI_Gatherv`。
 
-### **5. 同步操作**
+## **5. 同步操作**
 
-#### `MPI_Barrier`
+### `MPI_Barrier`
 
 - **功能**：
 
@@ -471,7 +473,7 @@ MPI（Message Passing Interface）是高性能计算中常用的消息传递标�
 
 过度使用会导致性能下降，应谨慎使用。
 
-### **总结对比表**
+## **总结对比表**
 
 |**API**|**通信模式**|**阻塞特性**|**数据流向**|**典型应用场景**|
 
@@ -493,7 +495,7 @@ MPI（Message Passing Interface）是高性能计算中常用的消息传递标�
 
 |`MPI_Barrier`|全局|阻塞|无数据传输，仅同步时间点|确保所有进程完成特定阶段|
 
-### **使用建议**
+## **使用建议**
 
 1. **阻塞 vs 非阻塞**：
 
@@ -518,9 +520,9 @@ MPI（Message Passing Interface）是高性能计算中常用的消息传递标�
 
 以下是 MPI 核心通信函数的参数详细说明，按功能分类整理：
 
-### **一、点对点通信函数**
+## **一、点对点通信函数**
 
-#### 1. `MPI_Send`
+### 1. `MPI_Send`
 
 ```c
 
@@ -542,7 +544,7 @@ MPI_Comm comm // 通信域
 
 ```
 
-#### 2. `MPI_Isend`
+### 2. `MPI_Isend`
 
 ```c
 
@@ -568,7 +570,7 @@ MPI_Request *request // 用于跟踪通信状态的请求句柄
 
 - **非阻塞特性**：返回时通信可能未完成，需用 `MPI_Wait` 或 `MPI_Test` 确认。
 
-#### 3. `MPI_Recv`
+### 3. `MPI_Recv`
 
 ```c
 
@@ -592,7 +594,7 @@ MPI_Status *status // 接收状态信息（包含实际接收的数据量等）
 
 ```
 
-#### 4. `MPI_Irecv`
+### 4. `MPI_Irecv`
 
 ```c
 
@@ -616,9 +618,9 @@ MPI_Request *request // 用于跟踪通信状态的请求句柄
 
 ```
 
-### **二、广播函数**
+## **二、广播函数**
 
-#### `MPI_Bcast`
+### `MPI_Bcast`
 
 ```c
 
@@ -642,9 +644,9 @@ MPI_Comm comm // 通信域
 
 根进程的数据被复制到所有进程（包括根进程自身）的接收缓冲区。
 
-### **三、归约函数**
+## **三、归约函数**
 
-#### 1. `MPI_Reduce`
+### 1. `MPI_Reduce`
 
 ```c
 
@@ -672,7 +674,7 @@ MPI_Comm comm // 通信域
 
 `MPI_SUM`, `MPI_PROD`, `MPI_MAX`, `MPI_MIN`, `MPI_MAXLOC`, `MPI_MINLOC` 等。
 
-#### 2. `MPI_Allreduce`
+### 2. `MPI_Allreduce`
 
 ```c
 
@@ -698,9 +700,9 @@ MPI_Comm comm // 通信域
 
 结果会广播到所有进程，相当于 `MPI_Reduce` + `MPI_Bcast` 的组合。
 
-### **四、数据分发与收集函数**
+## **四、数据分发与收集函数**
 
-#### 1. `MPI_Scatter`
+### 1. `MPI_Scatter`
 
 ```c
 
@@ -730,7 +732,7 @@ MPI_Comm comm // 通信域
 
 根进程的 `sendbuf` 被分割为 `sendcount` 大小的块，分发给各进程。
 
-#### 2. `MPI_Gather`
+### 2. `MPI_Gather`
 
 ```c
 
@@ -760,9 +762,9 @@ MPI_Comm comm // 通信域
 
 所有进程的 `sendbuf` 被收集到根进程的 `recvbuf` 中。
 
-### **五、同步函数**
+## **五、同步函数**
 
-#### `MPI_Barrier`
+### `MPI_Barrier`
 
 ```c
 
@@ -778,9 +780,9 @@ MPI_Comm comm // 通信域
 
 所有进程在此处阻塞，直到通信域内的所有进程都调用此函数，然后继续执行。
 
-### **六、关键参数详解**
+## **六、关键参数详解**
 
-#### 1. `MPI_Datatype`
+### 1. `MPI_Datatype`
 
 - 预定义类型：
 
@@ -790,13 +792,13 @@ MPI_Comm comm // 通信域
 
 通过 `MPI_Type_create_struct` 或 `MPI_Type_contiguous` 等函数创建。
 
-#### 2. `MPI_Comm`
+### 2. `MPI_Comm`
 
 - 通信域：
 
 最常用的是 `MPI_COMM_WORLD`（包含所有进程），也可通过 `MPI_Comm_split` 创建子通信域。
 
-#### 3. `MPI_Request`
+### 3. `MPI_Request`
 
 - 非阻塞通信句柄：
 
@@ -810,7 +812,7 @@ MPI_Comm comm // 通信域
 
 非阻塞检查通信是否完成。
 
-#### 4. `MPI_Status`
+### 4. `MPI_Status`
 
 - 接收状态信息：
 
@@ -820,9 +822,9 @@ MPI_Comm comm // 通信域
 - `status.MPI_TAG`：实际消息标签
 - `MPI_Get_count(&status, datatype, &count)`：获取实际接收的数据项数量
 
-### **七、示例代码片段**
+## **七、示例代码片段**
 
-#### 1. 点对点通信
+### 1. 点对点通信
 
 ```c
 
@@ -844,7 +846,7 @@ MPI_Recv(&received, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
 ```
 
-#### 2. 广播与归约
+### 2. 广播与归约
 
 ```c
 
@@ -866,7 +868,7 @@ MPI_Reduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
 ```
 
-### **八、注意事项**
+## **八、注意事项**
 
 1. **缓冲区大小匹配**：
 

@@ -1,7 +1,8 @@
 ---
 dateCreated: 2024-11-19
 dateModified: 2025-06-02
-banner: "[[../300-以影像之/Genshin/OST/沉玉沐芳 Jadeite Redolence.jpg]]"
+banner:
+category: Note
 ---
 # 讲义内容
 

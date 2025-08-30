@@ -5,6 +5,11 @@ tags:
 
 # 学习资源
 
+## 并行计算理论
+
+并行算法设计与性能优化 刘文志 著：对理论于传统并行优化方法有全面介绍。
+
+## AI sys
 相关资源推荐：https://zhuanlan.zhihu.com/p/20076957712
 
 AI 相关大学课程严忻恺：https://www.zhihu.com/people/yan-xin-kai-38/posts

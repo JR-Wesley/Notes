@@ -1,0 +1,26 @@
+views:
+  - type: table
+    name: 表格
+    filters:
+      and:
+        - file.ext == "md"
+    order:
+      - file.path
+      - file.name
+      - tags
+      - category
+      - banner
+    sort:
+      - property: file.path
+        direction: DESC
+      - property: banner
+        direction: ASC
+      - property: file.name
+        direction: ASC
+      - property: file.folder
+        direction: ASC
+    columnSize:
+      file.path: 627
+      note.tags: 179
+  - type: cards
+    name: 视图
