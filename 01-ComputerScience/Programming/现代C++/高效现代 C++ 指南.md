@@ -1,504 +1,40 @@
 ---
-dateCreated: 2023-01-15
-dateModified: 2025-07-27
+tags:
+  - CS
+category: Summary
 ---
 
-# Static
-
-在 C++ 中，`static` 关键字是一个多功能的关键字，用于控制变量、函数和类成员的**生命周期**、**作用域**和**访问权限**。以下是 `static` 在 C++ 中的详细用法和示例：
-
----
-
-## **一、静态局部变量**
-
-### **定义**
-
-在函数内部使用 `static` 修饰的变量称为**静态局部变量**。
-
-### **特点**
-
-1. **生命周期**：从程序开始到结束，变量的值在函数调用之间保留。
-2. **作用域**：仍局限于函数内部。
-3. **存储位置**：静态存储区（全局数据区），而非栈区。
-4. **初始化**：静态局部变量只初始化一次，后续调用函数时不再重新初始化。
-
-### **示例**
-
-```
-#include <iostream>
-using namespace std;
-
-void counter() {
-    static int count = 0; // 静态局部变量
-    count++;
-    cout << "Count: " << count << endl;
-}
-
-int main() {
-    for (int i = 0; i < 5; ++i) {
-        counter(); // 每次调用count的值保留
-    }
-    return 0;
-}
-```
-
-**输出**：
-
-深色版本
-
-```
-Count: 1
-Count: 2
-Count: 3
-Count: 4
-Count: 5
-```
-
-### **注意事项**
-
-- 如果不使用 `static`，普通局部变量每次函数调用后会被销毁，重新初始化为 0。
-- 静态局部变量适用于需要跨函数调用保留状态的场景（如计数器、缓存等）。
-
----
-
-## **二、静态全局变量**
-
-### **定义**
-
-在文件作用域（函数外部）使用 `static` 修饰的全局变量或函数称为**静态全局变量**和**静态函数**。
-
-### **特点**
-
-1. **作用域**：仅限于定义它的文件（内部链接），其他文件无法访问。
-2. **链接属性**：静态全局变量具有**内部链接**（Internal Linkage），而非外部链接（External Linkage）。
-3. **目的**：避免命名冲突，实现文件级别的封装。
-
-### **示例**
-
-
-```
-// file1.cpp
-#include <iostream>
-using namespace std;
-
-static int file1_var = 10; // 静态全局变量，仅在file1.cpp中可见
-
-void printFile1Var() {
-    cout << "file1_var: " << file1_var << endl;
-}
-
-// file2.cpp
-#include <iostream>
-using namespace std;
-
-int file2_var = 20; // 普通全局变量，具有外部链接
-
-extern int file1_var; // 错误！无法访问file1.cpp中的静态全局变量
-void printFile2Var() {
-    cout << "file2_var: " << file2_var << endl;
-}
-```
-
-### **注意事项**
-
-- 如果全局变量不需要跨文件访问，使用 `static` 可以避免命名冲突。
-- 静态函数的作用域同样限于定义它的文件。
-
----
-
-## **三、静态成员变量**
-
-### **定义**
-
-在类中使用 `static` 修饰的成员变量称为**静态成员变量**。
-
-### **特点**
-
-1. **归属**：属于类本身，而非类的某个对象。
-2. **共享性**：所有对象共享同一个静态成员变量。
-3. **访问权限**：受类的访问修饰符（`public`/`private`）控制。
-4. **定义与初始化**：必须在类外定义并初始化（C++17 之前）。
-
-### **示例**
-
-```
-#include <iostream>
-using namespace std;
-
-class Box {
-public:
-    static int objectCount; // 声明静态成员变量
-    Box() { objectCount++; } // 构造函数中增加计数
-    ~Box() { objectCount--; } // 析构函数中减少计数
-};
-
-// 类外定义并初始化静态成员变量
-int Box::objectCount = 0;
-
-int main() {
-    Box b1, b2;
-    cout << "Number of Box objects: " << Box::objectCount << endl; // 输出2
-    return 0;
-}
-```
-
-### **注意事项**
-
-- 静态成员变量不能直接通过对象访问（除非是 `public`），推荐通过 `类名::静态成员变量` 访问。
-- 静态成员变量的初始化必须在类外完成。
-
----
-
-## **四、静态成员函数**
-
-### **定义**
-
-在类中使用 `static` 修饰的成员函数称为**静态成员函数**。
-
-### **特点**
-
-1. **归属**：属于类本身，而非类的某个对象。
-2. **访问权限**：受类的访问修饰符控制。
-3. **限制**：
-    - 不能访问非静态成员变量（因为没有 `this` 指针）。
-    - 只能访问静态成员变量和其他静态成员函数。
-
-### **示例**
-
-```
-#include <iostream>
-using namespace std;
-
-class MathUtils {
-public:
-    static int add(int a, int b) { // 静态成员函数
-        return a + b;
-    }
-};
-
-int main() {
-    int result = MathUtils::add(3, 4); // 直接通过类名调用
-    cout << "Result: " << result << endl; // 输出7
-    return 0;
-}
-```
-
-### **注意事项**
-
-- 静态成员函数通常用于提供与类相关的工具函数（如数学计算、工厂方法等）。
-
----
-
-## **五、静态初始化顺序问题**
-
-### **问题描述**
-
-当多个翻译单元（源文件）中的静态变量相互依赖时，可能出现**静态初始化顺序问题**（Static Initialization Order Problem）。
-
-### **示例**
-
-cpp
-
-深色版本
-
-```
-// file1.cpp
-#include <iostream>
-using namespace std;
-
-static int globalVar1 = getGlobalVar2(); // 依赖globalVar2的初始化
-
-// file2.cpp
-#include <iostream>
-using namespace std;
-
-static int globalVar2 = 100; // 初始化后才被globalVar1使用
-
-int getGlobalVar2() {
-    return globalVar2;
-}
-```
-
-**问题**：如果 `globalVar1` 在 `globalVar2` 初始化之前使用，会导致未定义行为。
-
-### **解决方案**
-
-- 使用函数返回静态局部变量（Meyers' Singleton 模式）：
-
-    cpp
-
-    深色版本
-
-- ```
-    int& getGlobalVar2() {
-        static int globalVar2 = 100; // 延迟初始化
-        return globalVar2;
-    }
-    ```
-
----
-
-## **六、总结对比**
-
-|用法|作用域|生命周期|存储位置|典型用途|
-|---|---|---|---|---|
-|静态局部变量|函数内部|程序运行期间|静态存储区|跨调用保留状态|
-|静态全局变量|定义文件|程序运行期间|静态存储区|文件级封装，避免命名冲突|
-|静态成员变量|类|程序运行期间|静态存储区|类级别的共享数据|
-|静态成员函数|类|无（函数代码）|代码区|操作静态成员或类相关功能|
-
----
-
-## **七、关键点**
-
-1. **静态局部变量**：生命周期长，作用域小。
-2. **静态全局变量**：作用域小，生命周期长。
-3. **静态成员变量/函数**：属于类，共享性高。
-4. **初始化顺序问题**：跨文件依赖时需谨慎处理。
-
-通过合理使用 `static`，可以有效管理资源、避免命名冲突，并提高代码的封装性和可维护性。
-
-# 引用
-
-在 C++ 中，**左值（lvalue）**和**右值（rvalue）**是表达式的分类，它们决定了对象的生命周期、可寻址性以及如何参与赋值和资源管理。结合引用类型（`&` 和 `&&`），它们是现代 C++ 中实现**移动语义**。
-- **和**：
-    - 可以被多次使用。
-    - 生命周期超出当前表达式。
-    - 示例：
-
-        cpp
-
-        深色版本
-
-- - ```
-        int x = 10;          // x 是左值
-        int* p = &x;         // 可以取地址
-        x = 20;              // 左值可以赋值
-        int arr[3];          // arr[0] 是左值
-        int& ref = x;        // 左值引用
-        ```
-        
-
-
-
-
-
-## **是表达式的分类，它们决定了对象的生命周期、可寻址性以及如何参与赋值和资源管理。结合引用类型（`&` 和 `&x`），它们是现代 C++ 中实现**
-
-- **和**：临时存在的值，通常是字面量、临时对象或表达式结果，没有持久内存地址，不能取地址。
-- **是表达式的分类，它们决定了对象的生命周期、可寻址性以及如何参与赋值和资源管理。结合引用类型（`&10` 和 `x = 10`），它们是现代 C++ 中实现**：
-    - 生命周期仅限于当前表达式。
-    - 通常不可修改（除非通过右值引用）。
-    - 示例：
-
-
-- - ```
-        int y = 42;          // 42 是右值（字面量）
-        int z = x + 5;       // x + 5 是右值（临时结果）
-        std::string s = "hello"; // "hello" 是右值（临时字符串）
-        ```
-        
-
-
-
-
-
-## **完美转发**
-
-|特性|左值（lvalue）|右值（rvalue）|
-|---|---|---|
-|是否可取地址|✅ 可以（如 `10 = x`）|❌ 不可以（如 `&` 非法）|
-|是否可赋值|✅ 可以（如 `&&`）|❌ 不可以（如 `T&` 非法）|
-|生命周期|持久（超出当前表达式）|临时（仅当前表达式）|
-|典型例子|变量、数组元素、解引用指针|字面量、临时对象、表达式结果|
-
----
-
-# **1. 左值（lvalue）与右值（rvalue）**
-
-## **左值（lvalue）**
-
-- **定义**：只能绑定到**特点**。
-- **右值（rvalue）**：
-    - 避免拷贝，直接操作原始对象。
-    - 修改左值的内容。
-- **定义**：
-
-
-- ```
-    int x = 10;
-    int& ref = x;       // 左值引用绑定左值
-    ref = 20;           // 修改 x 的值
-    ```
-
-## **特点**
-
-- **左值 vs 右值对比表**：只能绑定到**2. 引用类型：`T&&` 和 `std::move`**或通过 `T&` 转换的左值。
-- **左值引用（lvalue Reference, `int x = 10; int& ref = x;`）**：
-    - 实现**绑定目标**（资源转移，而非拷贝）。
-    - 支持**左值**（保留参数的值类别）。
-- **用途**：
-
-    cpp
-
-    深色版本
-
-- ```
-    int&& rref = 42;           // 右值引用绑定右值
-    rref = 50;                 // 修改 rref 的值
-    std::vector<int> v1 = {1,2,3};
-    std::vector<int> v2 = std::move(v1); // 将 v1 转为右值，触发移动构造
-    ```
-
-## **示例**
-
-|引用类型|可绑定对象|示例|
-|---|---|---|
-|`const T&`|左值|`int&& temp = 10; const int& cref = temp;`|
-|`T&&`|左值或右值（延长临时对象寿命）|`int&& rref = x + 5;`|
-|`std::move`|右值|`std::forward`|
-
----
-
-# **右值引用（rvalue Reference, `std::vector`）**
-
-## **绑定目标**
-
-通过右值引用实现资源转移，避免深拷贝开销：
-
-cpp
-
-深色版本
-
-```
-class Buffer {
-public:
-    Buffer(Buffer&& other) noexcept {  // 移动构造函数
-        data_ = other.data_;           // 直接“窃取”资源
-        other.data_ = nullptr;         // 释放原资源所有权
-    }
-private:
-    int* data_;
-};
-```
-
-## **右值**
-
-将左值显式转换为右值，触发移动语义：
-
-cpp
-
-深色版本
-
-```
-std::vector<int> v1 = {1,2,3};
-std::vector<int> v2 = std::move(v1);  // v1 被“移动”，v2 接管资源
-```
-
----
-
-# **用途**
-
-## **移动语义**
-
-通过右值引用和 `emplace_back` 保留参数的值类别：
-
-cpp
-
-深色版本
-
-```
-template <typename T>
-void wrapper(T&& arg) {
-    target(std::forward<T>(arg));  // 保持 arg 的左/右值属性
-}
-```
-
-## **完美转发**
-
-cpp
-
-深色版本
-
-```
-template <typename T, typename... Args>
-std::unique_ptr<T> create(Args&&... args) {
-    return std::make_unique<T>(std::forward<Args>(args)...);
-}
-```
-
----
-
-# **示例**
-
-## **绑定规则总结**
-
-- **3. 移动语义与右值引用**：直接构造元素，避免临时对象。
-- **移动构造函数**：在容器扩容时通过移动元素减少拷贝。
-
-## **`std::move_iterator` 的作用**
-
-- **4. 完美转发与右值引用**：`std::unique_ptr` 和 `std::shared_ptr` 利用移动语义实现所有权转移。
-- **模板中的引用折叠**：通过右值引用实现资源接管。
-
-## **示例：工厂函数**
-
-根据参数类型选择不同的函数：
-
-cpp
-
-深色版本
-
-```
-void process(int& lval) { std::cout << "Lvalue\n"; }
-void process(int&& rval) { std::cout << "Rvalue\n"; }
-
-int main() {
-    int x = 10;
-    process(x);      // 调用 process(int&)
-    process(20);     // 调用 process(int&&)
-}
-```
-
----
-
-# **5. 典型应用场景**
-
-1. **1. 容器操作优化**
-    右值引用变量有名称和地址，因此它本身是左值：
-
-    cpp
-
-    深色版本
-
-2. ```
-    int&& rref = 42;
-    int& lref = rref;  // 合法！rref 是左值
-    ```
-
-3. **`std::move` 的 `std::move`**
-    `std::unique_ptr` 仅用于显式将左值转为右值，通常在资源转移时使用，而非随意调用。
-    
-4. **`&`**
-    右值引用常与智能指针（如 `&&`）结合，确保资源安全。
-    
-5. **2. 资源管理**
-    右值引用绑定的临时对象生命周期仅限于当前表达式，需谨慎处理。
-
----
-
-# **智能指针**
-
-|概念|核心要点|
-|---|---|
-|左值（lvalue）|有持久内存地址，可取地址，可赋值，如变量、数组元素。|
-|右值（rvalue）|临时值，无持久地址，如字面量、表达式结果，需通过右值引用绑定。|
-|左值引用 `std::vector`|绑定左值，用于避免拷贝和修改原始对象。|
-|右值引用 `std::forward`|绑定右值，实现移动语义和完美转发，提升性能。|
-|移动语义|通过右值引用转移资源，避免深拷贝，如 `someStruct<42ul, 'e', GREEN> theStruct;` 的移动构造函数。|
-|完美转发|通过 `someStruct` 保留参数的值类别，常用于模板函数和工厂函数。|
-
-通过合理使用左值、右值及引用类型，可以显著提升 C++ 程序的性能和安全性，尤其是在处理大型对象、资源管理及模板编程时。
+本系列旨在梳理现代 C++ 的关键特性，构建从 C 基础开始的系统C++高效编程范式。
+
+> [!note] 参考
+> - <a href="https://cntransgroup.github.io/EffectiveModernCppChinese/Introduction.html">高效现代 C++ 中文 </a>：现代 C++ 高效编程进阶书，能帮助掌握高效编程的必要范式，需要对 C++ 基础有了解。
+> 	- 【【Effective Modern C++】啃书第一章：类型推导】 https://www.bilibili.com/video/BV1Gg4y1p71w/?share_source=copy_web&vd_source=fd37be71d17f708cc53476cbd29e590f 一个博主对该书的详细个人解读
+> - <a href="https://learn.microsoft.com/zh-cn/cpp/cpp/welcome-back-to-cpp-modern-cpp?view=msvc-170">微软现代 C++ 中文 </a>
+> - <a href="https://en.cppreference.com/w/cpp/23.html"> Cpp reference 23 </a> C++ 标准，更新至 23
+> - C++ Primer 5ed: 作为一本 C++11 的字典式的教科书，可以反复查阅，可能对一些底层原理没有深入的讲解。
+
+我总结的现代 C++ 一些关键的点，它们是现代C++高效和安全的基础：
+
+- 强类型，类型转换，const
+- 引用、移动语义、值语义
+- RAII，指针、对象对资源的管理
+- STL，容器、算法库，lambda表达式
+- 封装继承多态的相关基础
+- 一些语法增强。。。
+- 并发编程（不限于C++）
+
+# C++ Primer 导读
+
+- 第 1 章：讲解基本的程序执行和控制流。
+	- **建议**：在实践中逐渐熟悉程序的编译、调试。
+- 第 2 章：介绍变量和基本类型。
+	- **建议**：使用 `const constexpr auto using nullptr` 等，同时需要避免类型窄化转换，`const`、引用有很多使用方法需要额外掌握。
+- 第 3 章：介绍字符串、`vector`、数组。从这里开始，就要注意现代 C++ 的理念是**用资源管理代替裸指针，用高级抽象代替低级操作**，应该避免一些 C 风格的实现，除非与 C 接口交互。其实也应该避免 `new[]`/`delete[]`、`malloc`/`free`。
+	- **建议**：字符串用 `std::string` 和 `std::string_view`。
+	- **建议**：STL 的 `vector` 用于动态数组，`array` 用于静态数组用于替代 C 的数组。原始内存管理用 `std::unique_ptr<T[]>` 或 `std::shared_ptr<T[]>`。
+	- **建议**：迭代器仍然是一个基础概念，它是 STL 容器和算法的基础，但是它不再是日常编程的首选，现代 C++ 推荐使用 `for range`、函数式风格的算法 +`lambda`、C++20 引入的 `Ranges`。
+- 第 4、5 章：回顾表达式和语句，C++ 保留了 C 大部分语法特性，但是在语义和表达力上有了很多增强，有一些新引入的特性可以在后面具体用到时学习。
+	- **建议**：优先使用 `{}` 初始化，避免 `() =` 混淆。
 
 # 友元
 
@@ -506,7 +42,7 @@ int main() {
 
 ## 友元的主要形式
 
-1. **文件/网络资源管理**：一个非成员函数被声明为某个类的友元后，可以访问该类的私有和保护成员。
+1. **`p`**：一个非成员函数被声明为某个类的友元后，可以访问该类的私有和保护成员。
 
 ```cpp
 class MyClass {
@@ -525,7 +61,7 @@ void printData(MyClass obj) {
 }
 ```
 
-2. **3. 函数重载**：一个类被声明为另一个类的友元后，该类的所有成员函数都能访问对方类的私有和保护成员。
+2. **2. 资源管理**：一个类被声明为另一个类的友元后，该类的所有成员函数都能访问对方类的私有和保护成员。
 
     ```cpp
     class A {
@@ -629,7 +165,7 @@ inline MyClass myGlobalObj; // 即 使 被 多 个CPP文 件 包 含 也OK
 
 需要注意的是，编写时在同一个代码文件中要保证定义对象的唯一性。
 
-**6. 常见误区与注意事项**
+**智能指针**
 
 按照一次定义原则，一个变量或者实体只能出现一个编译单元内，除非这个变量或者实体使用了 inline 进行修饰。如下面的代码。如果在一个类中定义了一个静态成员变量，然后在类的外部进行初始化，本身符合一次定义原则。但是如果在多个 CPP 文件同时包含了该头文件，在链接时编译器会报错。
 
@@ -662,7 +198,7 @@ std::string MyClass::msg{"OK"};
 
 这样类定义包含在多个代码文件的时候的就不会有链接错误了吧？实际上，错误依旧存在。那么在 C++17 以前，有哪些解决方法呢?
 
-**右值引用变量本身是左值**
+**文件/网络资源管理**
 
 实际上，根据不同的使用场景，可以有不同的方案。
 
@@ -718,7 +254,7 @@ T myGlobalMsg{"OK"}
 
 从上面可以看到，及时没有 C++17 在实际编程时也能解决遇到的问题。但是当跳出来再看这些方法的时候，就会注意到在实际使用时会存在一些问题。如上面的方法会导致签名重载、可读性变差、全局变量初始化延迟等一些问题。变量初始化延迟也会和我们固有的认知产生矛盾。因为我们定义一个变量的时候默认就已经被立即初始化了。
 
-**`sizeof` 的使用场景**
+**3. 函数重载**
 
 C++17 中内联变量的使用可以帮助我们解决实际编程中的问题而又不失优雅。使用 inline 后，即使定义的全局对象被多个文件引用也只会有一个全局对象。如下面的代码，就不会出现之前的链接问题。
 
@@ -747,7 +283,7 @@ inline MyData MyData::max{0};
 
 复制
 
-**避免混用裸指针与智能指针**
+**6. 常见误区与注意事项**
 
 从 C++17 开始，如果在编程时继续使用 constexpr static 修饰变量，实际上编译器就会默认是内联变量。如下面定义的代码:
 
@@ -769,7 +305,7 @@ struct MY_DATA {
 
 复制
 
-**生命周期管理**
+**右值引用变量本身是左值**
 
 在支持 C++17 的编译器编程时使用 thread_local 可以给每一个线程定义一个属于自己的内联变量。如下面的代码：
 
@@ -904,15 +440,15 @@ map 和 set 两种容器的底层结构都是红黑树，所以容器中不会�
 
 C++20 都支持虚函数的 constexpr 了，我打算用三篇读文章讲清楚编译期常量和 constexpr 这个东西和编译期常量的关系，即为什么需要他来辅助解决这个问题。最后帮助读者在实际编码过程中能够有意识地去运用他们，这才是终极目标。这篇文章中会讲到隐藏在日常编程中的各种编译期常量，以及他们存在的意义。
 
-## **7. 总结**
+## **`p` 的使用场景**
 
 想要用编译期常量就要首先知道它们是什么，一般出现在哪里和运行期常量有什么区别，因此我打算用第一篇文章重点分析编译期常量以及使用他们有什么好处。
 
-编译期常量 (Compile-time constants) 是 C++ 中相当重要的一部分，整体而言他们有助提高**友元函数**，并提高程序的性能。这篇文章中出现的编译期常量都是在 C++11 之前就可以使用的，constexpr 是 C++11 的新特性，所以各位不要有心理包袱。
+编译期常量 (Compile-time constants) 是 C++ 中相当重要的一部分，整体而言他们有助提高**避免混用裸指针与智能指针**，并提高程序的性能。这篇文章中出现的编译期常量都是在 C++11 之前就可以使用的，constexpr 是 C++11 的新特性，所以各位不要有心理包袱。
 
 总有些东西是编译器要求编译期间就要确定的，除了变量的类型外，最频繁出现的地方就是数组、switch 的 case 标签和模板了。
 
-### **友元类**
+### **生命周期管理**
 
 如果我们想要创建一个不是动态分配内存的数组，那么我们就必须给他设定一个 size——这个 size 必须在编译期间就知道，因此静态数组的大小是编译期常量。
 
@@ -929,7 +465,7 @@ C++20 都支持虚函数的 constexpr 了，我打算用三篇读文章讲清楚
  char charArray[] = "Ich liebe dich.";
 ```
 
-### **1 内联变量的缘起**
+### **7. 总结**
 
 除了类型以外，数字也可以作为模板的参数。这些数值变量包括 int，long，short，bool，char 和弱枚举 enum 等。
 
@@ -942,7 +478,7 @@ C++20 都支持虚函数的 constexpr 了，我打算用三篇读文章讲清楚
  someStruct<42ul, 'e', GREEN> theStruct;
 ```
 
-### **编程秘籍**
+### **友元函数**
 
 既然编译器在初始化模板的时候必须知道模板的类型，那么这些模板的参数也必须是编译期常量。
 
@@ -966,11 +502,11 @@ switch 语句的分支判断也必须是编译期常量，和上边模板的情�
  }
 ```
 
-## **2 内联变量的使用**
+## **友元类**
 
 如果编译期常量的使用方法只有上边呈现的几种，那你大概会感觉有些无聊了。事实上，关于编译期常量我们能做的事情还有许多，他们能帮助我们去实现更高效的程序。
 
-### **3 Constexpr Static 和 inline**
+### **1 内联变量的缘起**
 
 编译期常量能让我们写出更有逻辑的代码——在编译期就体现出逻辑。比如矩阵相乘：
 
@@ -1015,7 +551,7 @@ switch 语句的分支判断也必须是编译期常量，和上边模板的情�
 
 在这个例子中，编译器本身就阻止了错误的发生，还有很多其他的例子——更复杂的例子在编译期间使用模板。从 C++11 后有一堆这样的模板都定义在了标准库 STL 中，这个之后再说。所以大家不要觉得上边这种做法是脱裤子放屁，相当于我们把运行时的条件判断交给了编译期来做，前提就是矩阵的类型必须是编译期常量。你可能会问，除了像上边直接用常数来实例化矩阵，有没有其他方法来告诉编译器这是个编译期常量呢？请往下看。
 
-### **4 内联变量和 thread_local**
+### **编程秘籍**
 
 编译器能根据编译期常量来实现各种不同的优化。比如，如果在一个 if 判断语句中，其中一个条件是编译期常量，编译器知道在这个判断句中一定会走某一条路，那么编译器就会把这个 if 语句优化掉，留下只会走的那一条路。
 
@@ -1032,11 +568,11 @@ switch 语句的分支判断也必须是编译期常量，和上边模板的情�
 - someStruct 结构中包含一个‘unsigned long’，一个‘char’，和一个‘color’，尽管如此他的实例对象却只占用一个 byte 左右的空间。
 - 矩阵相乘的时候，我们在矩阵中也没必要花费空间去存储矩阵的行数和列数了。
 
-**从编译期常量谈起**
+**2 内联变量的使用**
 
 这一篇文章只讲到了编译期常量，为了使编译器在编译期间计算出常量，我们在 C++11 标准之前和之后都采用了不同的方法去实现它。在第二篇文章中，我会将主要精力放在 C++11 标准之前的编译期计算的问题，通过展现一系列蹩脚的方法来引出我们的主角——constexpr。
 
-在第一篇文章中，我把主要精力放在了什么是编译期常量，以及编译期常量有什么作用上。在这一篇文章中，我将更详细地介绍**程序的正确性** calculations），通过了解这些比较原始的方法，我们能够更好地理解 C++11 标准为编译期运算方面所做的工作。
+在第一篇文章中，我把主要精力放在了什么是编译期常量，以及编译期常量有什么作用上。在这一篇文章中，我将更详细地介绍**3 Constexpr Static 和 inline** calculations），通过了解这些比较原始的方法，我们能够更好地理解 C++11 标准为编译期运算方面所做的工作。
 
 作者：小天狼星不来客
 
@@ -1046,11 +582,11 @@ switch 语句的分支判断也必须是编译期常量，和上边模板的情�
 
 著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
 
-## **数组中的编译期常量**
+## **4 内联变量和 thread_local**
 
-在我们的经验中，大部分编译期常量的来源还是字面常量（literals）以及枚举量（enumerations）。比如上一篇文章我写的 `p` 中 `p` 的三个模板参数都是常量——分别是整形字面量、char 型字面量和枚举常量。
+在我们的经验中，大部分编译期常量的来源还是字面常量（literals）以及枚举量（enumerations）。比如上一篇文章我写的 `p` 中 `switch` 的三个模板参数都是常量——分别是整形字面量、char 型字面量和枚举常量。
 
-比较典型的编译期常量的来源就是内置的 `p` 操作符。编译器必须在编译期就知道一个变量占据了多少内存，所以它的值也可以被用作编译期常量。
+比较典型的编译期常量的来源就是内置的 `sizeof(void*) == 4` 操作符。编译器必须在编译期就知道一个变量占据了多少内存，所以它的值也可以被用作编译期常量。
 
 ```cpp
  class SomeClass {
@@ -1064,7 +600,7 @@ switch 语句的分支判断也必须是编译期常量，和上边模板的情�
  unsigned char buffer[sizeof(i)] = {};   //常量表达式，在编译期计算
 ```
 
-另一个经常出现编译期常量最常出现的地方就是**模板中的编译期常量**（static class member variables），而枚举常量常常作为它的替换也出现在类中。
+另一个经常出现编译期常量最常出现的地方就是**从编译期常量谈起**（static class member variables），而枚举常量常常作为它的替换也出现在类中。
 
 ```cpp
  struct SomeStruct{
@@ -1075,7 +611,7 @@ switch 语句的分支判断也必须是编译期常量，和上边模板的情�
  };
 ```
 
-与编译期常量对应的概念**Case labels**R} 的值，即 `switch` 此时变成了编译期常量表达式。
+与编译期常量对应的概念**程序的正确性**R} 的值，即 `sizeof` 此时变成了编译期常量表达式。
 
 ```cpp
 const int i = 100;        
@@ -1086,9 +622,9 @@ const int p = k * 200;    //是编译期常量表达式，由下边数组确定
 unsigned char helper[p] = {}; //要求p是编译期常量表达式，在编译期就需确定
 ```
 
-## **使用编译期常量有什么好处**
+## **数组中的编译期常量**
 
-从上边的例子可以看出，有时我们可以**更安全的程序**可以做各种各样的编译期运算，实现在编译期就确定一个常量表达式的目的。事实上，由最简单的运算表达式出发，我们可以做到各种各样的编译期运算。比如非常简单：
+从上边的例子可以看出，有时我们可以**模板中的编译期常量**可以做各种各样的编译期运算，实现在编译期就确定一个常量表达式的目的。事实上，由最简单的运算表达式出发，我们可以做到各种各样的编译期运算。比如非常简单：
 
 ```cpp
  int const doubleCount = 10;
@@ -1108,7 +644,7 @@ unsigned char helper[p] = {}; //要求p是编译期常量表达式，在编译�
  }
 ```
 
-上边的代码并没有什么实际的意义，但是我还是想解释一下。在上一篇文章我们解释过了，`sizeof(void*) == 4` 语句的每一个 case label 必须是编译期常量，表达式 `sizeof` 的意思是当前系统是不是一个 32 位系统，这个表达式由于 `0` 的原因是常量表达式，判断结果作为三元运算符的第一个参数，最后的 case label 由当前系统的位数分别是 "some" 的 "s"（是 32 位系统）或 "o"（不是 32 位系统）。返回的两个字符串分别是我的两个学校的城市。
+上边的代码并没有什么实际的意义，但是我还是想解释一下。在上一篇文章我们解释过了，`0` 语句的每一个 case label 必须是编译期常量，表达式 `1` 的意思是当前系统是不是一个 32 位系统，这个表达式由于 `constexpr` 的原因是常量表达式，判断结果作为三元运算符的第一个参数，最后的 case label 由当前系统的位数分别是 "some" 的 "s"（是 32 位系统）或 "o"（不是 32 位系统）。返回的两个字符串分别是我的两个学校的城市。
 
 尽管上边的例子是无意义的，我们仍然可以看出由这种方法写出的常量表达式很难读。我们可以改进可读性，将上边例子改写成：
 
@@ -1125,9 +661,9 @@ unsigned char helper[p] = {}; //要求p是编译期常量表达式，在编译�
  }
 ```
 
-## **编译优化**
+## **Case labels**
 
-在上篇文章我们提到，实例化模板的参数必须为编译期常数——换句话说编译器会在编译期计算**结语**。回忆一下我们可以利用静态成员常量作为编译期常量，我们就可以利用以上特性去把函数模板当成函数来计算，其实这就是模板元编程（template meta programming）方法的雏形。
+在上篇文章我们提到，实例化模板的参数必须为编译期常数——换句话说编译器会在编译期计算**使用编译期常量有什么好处**。回忆一下我们可以利用静态成员常量作为编译期常量，我们就可以利用以上特性去把函数模板当成函数来计算，其实这就是模板元编程（template meta programming）方法的雏形。
 
 ```cpp
  template <unsigned N> 
@@ -1149,11 +685,11 @@ unsigned char helper[p] = {}; //要求p是编译期常量表达式，在编译�
  };
 ```
 
-最后一个模板比较有意思，仔细看代码就会发现，它**编译期常量是如何产生的。**之所以要把编译期常量了解的这么透彻，是因为他是编译期运算的基础。在这篇文章中还会讲解我们在**C++11 标准前**去实例化参数为 N 的的模板，递归终止在模板参数为 `1` 和 `constexpr` 时，就是我们的第二和第三个模板所直接返回的编译期常量。
+最后一个模板比较有意思，仔细看代码就会发现，它**更安全的程序**LINE_CODE_BLOCK_PLACEHOLDER} 和 `constexpr` 时，就是我们的第二和第三个模板所直接返回的编译期常量。
 
-这种模板元函数看起来啰啰嗦嗦的，但是在 C++11 出现前，它是**之所以要把编译期常量了解的这么透彻，是因为他是编译期运算的基础。在这篇文章中还会讲解我们在**运算的工作都是在为运行期减少负担。
+这种模板元函数看起来啰啰嗦嗦的，但是在 C++11 出现前，它是**编译优化**运算的工作都是在为运行期减少负担。
 
-在 C++11 和 C++14 中，一方面，可变参数模板的出现让更为复杂的模板元编程成为了可能；另一方面，`constexpr` 的出现也完全改变了我们使用编译期常量的思路。在下一篇文章中，我们会着重介绍 {INLINE_CODE_BLOCK_PLACEHOLDER} 这个实战利器。
+在 C++11 和 C++14 中，一方面，可变参数模板的出现让更为复杂的模板元编程成为了可能；另一方面，{INLINE_CODE_BLOCK_PLACEHOLDER} 的出现也完全改变了我们使用编译期常量的思路。在下一篇文章中，我们会着重介绍 {INLINE_CODE_BLOCK_PLACEHOLDER} 这个实战利器。
 
 # C++ Final 关键字
 
@@ -1223,12 +759,9 @@ C::func() 是否声明为 override 没关系，一旦一个虚函数被声明为
 
 ### 1.1 Program
 
-- C++ is a **之所以要把编译期常量了解的这么透彻，是因为他是编译期运算的基础。在这篇文章中还会讲解我们在**: For a program to run, its source text has to be processed by a compiler, producing
-  object files, which are combined by a linker yielding an executable program.
-- An executable program is created for a specific hardware/system combination; it is **编译期常量都从哪里来？**. we usually mean **静态类成员变量**; that is, the source code can be successfully compiled and run on a variety of systems.
-- The ISO C++ standard defines two kinds of entities: **编译期常量表达式（compile-time constant expression）**指的是，值不会改变且在编译期就可以计算出来的表达式。其实更好理解的说法是，**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**。需要注意的是，并不是所有的常量表达式都是编译期常量表达式，只有我们**要求编译器计算出来时**(built-in types and loops) and loops.
-- The **指的是，值不会改变且在编译期就可以计算出来的表达式。其实更好理解的说法是，**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**。需要注意的是，并不是所有的常量表达式都是编译期常量表达式，只有我们** are perfectly ordinary C++ code provided by every C++ implementation.
-- C++ is a **任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**. the type of every entity must be known to the compiler at its point of use. The type of an object determines the set of operations applicable to it.
+- C++ is a **结语**: For a program to run, its source text has to be processed by a compiler, producing object files, which are combined by a linker yielding an executable program.
+- An executable program is created for a specific hardware/system combination; it is **编译期常量是如何产生的。**之所以要把编译期常量了解的这么透彻，是因为他是编译期运算的基础。在这篇文章中还会讲解我们在**C++11 标准前**CEHOLDER}; that is, the source code can be successfully compiled and run on a variety of systems.
+- The ISO C++ standard defines two kinds of entities: **之所以要把编译期常量了解的这么透彻，是因为他是编译期运算的基础。在这篇文章中还会讲解我们在**STRONG_PLACEHOLDER}. the type of every entity must be known to the compiler at its point of use. The type of an object determines the set of operations applicable to it.
 
 ### 1.2 Types, Variables, and Arithmetic
 
@@ -1236,12 +769,10 @@ A declaration is a statement that introduces a name into the program. It specifi
 
 entity:
 
-- A **指的是，值不会改变且在编译期就可以计算出来的表达式。其实更好理解的说法是，**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**。需要注意的是，并不是所有的常量表达式都是编译期常量表达式，只有我们** defines a set of possible values and a set of operations (for an object).
-- An **任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式** is some memory that holds a value of some type.
-- A **任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式** is a set of bits interpreted according to a type.
-- A **编译期运算** is a named object.
-
-We use ***auto*** where we don’t have a specific reason to mention the type explicitly.(The definition is in a large scope where we want to make the type clearly visible to readers of our code.We want to be explicit about a variable’s range or precision)
+- A **之所以要把编译期常量了解的这么透彻，是因为他是编译期运算的基础。在这篇文章中还会讲解我们在**le values and a set of operations (for an object).
+- An **之所以要把编译期常量了解的这么透彻，是因为他是编译期运算的基础。在这篇文章中还会讲解我们在** is some memory that holds a value of some type.
+- A **之所以要把编译期常量了解的这么透彻，是因为他是编译期运算的基础。在这篇文章中还会讲解我们在** is a set of bits interpreted according to a type.
+- A **编译期常量都从哪里来？** definition is in a large scope where we want to make the type clearly visible to readers of our code.We want to be explicit about a variable’s range or precision)
 
 avoid redundancy and writing long type names & especially important in generic
 
@@ -1286,7 +817,7 @@ constexpr double square(double x){return x*x;}
 
 To be constexpr, a function must be rather simple: just a return-statement computing a value.
 
-**通过某些手段去“胁迫”编译器，把运算任务从运行时提前到编译期** We allow a constexpr function to be called with non-constant-expression arguments in contexts that do not require constant expressions, so that we don’t have to define essentially the same function twice: once for constant expressions and once for variables.
+**静态类成员变量**nction to be called with non-constant-expression arguments in contexts that do not require constant expressions, so that we don’t have to define essentially the same function twice: once for constant expressions and once for variables.
 
 ### 1.5 Pointers, Arrays, and References
 
@@ -1398,16 +929,16 @@ A container is an object holding a collection of elements.
 
 Vector’s constructor allocates some memory on the free store (also called the heap or dynamic store) using the new operator. The destructor cleans up by freeing that memory using the delete operator.
 
-- The constructor allocates the elements and initializes the Vector members appropriately. The destructor deallocates the elements. This **使用模板进行编译期运算** model is very commonly used to manage data that can vary in size during the lifetime of an object.
-- The technique of acquiring resources in a constructor and releasing them in a destructor, known as **作为实例化模板参数的常量表达式** or RAII, allows us to eliminate “naked new operations,” that is, to avoid allocations in general code and keep them buried inside the implementation of well-behaved abstractions.
+- The constructor allocates the elements and initializes the Vector members appropriately. The destructor deallocates the elements. This **编译期常量表达式（compile-time constant expression）**指的是，值不会改变且在编译期就可以计算出来的表达式。其实更好理解的说法是，**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**。需要注意的是，并不是所有的常量表达式都是编译期常量表达式，只有我们**要求编译器计算出来时** model is very commonly used to manage data that can vary in size during the lifetime of an object.
+- The technique of acquiring resources in a constructor and releasing them in a destructor, known as **指的是，值不会改变且在编译期就可以计算出来的表达式。其实更好理解的说法是，**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**。需要注意的是，并不是所有的常量表达式都是编译期常量表达式，只有我们**liminate “naked new operations,” that is, to avoid allocations in general code and keep them buried inside the implementation of well-behaved abstractions.
 
-The **递归式地** used to define the initializer-list constructor is a standard-library type known to the compiler: when we use a {}-list, such as {1,2,3,4}, the compiler will create an object of type initializer_list to give to the program.
+The **任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式** used to define the initializer-list constructor is a standard-library type known to the compiler: when we use a {}-list, such as {1,2,3,4}, the compiler will create an object of type initializer_list to give to the program.
 
 ### 4.2 Abstract Types
 
 concrete types -representation is part of their definition
 
-abstract type - insulates a **唯一** from **结论** details. To do that, we decouple the interface from the representation and give up genuine local variables.
+abstract type - insulates a **指的是，值不会改变且在编译期就可以计算出来的表达式。其实更好理解的说法是，**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**。需要注意的是，并不是所有的常量表达式都是编译期常量表达式，只有我们** from **任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式** decouple the interface from the representation and give up genuine local variables.
 
 ```c++
 class Container {
@@ -1427,11 +958,11 @@ void use(Container& c)
 // use Container interface without any idea of                   
 ```
 
-The word **compiled language** means “may be redefined later in a class derived from this one.” Unsurprisingly, a function declared virtual is called a virtual function. A class derived from Container provides an implementation for the Container interface. The **not portable** syntax says the function is pure virtual; that is, some class derived from Container must define the function.Thus, it is not possible to define an object that is just a Container; a Container can only serve as the interface to a class that implements its operator[]()and size() functions. A class with a pure virtual function is called an abstract class.
+The word **任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式** means “may be redefined later in a class derived from this one.” Unsurprisingly, a function declared virtual is called a virtual function. A class derived from Container provides an implementation for the Container interface. The **指的是，值不会改变且在编译期就可以计算出来的表达式。其实更好理解的说法是，**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**。需要注意的是，并不是所有的常量表达式都是编译期常量表达式，只有我们** syntax says the function is pure virtual; that is, some class derived from Container must define the function.Thus, it is not possible to define an object that is just a Container; a Container can only serve as the interface to a class that implements its operator[]()and size() functions. A class with a pure virtual function is called an abstract class.
 
-A class provides the interface is called **portability of source code**.
+A class provides the interface is called **任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**.
 
-abstract classes, Container does not have a constructor but have **Core language features** because they tend to be manipulated through references or pointers.
+abstract classes, Container does not have a constructor but have **任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式** because they tend to be manipulated through references or pointers.
 
 ```c++
 class Vector_container : public Container { // concrete class Vector_container implements Container
@@ -1461,13 +992,13 @@ The implementation of the caller needs only to know the location of the pointer 
 
 ### 4.4 Class Hierarchies
 
-A class hierarchy is **standard-library components**.
+A class hierarchy is **任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**.
 
 Explicit Overriding: override
 
 Benefits from Hierarchies: Interface inheritance/ Implementation inheritance
 
-Concrete classes are much like built-in types: we define them as local variables, access them using their names, copy them around, etc. Classes in class hierarchies are different: we tend to allocate them on the free store using new, and we access them through **statically typed language**.
+Concrete classes are much like built-in types: we define them as local variables, access them using their names, copy them around, etc. Classes in class hierarchies are different: we tend to allocate them on the free store using new, and we access them through **指的是，值不会改变且在编译期就可以计算出来的表达式。其实更好理解的说法是，**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**。需要注意的是，并不是所有的常量表达式都是编译期常量表达式，只有我们**.
 
 - Avoiding Resource Leaks
 
@@ -1609,7 +1140,7 @@ To handle multiple character sets, string is really an alias for a general templ
 
 ## 9. Containers
 
-**type** is commonly called a container.
+**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式** is commonly called a container.
 
 ### 9.1 Vector
 

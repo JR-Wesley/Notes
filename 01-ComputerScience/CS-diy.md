@@ -68,24 +68,19 @@ NJU OS https://njuics-wiki.github.io/ics-wiki/
 	- [操作系统：设计与实现 (2023 春季学期)](https://link.zhihu.com/?target=https%3A//jyywiki.cn/OS/2023/index.html)
 	- 《操作系统导论》
 - 数据库
-- [CMU 15-445/645 :: Intro to Database Systems (Fall 2024)](https://link.zhihu.com/?target=https%3A//15445.courses.cs.cmu.edu/fall2024/)
-- [Talent Plan | TiDB 社区](https://link.zhihu.com/?target=https%3A//tidb.net/talent-plan)
-- [Mini-LSM Overview - LSM in a Week](https://link.zhihu.com/?target=https%3A//skyzh.github.io/mini-lsm/00-overview.html)
-- [MySQL 是怎样运行的：从根儿上理解 MySQL - 小孩子4919 - 掘金小册](https://link.zhihu.com/?target=https%3A//juejin.cn/book/6844733769996304392/section/6844733770071801864)
-- 《数据库系统概念》
 - 分布式系统
 - [6.5840 Schedule: Spring 2024](https://link.zhihu.com/?target=https%3A//pdos.csail.mit.edu/6.824/schedule.html)
 - 并行计算
 - [gfxcourses.stanford.edu/cs149/fall24](https://link.zhihu.com/?target=https%3A//gfxcourses.stanford.edu/cs149/fall24)
 - 人工智能
-- 李宏毅：[ML 2023 Spring](https://link.zhihu.com/?target=https%3A//speech.ee.ntu.edu.tw/~hylee/ml/2023-spring.php)
-- [面向开发者的LLM入门教程](https://link.zhihu.com/?target=https%3A//datawhalechina.github.io/llm-cookbook/%23/)
+	- 李宏毅：[ML 2023 Spring](https://link.zhihu.com/?target=https%3A//speech.ee.ntu.edu.tw/~hylee/ml/2023-spring.php)
+	- [面向开发者的LLM入门教程](https://link.zhihu.com/?target=https%3A//datawhalechina.github.io/llm-cookbook/%23/)
 - 编译原理
-- [北京大学编译实践课程在线文档 | 北大编译实践在线文档](https://link.zhihu.com/?target=https%3A//pku-minic.github.io/online-doc/%23/)
-- [CS143: Compilers](https://link.zhihu.com/?target=https%3A//web.stanford.edu/class/cs143/)
-- [kaist-cp/cs420: KAIST CS420: Compiler Design (2023 Spring)](https://link.zhihu.com/?target=https%3A//github.com/kaist-cp/cs420)
-- [LLVM Tutorial: Table of Contents — LLVM 20.0.0git documentation](https://link.zhihu.com/?target=https%3A//llvm.org/docs/tutorial/)
-- 《编译原理》龙书
+	- [北京大学编译实践课程在线文档 | 北大编译实践在线文档](https://link.zhihu.com/?target=https%3A//pku-minic.github.io/online-doc/%23/)
+	- [CS143: Compilers](https://link.zhihu.com/?target=https%3A//web.stanford.edu/class/cs143/)
+	- [kaist-cp/cs420: KAIST CS420: Compiler Design (2023 Spring)](https://link.zhihu.com/?target=https%3A//github.com/kaist-cp/cs420)
+	- [LLVM Tutorial: Table of Contents — LLVM 20.0.0git documentation](https://link.zhihu.com/?target=https%3A//llvm.org/docs/tutorial/)
+	- 《编译原理》龙书
 
 mit 6.824 / CMU 15445
 

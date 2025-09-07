@@ -6,20 +6,35 @@ category: Summary
 
 本目录基于 https://docs.nvidia.com/cuda/cuda-c-programming-guide/contents.html v12.9 整理。
 
-官方文档只是详尽地罗列的编程方法，但是没有给出编程指导方案。
+注意CUDA和GPU架构一直在不断进展，需要跟进官网指南以同步最新编程范式和方法。
 
+官方文档有的是详尽地罗列的编程指南，但是没有给出具体的指导方法，构建整个体系，没有把各个用法的关联组织起来。有一些旧的资料可能只覆盖了最基本的教程和代码片段分析，没有深入优化方法实际应用，而且可能会有一些过时的内容。
+
+总体来说推荐的资源是：
+- NVIDIA CUDA C++ Programming Guide [https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html](https://link.zhihu.com/?target=https%3A//docs.nvidia.com/cuda/cuda-c-programming-guide/index.html)
+- Programming Massively Parallel Processors A Hands-on Approach 及 CMPS224
+- 
 # 推荐资源
 
-- **官方文档**，主要是两个 Guide：
+- **官方文档**：
     - [CUDA Toolkit Documentation](https://docs.nvidia.com/cuda/)：包含编程指南、API 参考等。
     - [NVIDIA Developer](https://developer.nvidia.com/)：提供教程、示例代码和白皮书。
     - NVIDIA CUDA C++ Programming Guide [https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html](https://link.zhihu.com/?target=https%3A//docs.nvidia.com/cuda/cuda-c-programming-guide/index.html)
-	    - 基础教程，但是讲的很宽泛，也缺乏细节，有一定的跳跃性。前 7 章是比较核心的内容。
+	    - 是一个详尽的一直在进展的编程指南，需要反复理解，同时注意会不断更新，建议阅读网页版保持最新进展。但是讲的很宽泛，也缺乏细节，有一定的跳跃性，不适合入门，前 7 章是入门核心的内容。
+	- https://docs.nvidia.com/cuda/archive/9.1/pdf/CUDA_C_Programming_Guide.pdf
+		- 2018，
+	- Professional CUDA
+		- 2014， 通过一些简单的例子，解释CUDA的基本原理和基本加速概念
     - CUDA C++ Best Practices Guide  [https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html](https://link.zhihu.com/?target=https%3A//docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html)
 	    - 主要从理论上给出了一些性能优化的方法，如何最大化利用 GPU 特性提升性能。需要掌握一些上面教程的基本概念。
-- **在线课程**：
+	- https://developer.nvidia.com/cuda-books-archive
+- **在线课程和书籍**：
     - 【【精译⚡GPU 计算】贝鲁特美国大学•CMPS224•2021】https://www.bilibili.com/video/BV1Rx4y147Dp/?p=5&share_source=copy_web&vd_source=fd37be71d17f708cc53476cbd29e590f
 	    - 基于 Programming Massively Parallel Processors A Hands-on Approach 4th Edition 的 GPU 课程，老师的讲解很深入有见解，PPT 可以见 https://www.elsevier.com/books-and-journals/book-companion/9780323912310。
+	- Programming Massively Parallel Processors A Hands-on Approach
+		- 这本书详尽的讲述了CUDA架构和编程模型，并详细介绍了常见算子的优化，值得阅读。
+	- https://www.bilibili.com/video/BV1c64y1Q7Kt/?vd_source=bc07d988d4ccb4ab77470cec6bb87b69
+		- https://www.olcf.ornl.gov/calendar/cuda-shared-memory/ **美国橡树岭领导计算设施 (Oak Ridge Leadership Computing Facility, OLCF)** 发布的关于 **CUDA 培训系列**
 - **开源项目**：
 	- leetgpu
 	- [https://github.com/bytedance/lightseq](https://link.zhihu.com/?target=https%3A//github.com/bytedance/lightseq)
