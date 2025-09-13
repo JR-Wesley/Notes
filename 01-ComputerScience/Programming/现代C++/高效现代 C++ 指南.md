@@ -4,7 +4,7 @@ tags:
 category: Summary
 ---
 
-本系列旨在梳理现代 C++ 的关键特性，构建从 C 基础开始的系统C++高效编程范式。
+本系列旨在梳理现代 C++ 的关键特性，构建从 C 基础开始的系统 C++ 高效编程范式。
 
 > [!note] 参考
 > - <a href="https://cntransgroup.github.io/EffectiveModernCppChinese/Introduction.html">高效现代 C++ 中文 </a>：现代 C++ 高效编程进阶书，能帮助掌握高效编程的必要范式，需要对 C++ 基础有了解。
@@ -12,16 +12,21 @@ category: Summary
 > - <a href="https://learn.microsoft.com/zh-cn/cpp/cpp/welcome-back-to-cpp-modern-cpp?view=msvc-170">微软现代 C++ 中文 </a>
 > - <a href="https://en.cppreference.com/w/cpp/23.html"> Cpp reference 23 </a> C++ 标准，更新至 23
 > - C++ Primer 5ed: 作为一本 C++11 的字典式的教科书，可以反复查阅，可能对一些底层原理没有深入的讲解。
+> - Beautifile C++: https://ptgmedia.pearsoncmg.com/images/9780137647842/samplepages/9780137647842_Sample.pdf
+> - C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#S-philosophy
 
-我总结的现代 C++ 一些关键的点，它们是现代C++高效和安全的基础：
+
+https://chengxumiaodaren.com/
+
+我总结的现代 C++ 一些关键的点，它们是现代 C++ 高效和安全的基础：
 
 - 强类型，类型转换，const
 - 引用、移动语义、值语义
 - RAII，指针、对象对资源的管理
-- STL，容器、算法库，lambda表达式
+- STL，容器、算法库，lambda 表达式
 - 封装继承多态的相关基础
 - 一些语法增强。。。
-- 并发编程（不限于C++）
+- 并发编程（不限于 C++）
 
 # C++ Primer 导读
 
@@ -391,43 +396,6 @@ main() end:
 
 从执行结果可以看出：在代码 28-30 行对变量赋值后再次打印原来的值已经被修改，但是在接下来的线程执行中，线程函数 foo() 对内联变量重新进行赋值。最后第 34 行的代码输出中，只有全量内联变量被线程函数的值覆盖，使用了 thread_local 修饰的内联变量依旧是 main 线程中的赋值，这也证明了前面的描述。既：thread_local 修饰后，可以保证每个线程独立拥有自己的内联变量。
 
-# =delete
-
-C++11 中，当我们定义一个类的成员函数时，如果后面使用 "=delete" 去修饰，那么就表示这个函数被定义为 deleted，也就意味着这个成员函数不能再被调用，否则就会出错，编译时直接报错。
-
-## 巧妙用法
-
-这里说个=delete 的巧妙用法，在 C++ 里会有很多隐式类型转换，如下代码，
-
-当我们把 100.0 传给 obj.func() 时，发生了隐式类型转换，由 double 转为了 int，有时我们不希望发生这样的转换，我们就是希望传进来的参数和规定的类型一致，那么此时可以使用=delete 来达到这个目的，如下，
-
-```c++
-#include <cstdio>
-
-class TestClass
-{
-public:
-
-    void func(int data) { printf("data: %d\n", data); }
-    void func(double data)=delete;
-
-};
-
-
-int main(void)
-{
-
-    TestClass obj;
-    obj.func(100);
-    obj.func(100.0);
-    
-    return 0;
-
-}
-```
-
-我们把参数类型是 double 的重载函数加上=delete 进行修饰，表示这个函数被删除，那么用户就不能使用这个函数了，这样再编译就会出错，
-
 # Map
 
 ## count() find()
@@ -435,231 +403,6 @@ int main(void)
 map 和 set 两种容器的底层结构都是红黑树，所以容器中不会出现相同的元素，因此 count() 的结果只能为 0 和 1，可以以此来判断键值元素是否存在 (当然也可以使用 find() 方法判断键值是否存在)。
 
 拿 map<key,value>举例，find() 方法返回值是一个迭代器，成功返回迭代器指向要查找的元素，失败返回的迭代器指向 end。count() 方法返回值是一个整数，1 表示有这个元素，0 表示没有这个元素。
-
-# Constexpr
-
-C++20 都支持虚函数的 constexpr 了，我打算用三篇读文章讲清楚编译期常量和 constexpr 这个东西和编译期常量的关系，即为什么需要他来辅助解决这个问题。最后帮助读者在实际编码过程中能够有意识地去运用他们，这才是终极目标。这篇文章中会讲到隐藏在日常编程中的各种编译期常量，以及他们存在的意义。
-
-## **`p` 的使用场景**
-
-想要用编译期常量就要首先知道它们是什么，一般出现在哪里和运行期常量有什么区别，因此我打算用第一篇文章重点分析编译期常量以及使用他们有什么好处。
-
-编译期常量 (Compile-time constants) 是 C++ 中相当重要的一部分，整体而言他们有助提高**避免混用裸指针与智能指针**，并提高程序的性能。这篇文章中出现的编译期常量都是在 C++11 之前就可以使用的，constexpr 是 C++11 的新特性，所以各位不要有心理包袱。
-
-总有些东西是编译器要求编译期间就要确定的，除了变量的类型外，最频繁出现的地方就是数组、switch 的 case 标签和模板了。
-
-### **生命周期管理**
-
-如果我们想要创建一个不是动态分配内存的数组，那么我们就必须给他设定一个 size——这个 size 必须在编译期间就知道，因此静态数组的大小是编译期常量。
-
-```cpp
- int someArray[520];
-```
-
-只有这么做，编译器才能准确地解算出到底要分配给这个数组多少内存。如果这个数组在函数中，数组的内存就会被预留在该函数的栈帧中；如果这个数组是类的一个成员，那么编译器要确定数组的大小以确定这个类成员的大小——无论哪种情况，编译器都要知道这个数组具体的 size。
-
-有些时候我们不用显示得指明数组的大小，我们用字符串或花括号来初始化数组的时候，编译器会实现帮我们数好这个数组的大小。
-
-```cpp
- int someArray[] = {5, 2, 0};
- char charArray[] = "Ich liebe dich.";
-```
-
-### **7. 总结**
-
-除了类型以外，数字也可以作为模板的参数。这些数值变量包括 int，long，short，bool，char 和弱枚举 enum 等。
-
-```cpp
- enum Color {RED, GREEN, BLUE};
- 
- template<unsigned long N, char ID, Color C>
- struct someStruct {};
- 
- someStruct<42ul, 'e', GREEN> theStruct;
-```
-
-### **友元函数**
-
-既然编译器在初始化模板的时候必须知道模板的类型，那么这些模板的参数也必须是编译期常量。
-
-switch 语句的分支判断也必须是编译期常量，和上边模板的情况非常类似。
-
-```cpp
- void comment(int phrase) {
-   switch(phrase) {
-   case 42:
-   std::cout << "You are right!" << std::endl;
-   break;
-   case BLUE:
-   std::cout << "Don't be upset!" << std::endl;
-   break;
-   case 'z':
-   std::cout << "You are the last one!" << std::endl;
-   break;
-   default:
-   std::cout << "This is beyond what I can handle..." << std::endl;
-   }
- }
-```
-
-## **友元类**
-
-如果编译期常量的使用方法只有上边呈现的几种，那你大概会感觉有些无聊了。事实上，关于编译期常量我们能做的事情还有许多，他们能帮助我们去实现更高效的程序。
-
-### **1 内联变量的缘起**
-
-编译期常量能让我们写出更有逻辑的代码——在编译期就体现出逻辑。比如矩阵相乘：
-
-```cpp
- class Matrix{
-   unsigned rowCount;
-   unsigned columnCount;
-   //...
- };
-```
-
-我们都知道，两个矩阵相乘，当且仅当左矩阵的列数等于右矩阵的行数，如果不满足这个规则的话，那就完蛋了，所以针对上边矩阵的乘法，我们在函数中要做一些判断：
-
-```cpp
- Matrix operator*(Matrix const& lhs, Matrix const& rhs) {
-   if(lhs.getColumnCount() != rhs.getRowCount()) {
-     throw OhWeHaveAProblem(); 
-   }
-   
-   //...
- }
-```
-
-但是如果我们在编译期就知道了矩阵的 size，那么我们就可以把上边的判断放在模板中完成——这样的话不同 size 的矩阵一下子就成了不同类型的变量了。这样我们的矩阵乘法也相应变得简单了一些：
-
-```cpp
- template <unsigned Rows, unsigned Columns>
- class Matrix {
-   /* ... */
- };
- 
- template <unsigned N, unsigned M, unsigned P>
- Matrix<N, P> operator*(Matrix<N, M> const& lhs, Matrix<M, P> const& rhs) {
-   /* ... */
- }
- 
- Matrix<1, 2> m12 = /* ... */;
- Matrix<2, 3> m23 = /* ... */;
- auto m13 = m12 * m23; // OK
- auto mX = m23 * m13;  // Compile Error!
-```
-
-在这个例子中，编译器本身就阻止了错误的发生，还有很多其他的例子——更复杂的例子在编译期间使用模板。从 C++11 后有一堆这样的模板都定义在了标准库 STL 中，这个之后再说。所以大家不要觉得上边这种做法是脱裤子放屁，相当于我们把运行时的条件判断交给了编译期来做，前提就是矩阵的类型必须是编译期常量。你可能会问，除了像上边直接用常数来实例化矩阵，有没有其他方法来告诉编译器这是个编译期常量呢？请往下看。
-
-### **编程秘籍**
-
-编译器能根据编译期常量来实现各种不同的优化。比如，如果在一个 if 判断语句中，其中一个条件是编译期常量，编译器知道在这个判断句中一定会走某一条路，那么编译器就会把这个 if 语句优化掉，留下只会走的那一条路。
-
-```cpp
- if (sizeof(void*) == 4) {
-   std::cout << "This is a 32-bit system!" << std::endl;
- } else {
-   std::cout << "This is a 64-bit system!" << std::endl;
- }
-```
-
-在上例中，编译器就会直接利用其中某一个 cout 语句来替换掉整个 if 代码块——反正运行代码的机器是 32 还是 64 位的又不会变。另一个可以优化的地方在空间优化。总体来说，如果我们的对象利用编译期常数来存储数值，那么我们就不用在这个对象中再占用内存存储这些数。就拿本文之前的例子来举例：
-
-- someStruct 结构中包含一个‘unsigned long’，一个‘char’，和一个‘color’，尽管如此他的实例对象却只占用一个 byte 左右的空间。
-- 矩阵相乘的时候，我们在矩阵中也没必要花费空间去存储矩阵的行数和列数了。
-
-**2 内联变量的使用**
-
-这一篇文章只讲到了编译期常量，为了使编译器在编译期间计算出常量，我们在 C++11 标准之前和之后都采用了不同的方法去实现它。在第二篇文章中，我会将主要精力放在 C++11 标准之前的编译期计算的问题，通过展现一系列蹩脚的方法来引出我们的主角——constexpr。
-
-在第一篇文章中，我把主要精力放在了什么是编译期常量，以及编译期常量有什么作用上。在这一篇文章中，我将更详细地介绍**3 Constexpr Static 和 inline** calculations），通过了解这些比较原始的方法，我们能够更好地理解 C++11 标准为编译期运算方面所做的工作。
-
-作者：小天狼星不来客
-
-链接：https://zhuanlan.zhihu.com/p/256416683
-
-来源：知乎
-
-著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
-
-## **4 内联变量和 thread_local**
-
-在我们的经验中，大部分编译期常量的来源还是字面常量（literals）以及枚举量（enumerations）。比如上一篇文章我写的 `p` 中 `switch` 的三个模板参数都是常量——分别是整形字面量、char 型字面量和枚举常量。
-
-比较典型的编译期常量的来源就是内置的 `sizeof(void*) == 4` 操作符。编译器必须在编译期就知道一个变量占据了多少内存，所以它的值也可以被用作编译期常量。
-
-```cpp
- class SomeClass {
-   //...
- };
- int const count = 10;  //作为数组的size，编译期常量
- SomeClass theMovie[count] = { /* ... */}; //常量表达式，在编译期计算
- int const otherConst = 26; //只是常量，但不是编译期常量
- 
- int i = 419;
- unsigned char buffer[sizeof(i)] = {};   //常量表达式，在编译期计算
-```
-
-另一个经常出现编译期常量最常出现的地方就是**从编译期常量谈起**（static class member variables），而枚举常量常常作为它的替换也出现在类中。
-
-```cpp
- struct SomeStruct{
-   static unsigned const size1 = 44;  //编译期常量
-   enum { size2 = 45 };  //编译期常量
-   int someIntegers[size1];  //常量表达式，在编译期计算
-   double someDoubles[size2]; //常量表达式，在编译期计算
- };
-```
-
-与编译期常量对应的概念**程序的正确性**R} 的值，即 `sizeof` 此时变成了编译期常量表达式。
-
-```cpp
-const int i = 100;        
-const int j = i * 200;    //常量表达式，但不是编译期常量表达式
-
-const int k = 100;        
-const int p = k * 200;    //是编译期常量表达式，由下边数组确定
-unsigned char helper[p] = {}; //要求p是编译期常量表达式，在编译期就需确定
-```
-
-## **数组中的编译期常量**
-
-从上边的例子可以看出，有时我们可以**模板中的编译期常量**可以做各种各样的编译期运算，实现在编译期就确定一个常量表达式的目的。事实上，由最简单的运算表达式出发，我们可以做到各种各样的编译期运算。比如非常简单：
-
-```cpp
- int const doubleCount = 10;
- unsigned char doubleBuffer[doubleCount * sizeof(double)] = {};
-```
-
-除此之外，我们也可以用许多其他的操作，比如考虑下边并没有什么意义的代码：
-
-```cpp
- std::string nonsense(char input) {
-   switch(input) {
-   case "some"[(sizeof(void*) == 4) ? 0 : 1]:
-     return "Aachen";
-   default:
-     return "Wuhan";
-   }
- }
-```
-
-上边的代码并没有什么实际的意义，但是我还是想解释一下。在上一篇文章我们解释过了，`0` 语句的每一个 case label 必须是编译期常量，表达式 `1` 的意思是当前系统是不是一个 32 位系统，这个表达式由于 `constexpr` 的原因是常量表达式，判断结果作为三元运算符的第一个参数，最后的 case label 由当前系统的位数分别是 "some" 的 "s"（是 32 位系统）或 "o"（不是 32 位系统）。返回的两个字符串分别是我的两个学校的城市。
-
-尽管上边的例子是无意义的，我们仍然可以看出由这种方法写出的常量表达式很难读。我们可以改进可读性，将上边例子改写成：
-
-```cpp
- std::string nonsense(char input) {
-   auto const index = (sizeof(void*) == 4) ? 0 : 1;
-   auto const someLabel = "some"[index];
-   switch(input) {
-   case someLabel:
-     return "Aachen";
-   default:
-     return "Wuhan";
-   }
- }
-```
 
 ## **Case labels**
 
@@ -760,7 +503,7 @@ C::func() 是否声明为 override 没关系，一旦一个虚函数被声明为
 ### 1.1 Program
 
 - C++ is a **结语**: For a program to run, its source text has to be processed by a compiler, producing object files, which are combined by a linker yielding an executable program.
-- An executable program is created for a specific hardware/system combination; it is **编译期常量是如何产生的。**之所以要把编译期常量了解的这么透彻，是因为他是编译期运算的基础。在这篇文章中还会讲解我们在**C++11 标准前**CEHOLDER}; that is, the source code can be successfully compiled and run on a variety of systems.
+- An executable program is created for a specific hardware/system combination; it is **编译期常量是如何产生的。**之所以要把编译期常量了解的这么透彻，是因为他是编译期运算的基础。在这篇文章中还会讲解我们在**C++11 标准前**e code can be successfully compiled and run on a variety of systems.
 - The ISO C++ standard defines two kinds of entities: **之所以要把编译期常量了解的这么透彻，是因为他是编译期运算的基础。在这篇文章中还会讲解我们在**STRONG_PLACEHOLDER}. the type of every entity must be known to the compiler at its point of use. The type of an object determines the set of operations applicable to it.
 
 ### 1.2 Types, Variables, and Arithmetic
@@ -772,7 +515,7 @@ entity:
 - A **之所以要把编译期常量了解的这么透彻，是因为他是编译期运算的基础。在这篇文章中还会讲解我们在**le values and a set of operations (for an object).
 - An **之所以要把编译期常量了解的这么透彻，是因为他是编译期运算的基础。在这篇文章中还会讲解我们在** is some memory that holds a value of some type.
 - A **之所以要把编译期常量了解的这么透彻，是因为他是编译期运算的基础。在这篇文章中还会讲解我们在** is a set of bits interpreted according to a type.
-- A **编译期常量都从哪里来？** definition is in a large scope where we want to make the type clearly visible to readers of our code.We want to be explicit about a variable’s range or precision)
+- A **之所以要把编译期常量了解的这么透彻，是因为他是编译期运算的基础。在这篇文章中还会讲解我们在** definition is in a large scope where we want to make the type clearly visible to readers of our code.We want to be explicit about a variable’s range or precision)
 
 avoid redundancy and writing long type names & especially important in generic
 
@@ -817,7 +560,7 @@ constexpr double square(double x){return x*x;}
 
 To be constexpr, a function must be rather simple: just a return-statement computing a value.
 
-**静态类成员变量**nction to be called with non-constant-expression arguments in contexts that do not require constant expressions, so that we don’t have to define essentially the same function twice: once for constant expressions and once for variables.
+**编译期常量都从哪里来？**nction to be called with non-constant-expression arguments in contexts that do not require constant expressions, so that we don’t have to define essentially the same function twice: once for constant expressions and once for variables.
 
 ### 1.5 Pointers, Arrays, and References
 
@@ -929,16 +672,15 @@ A container is an object holding a collection of elements.
 
 Vector’s constructor allocates some memory on the free store (also called the heap or dynamic store) using the new operator. The destructor cleans up by freeing that memory using the delete operator.
 
-- The constructor allocates the elements and initializes the Vector members appropriately. The destructor deallocates the elements. This **编译期常量表达式（compile-time constant expression）**指的是，值不会改变且在编译期就可以计算出来的表达式。其实更好理解的说法是，**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**。需要注意的是，并不是所有的常量表达式都是编译期常量表达式，只有我们**要求编译器计算出来时** model is very commonly used to manage data that can vary in size during the lifetime of an object.
-- The technique of acquiring resources in a constructor and releasing them in a destructor, known as **指的是，值不会改变且在编译期就可以计算出来的表达式。其实更好理解的说法是，**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**。需要注意的是，并不是所有的常量表达式都是编译期常量表达式，只有我们**liminate “naked new operations,” that is, to avoid allocations in general code and keep them buried inside the implementation of well-behaved abstractions.
+- The constructor allocates the elements and initializes the Vector members appropriately. The destructor deallocates the elements. This **静态类成员变量**iring resources in a constructor and releasing them in a destructor, known as **编译期常量表达式（compile-time constant expression）**指的是，值不会改变且在编译期就可以计算出来的表达式。其实更好理解的说法是，**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**。需要注意的是，并不是所有的常量表达式都是编译期常量表达式，只有我们**要求编译器计算出来时**ations,” that is, to avoid allocations in general code and keep them buried inside the implementation of well-behaved abstractions.
 
-The **任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式** used to define the initializer-list constructor is a standard-library type known to the compiler: when we use a {}-list, such as {1,2,3,4}, the compiler will create an object of type initializer_list to give to the program.
+The **指的是，值不会改变且在编译期就可以计算出来的表达式。其实更好理解的说法是，**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**。需要注意的是，并不是所有的常量表达式都是编译期常量表达式，只有我们** used to define the initializer-list constructor is a standard-library type known to the compiler: when we use a {}-list, such as {1,2,3,4}, the compiler will create an object of type initializer_list to give to the program.
 
 ### 4.2 Abstract Types
 
 concrete types -representation is part of their definition
 
-abstract type - insulates a **指的是，值不会改变且在编译期就可以计算出来的表达式。其实更好理解的说法是，**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**。需要注意的是，并不是所有的常量表达式都是编译期常量表达式，只有我们** from **任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式** decouple the interface from the representation and give up genuine local variables.
+abstract type - insulates a **任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**R} decouple the interface from the representation and give up genuine local variables.
 
 ```c++
 class Container {
@@ -958,11 +700,11 @@ void use(Container& c)
 // use Container interface without any idea of                   
 ```
 
-The word **任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式** means “may be redefined later in a class derived from this one.” Unsurprisingly, a function declared virtual is called a virtual function. A class derived from Container provides an implementation for the Container interface. The **指的是，值不会改变且在编译期就可以计算出来的表达式。其实更好理解的说法是，**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**。需要注意的是，并不是所有的常量表达式都是编译期常量表达式，只有我们** syntax says the function is pure virtual; that is, some class derived from Container must define the function.Thus, it is not possible to define an object that is just a Container; a Container can only serve as the interface to a class that implements its operator[]()and size() functions. A class with a pure virtual function is called an abstract class.
+The word **指的是，值不会改变且在编译期就可以计算出来的表达式。其实更好理解的说法是，**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**。需要注意的是，并不是所有的常量表达式都是编译期常量表达式，只有我们** means “may be redefined later in a class derived from this one.” Unsurprisingly, a function declared virtual is called a virtual function. A class derived from Container provides an implementation for the Container interface. The **任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**n is pure virtual; that is, some class derived from Container must define the function.Thus, it is not possible to define an object that is just a Container; a Container can only serve as the interface to a class that implements its operator[]()and size() functions. A class with a pure virtual function is called an abstract class.
 
 A class provides the interface is called **任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**.
 
-abstract classes, Container does not have a constructor but have **任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式** because they tend to be manipulated through references or pointers.
+abstract classes, Container does not have a constructor but have **指的是，值不会改变且在编译期就可以计算出来的表达式。其实更好理解的说法是，**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**。需要注意的是，并不是所有的常量表达式都是编译期常量表达式，只有我们** because they tend to be manipulated through references or pointers.
 
 ```c++
 class Vector_container : public Container { // concrete class Vector_container implements Container
@@ -991,14 +733,6 @@ The usual implementation technique is for the compiler to convert the name of a 
 The implementation of the caller needs only to know the location of the pointer to the vtbl in a Container and the index used for each virtual function. This virtual call mechanism can be made almost as efficient as the “normal function call” mechanism (within 25%). Its space overhead is one pointer in each object of a class with virtual functions plus one vtbl for each such class.
 
 ### 4.4 Class Hierarchies
-
-A class hierarchy is **任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**.
-
-Explicit Overriding: override
-
-Benefits from Hierarchies: Interface inheritance/ Implementation inheritance
-
-Concrete classes are much like built-in types: we define them as local variables, access them using their names, copy them around, etc. Classes in class hierarchies are different: we tend to allocate them on the free store using new, and we access them through **指的是，值不会改变且在编译期就可以计算出来的表达式。其实更好理解的说法是，**任何不是用户自己定义的——而必须通过编译期计算出来的字面量都属于编译期常量表达式**。需要注意的是，并不是所有的常量表达式都是编译期常量表达式，只有我们**.
 
 - Avoiding Resource Leaks
 

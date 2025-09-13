@@ -35,7 +35,7 @@ dateModified: 2025-07-13
 1. [[02-AISystem/HPCBasics/MPI|MPI]]
 2. [[openmp]]
 3. [[并行计算基础理论]]
-4. [[cuda]]
+4. [[0-CUDA]]
 5. [[向量化]]
 
 教学资料：

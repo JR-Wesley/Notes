@@ -27,6 +27,16 @@ This repository archives my (**not well organized**) learning journey through **
 
 **Ethical Note**: Contains reconstructed knowledge from cited sources - strictly for educational purposes.
 
+## Learning in the Era of AI
+
+In the era of LLM, I believe there are severel highlight that should be practices during permenant studying:
+
+1. Systemic View: Bidirectional Insight from Top-Down and Bottom-Up
+2. First Principles: The Cornerstone of Critical Thinking
+3. Hands-On Practice: Acquiring True Knowledge Through 'Getting Hands Dirty'
+4. AI Assistance: Co-Evolution with LLMs
+
+
 ---
 
 ## 🌐 Knowledge Matrix
@@ -71,12 +81,14 @@ This repository archives my (**not well organized**) learning journey through **
 └── ToolKit
     ├── assets
 ```
+
 ![[Knowledge Matrix.png]]
+
 ## 🛠️ Usage & Navigation
 
 ### Highlight
 
-I've arraged my notes into 6 parts:
+I've arranged my notes into 6 parts:
 
 - 🗂️ [[01-ComputerScience/01-ComputerScience|01-ComputerScience]]: Foundational pillars of computing, from hardware to software.
 - 🗂️ [[02-AISystem/02-AISystem|02-AISystem]]: Deep dive into the architecture and infrastructure powering AI.

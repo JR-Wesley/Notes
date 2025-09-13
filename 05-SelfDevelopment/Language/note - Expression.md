@@ -37,6 +37,8 @@ dateModified: 2025-05-27
 - the tip of iceberg: 冰山一角
 - without further/more ado: 毫不迟延；干脆；立即without delaying; immediately
 - in tandem with: 与。。。协同
+- “keep tabs on” 是一个常用的英语短语，核心含义是“密切关注、监视、跟踪（某人或某事的动态、情况）”，强调持续留意以掌握最新信息，避免遗漏关键变化。
+- pertain to: 属于、关于、附属
 
 # word
 

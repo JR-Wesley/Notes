@@ -4,31 +4,13 @@ category: Book
 
 # （二）C++ 基础语法
 
-- **从 C 到 C++ 的过渡**
-    
-    - C++ 对 C 的扩展：命名空间、引用、函数重载
-    - 输入输出流：iostream 库的使用
-    - 内存管理：new/delete 操作符
-    - 类型安全：强类型检查
-    - 编译时计算：const、constexpr
 - **基本语法特性**
     
-    - 变量声明：auto 关键字、类型推导
     - 引用类型：左值引用、右值引用（C++11）
     - 函数重载：同名函数的不同参数
     - 默认参数：函数参数的默认值
     - 内联函数：inline 关键字的使用
-- **命名空间**
-    
-    - namespace 定义：避免命名冲突
-    - using 声明：简化命名空间使用
-    - 匿名命名空间：文件内部链接
-    - 命名空间别名：简化长命名空间名
 
-# （三）面向对象编程基础
-
-- **类与对象**
-    
     - 类的定义：成员变量、成员函数
     - 对象的创建：栈对象、堆对象
     - 访问控制：public、private、protected
@@ -60,13 +42,6 @@ category: Book
 
 ## （一）内存管理与 RAII
 
-- **动态内存管理**
-    
-    - new/delete：单个对象的分配释放
-    - new[]/delete[]：数组的分配释放
-    - 内存泄漏：常见问题和检测工具
-    - 悬空指针：野指针的避免
-    - 内存对齐：数据结构的内存布局
 - **RAII 原则**
     
     - 资源获取即初始化：构造函数获取资源
@@ -143,14 +118,12 @@ category: Book
 ## （一）容器类
 
 - **序列容器**
-    
     - vector：动态数组，连续内存存储
     - deque：双端队列，分段连续存储
     - list：双向链表，非连续存储
     - forward_list：单向链表（C++11）
     - array：固定大小数组（C++11）
 - **关联容器**
-    
     - set/multiset：有序集合，基于红黑树
     - map/multimap：有序映射，键值对存储
     - unordered_set/unordered_multiset：哈希集合（C++11）
@@ -160,23 +133,6 @@ category: Book
     - stack：栈适配器，LIFO 结构
     - queue：队列适配器，FIFO 结构
     - priority_queue：优先队列，堆结构
-
-## （二）迭代器
-
-- **迭代器类型**
-    
-    - 输入迭代器：只读，单向遍历
-    - 输出迭代器：只写，单向遍历
-    - 前向迭代器：读写，单向遍历
-    - 双向迭代器：读写，双向遍历
-    - 随机访问迭代器：读写，随机访问
-- **迭代器使用**
-    
-    - begin/end：容器的迭代器范围
-    - 迭代器运算：递增、递减、距离计算
-    - 迭代器失效：容器操作对迭代器的影响
-    - 反向迭代器：rbegin/rend
-    - 常量迭代器：const_iterator
 
 ## （三）算法库
 
@@ -218,14 +174,6 @@ category: Book
 
 # 四、现代 C++ 特性（3-4 个月）
 
-## （一）C++11 核心特性
-
-- **类型推导**
-    
-    - auto 关键字：自动类型推导
-    - decltype：表达式类型推导
-    - 尾置返回类型：函数返回类型推导
-    - 类型别名：using 声明
 - **移动语义**
     
     - 右值引用：&&语法
@@ -239,28 +187,6 @@ category: Book
     - 初始化列表：std::initializer_list
     - 聚合初始化：结构体和数组
     - 直接初始化 vs 拷贝初始化
-
-## （二）C++14/17/20 新特性
-
-- **C++14 特性**
-    
-    - 泛型 Lambda：auto 参数
-    - 变量模板：template 变量
-    - 二进制字面量：0b 前缀
-    - 数字分隔符：单引号分隔
-- **C++17 特性**
-    
-    - 结构化绑定：auto [a, b] = tuple
-    - if constexpr：编译时条件判断
-    - 折叠表达式：可变参数模板简化
-    - std::optional：可选值类型
-    - std::variant：类型安全的联合体
-- **C++20 特性**
-    
-    - 概念（Concepts）：模板约束
-    - 协程（Coroutines）：异步编程
-    - 模块（Modules）：替代头文件
-    - 范围（Ranges）：算法库增强
 
 ## （三）并发编程
 
@@ -348,116 +274,6 @@ category: Book
     - 基准测试：Google Benchmark
     - 内存分析：内存泄漏检测
     - 热点分析：CPU 使用率分析
-
-# 六、实际应用开发（持续进行）
-
-## （一）图形界面开发
-
-- **Qt 框架**
-    
-    - Qt Core：核心功能模块
-    - Qt GUI：图形用户界面
-    - Qt Widgets：传统桌面控件
-    - Qt Quick：现代 UI 框架
-    - 信号槽机制：事件处理
-- **其他 GUI 框架**
-    
-    - GTK+：跨平台 GUI 工具包
-    - wxWidgets：原生外观的 GUI
-    - FLTK：轻量级 GUI 库
-    - Dear ImGui：即时模式 GUI
-
-## （二）游戏开发
-
-- **游戏引擎**
-    
-    - Unreal Engine：虚幻引擎 C++ 开发
-    - 自定义引擎：游戏引擎架构
-    - 图形渲染：OpenGL、DirectX、Vulkan
-    - 物理引擎：Bullet、Box2D
-- **游戏编程技术**
-    
-    - 实体组件系统：ECS 架构
-    - 游戏循环：渲染循环和逻辑更新
-    - 资源管理：纹理、模型、音频
-    - 网络编程：多人游戏同步
-
-## （三）系统编程
-
-- **操作系统接口**
-    
-    - POSIX API：跨平台系统调用
-    - Windows API：Windows 系统编程
-    - 文件系统：文件操作和目录遍历
-    - 进程间通信：管道、共享内存、消息队列
-- **网络编程**
-    
-    - Socket 编程：TCP/UDP 通信
-    - 异步 I/O：epoll、IOCP
-    - 网络库：Boost.Asio、libuv
-    - HTTP 服务器：Web 服务开发
-
-## （四）科学计算
-
-- **数值计算库**
-    
-    - Eigen：线性代数库
-    - BLAS/LAPACK：基础线性代数
-    - GSL：GNU 科学计算库
-    - Intel MKL：高性能数学库
-- **并行计算**
-    
-    - OpenMP：共享内存并行
-    - MPI：分布式内存并行
-    - CUDA：GPU 并行计算
-    - OpenCL：异构并行计算
-
-# 七、工程化与最佳实践（2 个月）
-
-## （一）代码质量管理
-
-- **编码规范**
-    
-    - Google C++ Style Guide：谷歌编码规范
-    - 命名约定：变量、函数、类的命名
-    - 代码格式：缩进、空格、换行
-    - 注释规范：文档注释、行内注释
-- **静态分析**
-    
-    - Clang Static Analyzer：静态代码分析
-    - PVS-Studio：商业静态分析工具
-    - Cppcheck：开源静态分析
-    - 编译器警告：-Wall、-Wextra 等选项
-
-## （二）测试与调试
-
-- **单元测试**
-    
-    - Google Test：C++ 测试框架
-    - Catch2：现代 C++ 测试框架
-    - 测试驱动开发：TDD 方法论
-    - 模拟对象：Google Mock
-- **调试技术**
-    
-    - GDB：GNU 调试器
-    - Visual Studio 调试器：Windows 平台调试
-    - Valgrind：内存错误检测
-    - AddressSanitizer：地址消毒器
-
-## （三）构建与部署
-
-- **构建系统**
-    
-    - CMake：跨平台构建配置
-    - Makefile：传统构建脚本
-    - Ninja：高速构建执行器
-    - 包管理：vcpkg、Conan
-- **持续集成**
-    
-    - GitHub Actions：自动化构建测试
-    - Jenkins：企业级 CI/CD
-    - Docker：容器化部署
-    - 跨平台编译：多目标平台支持
 
 # 八、学习资源与职业发展
 

@@ -46,7 +46,9 @@ VM follows three goals: **transparency** (invisible to programs), **efficienc
 
 # 26 Concurrency: An Introduction
 
-Threads is a concurrency abstraction within a single process, which are execution points in a process—multi-threaded processes have multiple PCs, share an address space (enabling easy data sharing), and each has private registers. The state of each thread is stored in **Thread Control Blocks/TCBs**. Thread context switches are lighter than process switches (no page table changes) but require saving/restoring registers. Unlike single-threaded processes (one stack), multi-threaded ones have one stack per thread (thread-local storage).
+>Threads is a concurrency abstraction within a single process, which are execution points in a process—multi-threaded processes have multiple PCs, share an address space (enabling easy data sharing), and each has private registers.
+
+The state of each thread is stored in **Thread Control Blocks/TCBs**. Thread context switches are lighter than process switches (no page table changes) but require saving/restoring registers. Unlike single-threaded processes (one stack), multi-threaded ones have one stack per thread (thread-local storage).
 
 ![[file-20250830150301197.png]]
 
@@ -55,6 +57,8 @@ In this figure, you can see two stacks spread throughout the address space of th
 Two key reasons to use threads are **parallelism** (using multiple CPUs to speed up tasks like array operations) and **avoiding I/O blocking** (letting other threads run while one waits for I/O, critical for servers).
 
 A major issue arises with shared data: threads updating a shared variable (e.g., a counter) often yield incorrect results due to **race conditions**—outcomes depend on execution timing, caused by non-atomic instruction sequences (e.g., loading, incrementing, storing a counter). The core of race conditions are the uncontrolled scheduling of the instructions.
+
+> See also `threads-intro`
 
 ![[file-20250830105132222.png]]
 
@@ -68,6 +72,7 @@ A major issue arises with shared data: threads updating a shared variable (e.g.,
 
 # 27 Interlude: Thread API
 
+
 > [!important] ASIDE: THREAD API GUIDELINES
 > There are a number of small but important things to remember when you use the POSIX thread library (or really, any thread library) to build a multi-threaded program. They are:
 > - **Keep it simple.** Above all else, any code to lock or signal between threads should be as simple as possible. Tricky thread interactions lead to bugs.
@@ -80,5 +85,33 @@ A major issue arises with shared data: threads updating a shared variable (e.g.,
 > - **Use the manual pages.** On Linux, in particular, the pthread man pages are highly informative and discuss many of the nuances presented here, often in even more detail. Read them carefully!
 
 # 28 Locks
+
+## The basic ideas
+
+> [!important] Locks
+> Programmers annotate source code with **locks**, putting them around critical sections, and thus ensure that any such critical section executes as if it were a single atomic instruction.
+
+A lock is just a variable, and thus to use one, you must **declare a lock variable** of some kind (such as mutex above). This lock variable (or just “lock” for short) holds the state of the lock at any instant in time. It is either available (or unlocked or free) and thus no thread holds the lock, or acquired (or locked or held), and thus exactly one thread holds the lock and presumably is in a critical section.
+
+>Locks provide some minimal amount of control over scheduling to programmers by guaranteeing that no more than a single thread can ever be active within the critical region.
+
+The name that the POSIX library uses for a lock is a **mutex**, as it is used to provide mutual exclusion between threads, i.e., if one thread is in the critical section, it excludes the others from entering until it has completed the section.
+
+> Building locks (needing hardware/OS support, using hardware primitives) and evaluating them via mutual exclusion, fairness (no starvation), and performance (various scenarios).
+
+
+## Failed attempts
+
+![[file-20250909233755425.png]]
+
+For single-processor systems, disabling interrupts (via hardware instructions) pre-critical section and enabling post- ensures atomic execution, a simple early mutual exclusion solution.
+
+Disabling interrupts for critical sections (single-processor, simple) ensures atomic execution but has flaws—needs trusting apps (abuse risk), fails on multiprocessors, and may lose interrupts causing system issues. Interrupt-off is limited for mutual exclusion, e.g., OS uses it for data atomicity/avoiding mess.
+
+![[file-20250909233741421.png]]
+
+With a simple lock using a flag variable, threads use `lock()` to check if the flag is 1 (not initially), set it to 1 to hold the lock, and `unlock()` to clear it. A second thread spins in a loop if the flag is 1, but normal loads/stores make this insufficient.
+
+The code has correctness (both threads enter critical sections due to bad interleaving, no mutual exclusion) and performance (spin-waiting wastes time) issues.
 
 # 36 I/O Devices

@@ -17,6 +17,8 @@ tags:
 
 ## 学习资源
 
+https://jyywiki.cn/Reading_List.md
+
 https://csdiy.wiki/
 
 https://hackway.org/
