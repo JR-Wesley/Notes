@@ -10,27 +10,33 @@ category: Summary
 
 - 推荐查阅与跟进——官方文档：注意 CUDA 和 GPU 架构一直在不断进展，需要跟进 [官方编程指南 NVIDIA CUDA C++ Programming](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html) 以同步最新编程范式和方法。官方文档是一个详尽的编程指南，但是没有给出具体的指导方法或者构建整个体系，没有把各个用法的关联组织起来。
 - 强烈推荐入门与系统——Professional C programming：一个详尽的入门指导书，有助于掌握核心的概念和编程模型，需要注意一些特性和工具链的更新，与官方更新的文档相互对照。
-- 视频课程推荐——Programming Massively Parallel Processors A Hands-on Approach 及 CMPS224 课程
-- 一些书籍或者个人博客，有的只覆盖了最基本的教程和代码片段分析，有的深入优化方法实际应用。注意有一些旧的资料可能会有一些过时的内容，要和官方文档同步。对于一些博客尤其是中文社区的，需要注意内容的真实性和时效性。
+- 视频课程推荐——Programming Massively Parallel Processors A Hands-on Approach 及 CMPS224 课程。
+- 在有了一定上面的基础变成后，推荐性能分析——C++ best Practice, NCU profiling guide，以及深入了解 CUDA toolkit 或 PTX/SASS。
+- 强烈推荐——性能优化和 tensor core 英文博客，见 [[cutlass与GEMM]]。
+- 选择看其他书籍或者个人博客，注意有一些旧的资料可能会有一些过时的内容，要和官方文档同步。鉴于大部分中文博客都是搬运的不推荐看。
 
 # 推荐资源
 
 - **官方文档**：
-    - [CUDA Toolkit Documentation](https://docs.nvidia.com/cuda/)：包含编程指南、API 参考等。
-    - [NVIDIA Developer](https://developer.nvidia.com/)：提供教程、示例代码和白皮书。
+    - [CUDA Toolkit Documentation](https://docs.nvidia.com/cuda/)：包含编程指南、API 参考等的 CUDA 完全工具导航。
     - <a href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html">NVIDIA CUDA C++ Programming Guide</a> 
-	    - 是一个详尽的一直在进展的编程指南，需要反复理解，同时注意会不断更新，建议阅读网页版保持最新进展。但是讲的很宽泛，也缺乏细节，有一定的跳跃性，不适合入门，前 7 章是入门核心的内容。
-	- https://docs.nvidia.com/cuda/cuda-runtime-api/index.html
-		- run-time API
-	- https://docs.nvidia.com/cuda/archive/12.9.1/cuda-driver-api/index.html
-		- driver API
+	    - 是官方详尽的 CUDA 指南，建议反复理解，同时注意会不断更新，建议阅读网页版保持最新进展。但是讲的很宽泛，有一定的跳跃性，前 7 章是入门核心的内容。
+	- [run-time API](https://docs.nvidia.com/cuda/cuda-runtime-api/index.html)
+	- [driver API](https://docs.nvidia.com/cuda/cuda-driver-api/index.html)
+	- [nvcc](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html)
 	- https://docs.nvidia.com/cuda/archive/9.1/pdf/CUDA_C_Programming_Guide.pdf
-		- 2018，
+		- 2018
 	- Professional CUDA： https://www.cs.utexas.edu/~rossbach/cs380p/papers/cuda-programming.pdf
 		- 2014， 通过一些简单的例子，解释 CUDA 的基本原理和基本加速概念
     - CUDA C++ Best Practices Guide  [https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html](https://link.zhihu.com/?target=https%3A//docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html)
 	    - 主要从理论上给出了一些性能优化的方法，如何最大化利用 GPU 特性提升性能。需要掌握一些上面教程的基本概念。
 	- https://developer.nvidia.com/cuda-books-archive
+- [NVIDIA Developer](https://developer.nvidia.com/)：官方专题教程、示例代码和白皮书。
+	- https://developer.download.nvidia.cn/CUDA/training/StreamsAndConcurrencyWebinar.pdf
+- **性能优化与进阶指南**
+    - [NVIDIA Performance Guide](https://developer.nvidia.com/performance-guides)
+    - [NVIDIA Code Examples](https://github.com/NVIDIA/cuda-samples)
+    - [CUDA Optimization Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/)
 - **在线课程和书籍**：
     - 【【精译⚡GPU 计算】贝鲁特美国大学•CMPS224•2021】https://www.bilibili.com/video/BV1Rx4y147Dp/?p=5&share_source=copy_web&vd_source=fd37be71d17f708cc53476cbd29e590f
 	    - 基于 Programming Massively Parallel Processors A Hands-on Approach 4th Edition 的 GPU 课程，老师的讲解很深入有见解，PPT 可以见 https://www.elsevier.com/books-and-journals/book-companion/9780323912310。
@@ -39,7 +45,10 @@ category: Summary
 	- https://www.bilibili.com/video/BV1c64y1Q7Kt/?vd_source=bc07d988d4ccb4ab77470cec6bb87b69
 		- https://www.olcf.ornl.gov/calendar/cuda-shared-memory/ **美国橡树岭领导计算设施 (Oak Ridge Leadership Computing Facility, OLCF)** 发布的关于 **CUDA 培训系列**
 		- https://www.olcf.ornl.gov/cuda-training-series/
+	- 一个基础的 GPU 介绍课程：https://cvw.cac.cornell.edu/gpu-architecture
+	- 可选 - 谭升的博客，翻译的 Professional C programming：[https://face2ai.com/program-blog/#GPU编程（CUDA）](https://link.zhihu.com/?target=https%3A//face2ai.com/program-blog/%23GPU%25E7%25BC%2596%25E7%25A8%258B%25EF%25BC%2588CUDA%25EF%25BC%2589)
 - **开源项目**：
+	- NV 6G GPU https://docs.nvidia.com/aerial/cuda-accelerated-ran/latest/index.html
 	- leetgpu
 	- [https://github.com/bytedance/lightseq](https://link.zhihu.com/?target=https%3A//github.com/bytedance/lightseq)
 		- 字节跳动开源的生成模型推理加速引擎，BERT、GPT、VAE 等等全都支持，速度也是目前业界最快的之一。
@@ -54,18 +63,13 @@ https://people.maths.ox.ac.uk/gilesm/cuda/index.html
 
 # 其他参考
 
+https://christianjmills.com/series/notes/cuda-mode-notes.html
+
 https://shichaoxin.com/tags/
 
 chen tianqi：DLSYS https://dlsys.cs.washington.edu/
 
-6G GPU https://docs.nvidia.com/aerial/cuda-accelerated-ran/latest/index.html
-
 ## Preofessional CUDA® C Programming
-
-- [x] CUDA 编程入门极简教程 https://zhuanlan.zhihu.com/p/34587739
-谭升的博客：[https://face2ai.com/program-blog/#GPU编程（CUDA）](https://link.zhihu.com/?target=https%3A//face2ai.com/program-blog/%23GPU%25E7%25BC%2596%25E7%25A8%258B%25EF%25BC%2588CUDA%25EF%25BC%2589)
-
-https://zhuanlan.zhihu.com/p/690779388
 
 https://github.com/mapengfei-nwpu/ProfessionalCUDACProgramming
 
@@ -86,10 +90,6 @@ CUDA C Programming Guide 解读：https://zhuanlan.zhihu.com/p/53773183
     - Udemy: [CUDA C++ High Performance Parallel Programming](https://www.udemy.com/course/cuda-c-programming/)
     - 《CUDA 高性能编程：GPU 编程实战》
     - 《GPU 高性能编程 CUDA 实战》
-1. **性能优化指南**
-    - [NVIDIA Performance Guide](https://developer.nvidia.com/performance-guides)
-    - [NVIDIA Code Examples](https://github.com/NVIDIA/cuda-samples)
-    - [CUDA Optimization Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/)
 
 HPC 方向主要需要了解 HPC SDK 等较上层的模块，如何使用。涉及运维、功耗控制等方面时，也会涉及驱动中的 NVML 等模块。下面挑选常用的模块作一些介绍：
 
@@ -103,6 +103,21 @@ HPC 方向主要需要了解 HPC SDK 等较上层的模块，如何使用。涉�
 - [CUPTI (Profiling Tools Interface)](https://developer.nvidia.com/cupti)：和上面那个功能类似，允许各种测量和性能检测的 API。
 - [NVML (NVIDIA Management Library)](https://developer.nvidia.com/nvidia-management-library-nvml)：C 语言 API，监控和管理 NVIDIA GPU 设备。API 分为五个模块：初始化和清理、查询、控制、事件处理、错误报告。库文件 `libnvidia-ml.so`，链接参数 `-lnvidia-ml`。
 - [NCCL (NVIDIA Collective Communications Library)](https://developer.nvidia.com/nccl)：C 语言 API，MPI 的替代品。提供多 GPU、多节点通信原语。适用硬件：NVLink、Mellanox Network。
+
+# 在一切开始之前——安装
+
+个人环境：
+
+- win11 下安装 wsl2+archlinux 系统，windows 下装有驱动。
+- linux 下安装 cuda-tools，包含 ncu，完成后可在 windows 下启动图形界面，arch 下通过 yay 安装。
+	- ==ERROR== ERR_NVGPUCTRPERM - The user does not have permission to access NVIDIA GPU Performance Counters on the target device 0. For instructions on enabling permissions and to get more information see https://developer.nvidia.com/ERR_NVGPUCTRPERM
+	- To allow access for any user, create a file with the .conf extension containing `options nvidia NVreg_RestrictProfilingToAdminUsers=0` in /etc/modprobe.d.
+	- 开启 windows 下控制面板性能分析权限，支持 ncu profile。
+- 硬件与驱动：NVIDIA GeForce RTX 4060 | NVIDIA-SMI 580.82.09              Driver Version: 581.29         CUDA Version: 13.0     |
+- vscode ssh 远程连接与调试
+	- 安装 Nsight Visual Studio Code Edition，launch.json 添加调试信息，支持 gdb 调试
+	- WARNING: Debug interface is not enabled. Please see https://docs.nvidia.com/cuda/cuda-gdb/index.html#supported-platforms for more details.
+	- vscode 添加配置 c_cpp_properties，配置 IntelliSense
 
 # CUDA 核心知识提纲
 
@@ -130,7 +145,7 @@ CUDA 编程的核心知识体系可分为**基础语法**、**并行策略**、*
     - 异步执行：任务在流中排队，支持计算与数据传输重叠
     - 流同步：`cudaStreamSynchronize`、事件（`cudaEvent`）
 
-## **三、性能优化核心**
+## 性能优化核心
 
 见 [[高级实践方法总结]]
 
@@ -169,15 +184,6 @@ CUDA 编程的核心知识体系可分为**基础语法**、**并行策略**、*
     - 计算指标：SM 利用率、Tensor Core 利用率
     - 内存指标：全局内存带宽、共享内存 Bank 冲突
     - 指令指标：分支发散率、寄存器压力
-
-## 实战案例
-
-1. **矩阵乘法优化**
-    - 朴素实现 → 共享内存 tiling → Tensor Core 优化
-2. **卷积加速**
-    - 直接卷积 → Im2col + 矩阵乘 → cuDNN 调用
-3. **深度学习算子实现**
-    - Softmax、BatchNorm、注意力机制的 GPU 优化
 
 # 相关生态系统
 

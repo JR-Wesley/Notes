@@ -3,13 +3,53 @@ tags:
   - AI
 ---
 
-# 学习资源
+本目录旨在提供一个结合面向高性能硬件加速、深度学习框架、分布式并行加速的 AI sys 概述。
 
+本篇的核心：
+
+- 张量库、数据的线性代数建模，以 Pytorch 为主。
+- 常见机器学习算法，注重计算过程，比较少关注算法准确度、分数。
+- 异构计算和高性能计算的硬件和编程模型，GPU、TPU 等。
+- 并行策略、分布式加速，各类分布式加速库。
+- 一点编译、驱动、运行时、硬件支持。
+
+本篇比较少涉及：
+
+- 算法或模型的探索、比较。算法模型有太多变种和糅合空间，并不作为高性能计算的重点。
+- 数据分析与处理。
+- 分布式存储。
+- MLops、全生命周期管理。
+
+推荐的学习路径：
+
+- 动手学深度学习：重点在于前 5 章深度学习张量计算、Pytorch 使用，按需了解几个有代表性的模型结构如 CNN/Resnet/Transformer。
+- CS 336：通过视频课了解 LLM 发展、结构和基本性能评估。重点关注部署和计算效率。
+
+其他资料
+
+- Happy-llm：对 LLM 的结构有大概了解。
+- MIT 336：系统性了解 LLM 的发展和核心组成，动手实践基础模型结构。
+- 并行策略：
+- Megatron/vllm
+
+# 学习资源
+## 博客
+
+图解大模型系列： https://www.zhihu.com/people/aaron-73-65/posts
+
+AI系列整理 https://www.zhihu.com/people/ruilibuaa
+
+孟元系列 https://www.zhihu.com/people/lemonround
 ## 并行计算理论
 
 并行算法设计与性能优化 刘文志 著：对理论于传统并行优化方法有全面介绍。
 
-## AI sys
+## AI Sys
+
+[CSE 599W](http://link.zhihu.com/?target=http%3A//dlsys.cs.washington.edu/) System for ML
+
+伯克利最近新开的课程 AI system [AI-Sys Spring 2019](http://link.zhihu.com/?target=https%3A//ucbrise.github.io/cs294-ai-sys-sp19/)
+
 相关资源推荐：https://zhuanlan.zhihu.com/p/20076957712
 
 AI 相关大学课程严忻恺：https://www.zhihu.com/people/yan-xin-kai-38/posts

@@ -2,6 +2,8 @@
 dateCreated: 2025-08-15
 dateModified: 2025-08-15
 ---
+https://cloud.tencent.com/developer/article/2505000
+
 # Deepseek
 
 通信与计算融合
@@ -13,8 +15,6 @@ DeepSeek-V 3 的训练得到了 HAI-LLM 框架的支持，这是一个由我们�
 1. 训练框架设计了 DualPipe 算法，减少了流水线气泡
 
 DualPipe 的核心思想是在一对独立的前向和反向块中重叠计算和通信。具体来说，我们将每个块分为四个部分：**注意力（attention）**、**全对全分发（all-to-all dispatch）**、**MLP** 和 **全对全合并（all-to-all combine）**。特别地，对于反向块，注意力和 MLP 进一步分为两部分：**输入的反向传播** 和 **权重的反向传播**，类似于 ZeroBubble（Qi et al., 2023 b）中的设计。此外，我们还有一个 **PP（Pipeline Parallelism）通信部分**。如图 4 所示，对于一对前向和反向块，我们重新排列这些组件，并手动调整 GPU SMs 中用于通信与计算的比例。在这种重叠策略中，我们可以确保全对全通信和 PP 通信在执行过程中完全隐藏。
-
-![]([https://conf01.birentech.com/download/attachments/202046727/image2025-2-12_11-24-55.png?version=1&modificationDate=1739330695000&api=v2](https://conf01.birentech.com/download/attachments/202046727/image2025-2-12_11-24-55.png?version=1&modificationDate=1739330695000&api=v2))
 
 1. 开发高效的跨节点全通信内核，以充分利用 InfiniBand（IB）和 NVLink 的带宽。见 3.2.2 节
 
@@ -53,3 +53,11 @@ DualPipe 的核心思想是在一对独立的前向和反向块中重叠计算�
 **CPU 中的指数移动平均**：在训练过程中，我们保存模型参数的指数移动平均（EMA），以便在学习率衰减后对模型性能进行早期评估。EMA 参数存储在 CPU 内存中，并在每个训练步骤后异步更新。这种方法使我们能够在不增加额外内存或时间开销的情况下维护 EMA 参数。
 
 **多令牌预测的共享嵌入和输出头**：通过 DualPipe 策略，我们将模型的最浅层（包括嵌入层）和最深层（包括输出头）部署在同一个流水线并行（PP）层级上。这种安排使得多令牌预测（MTP）模块与共享嵌入和输出头之间的参数和梯度能够物理共享，从而进一步优化内存使用
+
+
+
+# Deepseek v3 解读
+
+模型完全解读： https://zhuanlan.zhihu.com/p/1895912970212582251
+
+

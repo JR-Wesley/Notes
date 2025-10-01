@@ -4,6 +4,8 @@ dateModified: 2025-08-03
 ---
 
 <a href=" https://devhints.io/vim">cheatsheet vim</a>
+https://zhuanlan.zhihu.com/p/382092667
+https://github.com/northgreen/ictye-nvim-cfg
 
 vscode
 

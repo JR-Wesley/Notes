@@ -1,20 +1,23 @@
 ---
-dateCreated: 2025-07-05
-dateModified: 2025-08-06
+tags:
+  - GPU
+  - Architecture
 ---
 
 >[!info] 本文参考：
->- <a href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html">NVIDIA CUDA C++ Programming Guide</a>  第 5 章
->- Professional CUDA C Programming 第 2、3、4、5 章
+>- <a href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html">NVIDIA CUDA C++ Programming Guide</a>  第 2、3、4、5 章
+>- Professional CUDA C Programming 第 5 章，虽然这本书讲的 Fermi 架构比较老，仍有助于学习 GPU 编程架构最核心的部分，不过仍需注意一些特性的时效性。
+>- 这部分也会涉及很多硬件架构和性能调优的内容，可结合后面章节一起学习。
+>- [Programming Interface](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#programming-interface) 中给出了对 CUDA C++ 的宽泛描述。
+>- [CUDA samples](https://docs.nvidia.com/cuda/cuda-samples/index.html#vector-addition) 中可以找到本章和下一章中使用的向量加法示例的完整代码。
 
 # 2. 编程模型
 
-- [Programming Interface](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#programming-interface) 中给出了对 CUDA C++ 的广泛描述。
-- [CUDA samples](https://docs.nvidia.com/cuda/cuda-samples/index.html#vector-addition) 中可以找到本章和下一章中使用的向量加法示例的完整代码。
 ## 概述
+
 ### Introducing the CUDA Programming Model
 
-Programming models present an abstraction of computer architectures that act as a bridge between an application and its implementation on available hardware. Figure 2-1 illustrates the important layers of abstraction that lie between the program and the programming model implementation. The communication abstraction is the boundary between the program and the programming model implementation, which is realized through *a compiler or libraries using privileged hardware primitives and the operating system*. The program, written for a programming model, dictates how components of the program share information and coordinate their activities. The programming model provides a logical view of specific computing architectures. Typically, it is embodied in a programming language or programming environment.
+Programming models present **an abstraction of computer architectures that act as a bridge between an application and its implementation on available hardware**. Figure 2-1 illustrates the important layers of abstraction that lie between the program and the programming model implementation. The communication abstraction is the boundary between the program and the programming model implementation, which is realized through *a compiler or libraries using privileged hardware primitives and the operating system*. The program, written for a programming model, dictates how components of the program share information and coordinate their activities. The programming model provides a logical view of specific computing architectures. Typically, it is embodied in a programming language or programming environment.
 
 ![[Fig2-1.png]]
 
@@ -42,8 +45,8 @@ From the perspective of a programmer, you can view parallel computation from dif
 
 The CUDA programming model enables you to execute applications on heterogeneous computing systems by simply annotating code with a small set of extensions to the C programming language. A heterogeneous environment consists of CPUs complemented by GPUs, each with its own memory separated by a PCI-Express bus. Therefore, you should note the following distinction:
 
-- Host: the CPU and its memory (host memory)
-- Device: the GPU and its memory (device memory)
+- **Host: the CPU and its memory (host memory)**
+- **Device: the GPU and its memory (device memory)**
 
 > Starting with CUDA 6, NVIDIA introduced a programming model improvement called Unified Memory, which bridges the divide between host and device memory spaces. This improvement allows you to access both the CPU and GPU memory using a single pointer, while the system automatically migrates the data between the host and device. TODO: super-link
 
@@ -55,7 +58,7 @@ The host can operate **independently** of the device for most operations. When a
 
 ### Managing Memory
 
-> More about memory see  [[#存储体系结构|存储体系结构]]
+> More about memory see  [[3-存储体系结构]]
 
 内存管理在传统串行程序是非常常见的，寄存器空间，栈空间内的内存由机器自己管理，堆空间由用户控制分配和释放，CUDA 程序同样，只**有 CUDA 提供的 API 可以分配管理设备上的内存**，当然也可以用 CUDA 管理主机上的内存，主机上的传统标准库也能完成主机内存管理。
 
@@ -91,10 +94,134 @@ cudaError_t cudaMemcpy(void* dst, const void* src, size_t count, cudaMemcpyKind 
 >[!tip] Error Handling
 Every CUDA call, except kernel launches, returns an error code of an enumerated type `cudaError_t`. For example, if GPU memory is successfully allocated, it returns:  `cudaSuccess`  Otherwise, it returns:  `cudaErrorMemoryAllocation`.  You can convert an error code to a human-readable error message
 
-> 主机和GPU是不同的计算单元，它们有各自独立的内存地址空间， 并且不能直接相互访问对方的内存。这意味着，在主机代码中，不能像对待主机内存指针那样直接对指向GPU内存的设备指针进行解引用操作，因为主机CPU并不能直接访问GPU内存。 
+> 主机和 GPU 是不同的计算单元，它们有各自独立的内存地址空间， 并且不能直接相互访问对方的内存。这意味着，在主机代码中，不能像对待主机内存指针那样直接对指向 GPU 内存的设备指针进行解引用操作，因为主机 CPU 并不能直接访问 GPU 内存。
 > 如果在主机代码中直接对设备指针进行赋值等操作会导致程序出现未定义行为，比如非法内存访问。在运行时，程序往往会崩溃，因为操作系统无法处理这种跨不同内存空间的非法访问请求。
-> 应该使用CUDA提供的`cudaMemcpy`函数来在主机和设备内存之间安全地传输数据。
+> 应该使用 CUDA 提供的 `cudaMemcpy` 函数来在主机和设备内存之间安全地传输数据。
+
 ## 线程与执行模型
+
+### 线程层次
+
+GPU 上有很多并行化的轻量级线程。kernel 在 device 上执行时实际上是启动很多线程，**由一个内核启动所产生的所有线程统称一个网格（Grid），同一网格中的所有线程共享相同的全局内存空间**。grid 是线程结构的第一层次，而网格又可以分为很多**线程块 block**，一个线程块里面包含很多**线程 Thread**，这是第二个层次。**线程网格和线程块从逻辑上代表了一个核函数的线程层次结构，这种组织方式可以帮助我们有效地利用资源，优化性能**。
+
+All threads spawned by a single kernel launch are collectively called a **grid**. All threads in a grid share the same global memory space. A grid is made up of many **thread blocks**. A thread block is a group of **threads** that can cooperate with each other using:
+
+- **Block-local synchronization**
+- **Block-local shared memory**
+
+> [!tip] Threads from different blocks cannot cooperate.
+
+Threads rely on the following two unique coordinates to distinguish themselves from each other:
+
+- **`blockIdx` (block index within a grid)**
+- **`threadIdx` (thread index within a block)**
+
+These variables appear as *built-in, pre-initialized* variables that can be accessed within kernel functions. When a kernel function is executed, the coordinate variables `blockIdx` and `threadIdx` are assigned to each thread by the CUDA runtime. Based on the coordinates, you can assign portions of data to different threads.
+
+The coordinate variable is of type `uint3`, a CUDA built-in vector type, derived from the basic integer type. It is a structure containing three unsigned integers, and the 1st, 2nd, and 3rd components are accessible through the fields x, y, and z respectively.
+
+```c
+blockIdx.x, blockIdx.y, blockIdx.z,
+threadIdx.x, threadIdx.y, threadIdx.z,
+```
+
+CUDA organizes grids and blocks in three dimensions. Figure 2-5 shows an example of a thread hierarchy structure with a 2D grid containing 2D blocks. The dimensions of a grid and a block are specified by the following two built-in variables:
+
+- `blockDim` (block dimension, measured in threads)
+- `gridDim` (grid dimension, measured in blocks)
+
+These variables are of type `dim3`, an integer vector type based on `uint3` that is used to specify dimensions. When defining a variable of type `dim3`, any component left unspecified is initialized to 1. Each component in a variable of type `dim3` is accessible through its x, y, and z fields, respectively, as shown in the following example:  `blockDim.x blockDim.y blockDim.z`
+
+> GRID AND BLOCK DIMENSIONS: Usually, a grid is organized as a 2D array of blocks, and a block is organized as a 3D array of threads.  Both grids and blocks use the dim3 type with three unsigned integer fields. The unused fields will be initialized to 1 and ignored.
+
+> There are two distinct sets of grid and block variables in a CUDA program: manually-defined `dim3` data type and pre-defined `uint3` data type. On the host side, you define the dimensions of a grid and block using a dim3 data type as part of a kernel invocation. When the kernel is executing, the CUDA runtime generates the corresponding built-in, pre-initialized grid, block, and thread variables, which are accessible within the kernel function and have type uint3. *The manually-defined grid and block variables for the dim3 data type are only visible on the host side, and the built-in, pre-initialized grid and block variables of the uint3 data type are only visible on the device side.*
+
+> It is important to distinguish between the host and device access of grid and block variables. For example, using a variable declared as block from the host, you define the coordinates and access them as follows:  `block.x, block.y, and block.z`  On the device side, you have pre-initialized, built-in block size variable available as:  `blockDim.x, blockDim.y, and blockDim.z`  In summary, you define variables for grid and block on the host before launching a kernel, and access them there with the x, y and z fields of the vector structure from the host side. When the kernel is launched, you can use the pre-initialized, built-in variables within the kernel.
+
+> 简单区分一下 host 和 device 定义的这些变量的使用差异。
+
+线程两层组织结构如下图所示，这是一个 gird 和 block 均为 2-dim 的线程组织。grid 和 block 都是定义为 `dim3` 类型的变量，`dim3` 可以看成是包含三个无符号整数（x，y，z）成员的结构体变量，在定义时，缺省值初始化为 1。因此 grid 和 block 可以灵活地定义为 1-dim，2-dim 以及 3-dim 结构，对于图中结构（主要水平方向为 x 轴），定义的 grid 和 block 如下所示。
+
+![[Fig2-5.png]]
+
+A CUDA kernel call is a direct extension to the C function syntax that adds a kernel’s execution configuration inside triple-angle-brackets:  `kernel_name <<<grid, block>>>(argument list);`
+
+By specifying the grid and block dimensions, you configure:
+
+- The total number of threads for a kernel
+- The layout of the threads you want to employ for a kernel
+
+> 再次注意：The threads within the same block can easily communicate with each other, and threads that belong to different blocks cannot cooperate.
+
+```c
+dim3 grid(3, 2);
+dim3 block(5, 3);
+kernel_fun<<< grid, block >>>(prams…);
+```
+
+Kernel 上的两层线程组织结构（2-dim）
+
+- **`grid_dim`**：网格维度，指定整个网格的大小（车间数量）
+- **`block_dim`**：线程块维度，指定每个块的大小（每个车间的工人数）
+
+这两个参数可以是：
+
+1. **一维结构**：`<<<100, 256>>>` → 100 个块，每块 256 个线程
+2. **二维结构**：`<<<dim3(10, 5), dim3(16, 16)>>>` → 网格 10×5=50 个块，每块 16×16=256 个线程
+3. **三维结构**：常用于图像处理（如 3 D 体积数据）
+
+一个线程需要两个内置的坐标变量 `blockIdx，threadIdx）` 来唯一标识，它们都是 `dim3` 类型变量，其中 ` blockIdx` 指明线程所在 grid 中的位置，而 `threaIdx` 指明线程所在 block 中的位置，如图中的 `Thread (1,1)` 满足：
+
+```text
+threadIdx.x = 1
+threadIdx.y = 1
+blockIdx.x = 1
+blockIdx.y = 1
+```
+
+![grid-of-thread-blocks.png](grid-of-thread-blocks.png)
+
+为方便起见，`thread Idx` 是一个 3 分量 ` (3-component) ` 向量，因此可以使用一个一维、二维或三维的线程索引 ` (thread index) ` 来识别线程，形成一个具有一个维度、两个维度或三个维度的、由线程组成的块，我们称之为线程块 ` (thread block) `。这提供了一种自然的方法来对某一范围（例如向量、矩阵或空间）内的元素进行访问并调用计算。
+
+一个线程块上的线程是放在同一个流式多处理器（SM) 上的，但是单个 SM 的资源有限，这导致线程块中的线程数是有限制的，现代 GPUs 的线程块可支持的线程数可达 1024 个。有时候，我们要知道一个线程在 block 中的全局 ID，此时就必须还要知道 block 的组织结构，这是通过线程的内置变量 blockDim 来获得。它获取线程块各个维度的大小。
+
+> For a given data size, the general steps to determine the grid and block dimensions are:
+> - Decide the block size.
+> - Calculate the grid dimension based on the application data size and the block size.
+> To determine the block dimension, you usually need to consider:
+> - Performance characteristics of the kernel
+> - Limitations on GPU resources
+
+> There are several restrictions on the dimensions of grids and blocks. One of the major limiting factors on block size is available compute resources, such as registers, shared memory, and so on. Some limits can be retrieved by querying the GPU device.
+
+> 注意需要根据计算资源和算法来规划线程层次。
+
+### 索引计算
+
+CUDA GPU 有许多并行处理器，这些处理器被分组为流多处理器（Streaming Multiprocessors，简称 SM）。每个 SM 可以运行多个并发线程块，但每个线程块只能在单个 SM 上运行。例如，基于图灵（Turing）GPU 架构的英伟达 T4 GPU 有 40 个 SM 和 2560 个 CUDA 核心，每个 SM 最多可支持 1024 个活动线程。为了充分利用所有这些线程，我应该使用多个线程块启动内核。
+
+执行配置的第一个参数指定了线程块的数量。并行线程块共同构成了所谓的网格。由于我有 N 个元素需要处理，且每个块有 256 个线程，我只需要计算出至少能得到 N 个线程所需的块数。我只需将 N 除以块大小（如果 N 不是 blockSize 的倍数，要注意向上取整）。
+
+```cpp
+int blockSize = 256;
+int numBlocks = (N + blockSize - 1) / blockSize;
+add<<<numBlocks, blockSize>>>(N, x, y);
+```
+
+这个内核还将 stride 设置为网格中线程的总数 `（blockDim. x * gridDim. x）`。在 CUDA 内核中，这种类型的循环通常称为 grid-stride 循环。
+
+Because the data is stored linearly in global memory, you can use the built-in variables `blockIdx.x` and `threadIdx.x` to:
+
+- Identify a unique thread in the grid.
+- Establish a mapping between threads and data elements.
+
+Figure 2-6 illustrates the layout of threads in the `<<<4, 8>>>` configuration.
+
+![[Fig2-6.png]]
+
+![](Even-easier-intro-to-CUDA-image.png)
+
+> 参考：https://developer.nvidia.com/blog/even-easier-introduction-cuda/
 
 ### 内核
 
@@ -123,7 +250,22 @@ int main()
 
 这里，执行 `VecAdd()` 的 N 个线程中的每一个线程都会执行一个加法。
 
-### 线程层次
+A kernel call is **asynchronous** with respect to the host thread. After a kernel is invoked, control returns to the host side immediately. You can call the following function to force the host application to wait for all kernels to complete.
+
+```c
+cudaError_t cudaDeviceSynchronize(void);
+```
+
+  Some CUDA runtime APIs perform an implicit synchronization between the host and the device. When you use `cudaMemcpy` to copy data between the host and device, implicit synchronization at the host side is performed and the host application must wait for the data copy to complete.
+
+  `cudaError_t cudaMemcpy(void* dst, const void* src, size_t count, cudaMemcpyKind kind);`
+
+  It starts to copy after all previous kernel calls have completed. When the copy is finished, control returns to the host side immediately.
+
+> [!note] ASYNCHRONOUS BEHAVIORS
+> Unlike a C function call, all CUDA kernel launches are asynchronous. Control returns to the CPU immediately after the CUDA kernel is invoked.
+
+### 线程层次总结
 
 为方便起见，`threadIdx` 是一个三维向量，线程可通过一维、二维或三维线程索引来标识，从而形成一维、二维或三维的线程块 `thread block`。这种方式能自然地在向量、矩阵或体积等领域的元素间调用计算。
 
@@ -278,400 +420,6 @@ int main()
 
 在计算能力为 9.0 的 GPU 中，集群中的所有线程块都能保证在单个 GPU 处理集群（GPC）上协同调度，并允许集群中的线程块使用 [Cluster Group](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#cluster-group-cg) API `cluster.sync()` 执行硬件支持的同步操作。集群组还提供成员函数，分别使用 `num_threads ()` 和 `num_blocks () API`，依据线程数量或块数量来查询集群组的大小。分别使用 `dim_threads ()` 和 `dim_blocks ()` API，可以查询集群组中一个线程或块的 rank。属于某个集群的线程块可以访问分布式共享内存。集群中的线程块能够对分布式共享内存中的任何地址执行读取、写入和原子操作。[Distributed Shared Memory](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#distributed-shared-memory) 给出了一个在分布式共享内存中执行直方图计算的示例。
 
-### 线程总结与理解
-
-#### 线程层次
-
-GPU 上有很多并行化的轻量级线程。kernel 在 device 上执行时实际上是启动很多线程，**由一个内核启动所产生的所有线程统称一个网格（Grid），同一网格中的所有线程共享相同的全局内存空间**。grid 是线程结构的第一层次，而网格又可以分为很多**线程块 block**，一个线程块里面包含很多**线程 Thread**，这是第二个层次。**线程网格和线程块从逻辑上代表了一个核函数的线程层次结构，这种组织方式可以帮助我们有效地利用资源，优化性能**。
-
-线程两层组织结构如下图所示，这是一个 gird 和 block 均为 2-dim 的线程组织。grid 和 block 都是定义为 `dim3` 类型的变量，`dim3` 可以看成是包含三个无符号整数（x，y，z）成员的结构体变量，在定义时，缺省值初始化为 1。因此 grid 和 block 可以灵活地定义为 1-dim，2-dim 以及 3-dim 结构，对于图中结构（主要水平方向为 x 轴），定义的 grid 和 block 如下所示。
-
-```c
-dim3 grid(3, 2);
-dim3 block(5, 3);
-kernel_fun<<< grid, block >>>(prams…);
-```
-
-![](两层线程结构.png)
-
-Kernel 上的两层线程组织结构（2-dim）
-
-- **`grid_dim`**：网格维度，指定整个网格的大小（车间数量）
-- **`block_dim`**：线程块维度，指定每个块的大小（每个车间的工人数）
-
-这两个参数可以是：
-
-1. **一维结构**：`<<<100, 256>>>` → 100 个块，每块 256 个线程
-2. **二维结构**：`<<<dim3(10, 5), dim3(16, 16)>>>` → 网格 10×5=50 个块，每块 16×16=256 个线程
-3. **三维结构**：常用于图像处理（如 3 D 体积数据）
-
-一个线程需要两个内置的坐标变量 `blockIdx，threadIdx）` 来唯一标识，它们都是 `dim3` 类型变量，其中 ` blockIdx` 指明线程所在 grid 中的位置，而 `threaIdx` 指明线程所在 block 中的位置，如图中的 `Thread (1,1)` 满足：
-
-```text
-threadIdx.x = 1
-threadIdx.y = 1
-blockIdx.x = 1
-blockIdx.y = 1
-```
-
-![grid-of-thread-blocks.png](grid-of-thread-blocks.png)
-
-为方便起见，`thread Idx` 是一个 3 分量 ` (3-component) ` 向量，因此可以使用一个一维、二维或三维的线程索引 ` (thread index) ` 来识别线程，形成一个具有一个维度、两个维度或三个维度的、由线程组成的块，我们称之为线程块 ` (thread block) `。这提供了一种自然的方法来对某一范围（例如向量、矩阵或空间）内的元素进行访问并调用计算。
-
-一个线程块上的线程是放在同一个流式多处理器（SM) 上的，但是单个 SM 的资源有限，这导致线程块中的线程数是有限制的，现代 GPUs 的线程块可支持的线程数可达 1024 个。有时候，我们要知道一个线程在 block 中的全局 ID，此时就必须还要知道 block 的组织结构，这是通过线程的内置变量 blockDim 来获得。它获取线程块各个维度的大小。
-
-#### 索引计算
-
-CUDA GPU 有许多并行处理器，这些处理器被分组为流多处理器（Streaming Multiprocessors，简称 SM）。每个 SM 可以运行多个并发线程块，但每个线程块只能在单个 SM 上运行。例如，基于图灵（Turing）GPU 架构的英伟达 T4 GPU 有 40 个 SM 和 2560 个 CUDA 核心，每个 SM 最多可支持 1024 个活动线程。为了充分利用所有这些线程，我应该使用多个线程块启动内核。
-
-执行配置的第一个参数指定了线程块的数量。并行线程块共同构成了所谓的网格。由于我有 N 个元素需要处理，且每个块有 256 个线程，我只需要计算出至少能得到 N 个线程所需的块数。我只需将 N 除以块大小（如果 N 不是 blockSize 的倍数，要注意向上取整）。
-
-```cpp
-int blockSize = 256;
-int numBlocks = (N + blockSize - 1) / blockSize;
-add<<<numBlocks, blockSize>>>(N, x, y);
-```
-
-这个内核还将 stride 设置为网格中线程的总数 `（blockDim. x * gridDim. x）`。在 CUDA 内核中，这种类型的循环通常称为 grid-stride 循环。
-
-> 参考：https://developer.nvidia.com/blog/even-easier-introduction-cuda/
-
-![](Even-easier-intro-to-CUDA-image.png)
-
-## 存储体系结构
-
-In general, applications do not access arbitrary data or run arbitrary code at any point-in-time. Instead, applications often follow th**e principle of locality**, which suggests that they access a relatively small and localized portion of their address space at any point-in-time. There are two different types of locality:
-
-- **Temporal locality (locality in time)**
-- **Spatial locality (locality in space)**
-
-Temporal locality assumes that if a data location is referenced, then it is more likely to be referenced again within a short time period and less likely to be referenced as more and more time passes. Spatial locality assumes that if a memory location is referenced, nearby locations are likely to be referenced as well.
-
-Modern computers use a **memory hierarchy** of progressively lower-latency but lower-capacity memories to optimize performance. This memory hierarchy is only useful because of the principle of locality. A memory hierarchy consists of multiple levels of memory with different latencies, bandwidths, and capacities.
-
-![[Fig4-1.png]]
-
-Both GPUs and CPUs use similar principles and models in memory hierarchy design. The key difference between GPU and CPU memory models is that the CUDA programming model exposes more of the memory hierarchy and gives you more explicit control over its behavior.
-
-### CUDA 存储体系结构
-
-To programmers, there are generally two classifications of memory:
-
-- **Programmable**: You explicitly control what data is placed in programmable memory.
-- **Non-programmable**: You have no control over data placement, and rely on automatic techniques to achieve good performance.
-
-In the CPU memory hierarchy, L1 cache and L2 cache are examples of non-programmable memory. On the other hand, the CUDA memory model exposes many types of programmable memory to you:
-
-- Registers
-- Shared memory
-- Local memory
-- Constant memory
-- Texture memory
-- Global memory
-
-![](cuda%20内存模型.png)
-
-每个层次都有不同的范围、生命周期、缓存行为。CUDA 线程在执行期间可以从多种内存空间中访问数据，可以看到：
-
-- 每个线程有自己的**私有本地内存（Local Memory）**，
-- 而每个线程块有包含**共享内存（Shared Memory）**, 该共享内存内存对该块中的所有线程可见，并且具有与该块相同的生命周期。
-- 线程块集群中的线程块可以对彼此的共享内存执行读取、写入和原子操作。
-- 所有线程都可以访问相同的**全局内存（Global Memory）**。
-- 还有两个额外的只读内存空间可供所有线程访问：**常量内存（Constant Memory）和纹理内存（Texture Memory）**。
-
-全局、常量和纹理内存空间针对不同的内存使用进行了优化（[Device Memory Accesses](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#device-memory-accesses)）。纹理内存还为某些特定数据格式提供了不同的寻址模式以及数据过滤方法（[Texture and Surface Memory](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#texture-and-surface-memory)）。全局、常量、纹理内存有和应用相同的生命周期，也即全局内存、常量内存和纹理内存空间在同一应用程序启动的不同内核（kernel）之间是*持久存在*的。 简单来说，就是当同一个应用程序多次启动内核去执行任务时，这几种内存里的数据不会因为内核的启动和结束而消失，会一直保持着，方便后续内核继续使用这些内存中的数据。
-
-![[02-AISystem/GPU/CUDA-Programming-Guide/assets/2-CUDA编程核心.assets/memory-hierarchy.png]]
-
-#### 寄存器
-
-其中**寄存器是 GPU 上运行速度最快的内存空间**，通常其带宽为 8TB/s 左右，延迟为 1 个时钟周期。核函数中声明的一个没有其他修饰符的自变量，通常就存储在寄存器中。最快速也最受偏爱的存储器就是设备中的寄存器，属于具有重要价值有极度缺乏的资源。
-
-#### 共享内存
-
-接下来是共享内存，**共享内存是 GPU 上可受用户控制的一级缓存**。共享内存类似于 CPU 的缓存，不过与 CPU 的缓存不同，GPU 的共享内存可以有 CUDA 内核直接编程控制。由于共享内存是片上内存，所以与全局内存相比，它具有更高的带宽与更低的延迟，通常其带宽为 1.5TB/s 左右，延迟为 1～32 个时钟周期。对于共享内存的使用，主要考虑数据的重用性。**当存在着数据的重复利用时，使用共享内存是比较合适的**。如果数据不被重用，则直接将数据从全局内存或常量内存读入寄存器即可。
-
-**全局内存是 GPU 中最大、延迟最高并且最常使用的内存**。全局内存类似于 CPU 的系统内存。在编程中对全局内存访问的优化以最大化程度提高全局内存的数据吞吐量是十分重要的。
-
-#### **合理使用原则**
-
-下表对各个存储层次进行总结：
-
-| 存储类型     | 容量         | 延迟      | 带宽       | 访问权限        | 适用场景              |
-| -------- | ---------- | ------- | -------- | ----------- | ----------------- |
-| **寄存器**  | 每个线程 KB 级  | ~1 周期   | 无限       | 线程私有        | 高频临时变量            |
-| **共享内存** | 每个 SM 96KB | ~10 周期  | ~1TB/s   | 块内共享        | 数据重用（如矩阵乘 tiling） |
-| **常量内存** | 64KB       | ~20 周期  | ~800GB/s | 全局只读        | 频繁访问的常量数据         |
-| **全局内存** | GB 级       | ~400 周期 | ~1TB/s   | 全局读写        | 大数据存储             |
-| **纹理内存** | GB 级       | ~320 周期 | ~800GB/s | 只读，优化 2D 访问 | 图像 / 视频处理         |
-
-1. **寄存器**：优先存放循环变量、计算中间值
-→ 避免寄存器溢出（通过 `nvcc --ptxas-options=-v` 查看）
-2. **共享内存**：手动管理数据缓存
-
-```cuda
-__shared__ float tile[32][32];  // 矩阵乘分块
-```
-
-1. **全局内存**：确保合并访问（Warp 内连续线程访问连续地址）
-→ 例如：`float4` 类型访问比 `float` 效率高 4 倍
-
-## 共享内存和常量内存
-
-> 参考： Professional CUDA C Programming 第 5 章。重点：
-> 1. Learning how data is arranged in shared memory
-> 2. Mastering index conversion from 2D shared memory to linear global memory
-> 3. Resolving bank conflicts for different access modes
-> 4. Caching data in shared memory to reduce global memory accesses
-> 5. Avoiding non-coalesced global memory access using shared memory
-> 6. Understanding the difference between the constant cache and the read-only cache
-> 7. Programming with the warp shuffle instruction
-> 本章将会介绍两个例子：规约和矩阵转置。
-
->[!important] Shared Memory
->Misaligned memory accesses are not as problematic since modern GPU hardware includes an L1 cache, but non-coalesced memory accesses that stride through global memory still cause suboptimal bandwidth utilization. However, it is possible to **improve global memory coalesced access using shared memory** in many cases.
-
-GPUs are equipped with two types of memory:
-
-- **On-board memory**
-- **On-chip memory**
-
-Global memory is large, on-board memory and is characterized by relatively high latencies. Shared memory is smaller, low-latency on-chip memory that offers much higher bandwidth than global memory. You can think of it as a program-managed cache. Shared memory is generally useful as:
-
-- An intra-block thread communication channel
-- A program-managed cache for global memory data
-- Scratch pad memory for transforming data to improve global memory access patterns
-
-### 共享内存
-
-Shared memory (SMEM) is one of the key components of the GPU. Physically, each SM contains a small low-latency memory pool **shared by all threads in the thread block** currently executing on that SM. Shared memory enables threads within the same thread block to cooperate, facilitates reuse of on-chip data, and can greatly reduce the global memory bandwidth needed by kernels. Because the contents of shared memory are explicitly managed by the application, it is often
-
-described as a program-managed cache.
-
-![[Fig5-1.png]]
-
-As illustrated in Figure 5-1, all load and store requests to global memory **go through the L2 cache**, which is the primary point of data unification between SM units. Note that shared memory and L1 cache are physically closer to the SM than both the L2 cache and global memory. As a result, shared memory latency is roughly 20 to 30 times lower than global memory, and bandwidth is nearly 10 times higher.
-
-- A fixed amount of shared memory is allocated to each thread block when it starts executing.
-- This shared memory address space is shared by all threads in a thread block.
-- Its contents have the same lifetime as the thread block in which it was created.
-- Shared memory **accesses are issued per warp**. Ideally, each request to access shared memory by a warp is serviced in one transaction.
-
-Shared memory is partitioned **among all resident thread blocks** on an SM; therefore, shared memory is a critical resource that limits device parallelism. The more shared memory used by a kernel, the fewer possible concurrently active thread blocks.
-
->[!important] 共享内存仍要经过 L2 Cache，使用规则与“线程块（Thread Block）”强绑定，是线程块内线程协作的关键，而访问粒度与 warp 绑定，内存由 SM 驻留的所有 Block 分配。
-
-### 分配
-
-There are several ways to allocate or declare shared memory variables depending on your application requirements. You can allocate shared memory variables either statically or dynamically. Shared memory can also be declared as either local to a CUDA kernel or globally in a CUDA source code file. CUDA supports declaration of 1D, 2D, and 3D shared memory arrays.
-
-```c
-// inside or outside of a kernel
-__shared__ float tile[size_y][size_x];
-
-// dynamically declare an array (only 1D) and specify the size
-extern __shared__ int tile[];
-kernel<<<grid, block, isize*sizeof(int)>>>(...);
-```
-
-> 在 CUDA 中，`__shared__` 变量在**核函数外部声明**时，其作用域是**全局的**（对同一编译单元内的所有核函数可见），但这并不改变共享内存的本质特性 —— 它仍然是**每个线程块（block）私有的内存**。
-
-### 访问
-
-There are two key properties to measure when optimizing memory performance: latency and bandwidth. different global memory access patterns impact kernel performance of latency and bandwidth. Shared memory can be used to hide the performance impact of global memory latency and bandwidth. To fully exploit these resources, it is helpful to understand how shared memory is arranged.
-
-#### Memory Banks
-
->[!note] 32 Memory Banks
->To achieve high memory bandwidth, shared memory is divided into 32 equally-sized memory modules, called banks, which can be accessed simultaneously.
-
-There are 32 banks because there are 32 threads in a warp. Shared memory is a 1D address space. Depending on the compute capability of a GPU, the addresses of shared memory are mapped to different banks in different patterns (more on this later). If a shared memory load or store operation issued by a warp does not access more than one memory location per bank, the operation can be serviced by one memory transaction. Otherwise, the operation is serviced by multiple memory transactions, thereby decreasing memory bandwidth utilization.
-
-#### Bank Conflict
-
-> [!note] Bank Conflict
-> Multiple addresses in a shared memory request fall into the same memory bank, causing the request to be replayed.
-
-The hardware splits a request with a bank conflict into as many separate conflict-free transactions as necessary, decreasing the effective bandwidth by a factor equal to the number of separate memory transactions required.
-
-Three typical situations occur when a request to shared memory is issued by a warp:
-
-- Parallel access: multiple addresses accessed across multiple banks
-- Serial access: multiple addresses accessed within the same bank
-- Broadcast access: a single address read in a single bank
-![[Fig5-22.png]]
-![[Fig5-3-4.png]]
-图 5-2、5-3 都是规则和不规则的无冲突访存，图 5-4 可能是不冲突的广播，可能出现冲突。
-
-#### Access Mode
-
-Shared memory bank width defines which shared memory addresses are in which shared memory banks. Memory bank width varies for devices depending on compute capability.
-
-There are two different bank widths:
-
-- 4 bytes (32-bits) for devices of compute capability 2.x
-- 8 bytes (64-bits) for devices of compute capability 3.x
-
-For a Fermi device, the bank width is 32-bits and there are 32 banks. Each bank has a bandwidth of 32 bits per two clock cycles. Successive 32-bit words map to successive banks. Hence, the mapping from shared memory address to bank index can be calculated as follows:
-
-$$
-bank index = (byte address ÷ 4 bytes/bank) \% 32 banks
-$$
-
-The byte address is divided by 4 to convert to a 4-byte word index, and the modulo 32 operation converts the 4-byte word index into a bank index.
-
-The top of Figure 5-5 illustrates the mapping from byte address to word index for Fermi devices. At the bottom, the mapping from word index to bank index is shown. Note that bank membership wraps around every 32 words. Neighboring words are classified in different banks to maximize the number of possible concurrent accesses for a warp.
-
-![[file-20250913150514740.png]]
-
-A bank conflict does not occur when two threads from the same warp access the same address. In that case, for read accesses, the word is broadcast to the requesting threads, and for write accesses, the word is written by only one of the threads — which thread performs the write is undefined.
-
-![[Fig5-5.png]]
-
-> 对于 Kepler 架构，带宽是 64bit/cycle，64 位的地址相应计算同理。只读一个 32-bit word 是可以的，这时一个 Bank 容纳两个 32-bit word，所以同时访问这两个 word 不会冲突。
-
-不会冲突：
-
-![[Fig5-7-8.png]]
-
-两路冲突和三路冲突：
-
-![[Fig5-9-10.png]]
-
-> [!warning] 用于共享内存访存位宽的访存模式配置的 API [cudaDeviceSetSharedMemConfig](https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE__DEPRECATED.html#group__CUDART__DEVICE__DEPRECATED_1g76cb4f94c7af96c1247dfc7f105eabae) [cudaSharedMemConfig](https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html#group__CUDART__TYPES_1g6e62d15f3c224625e8c9aa946f1709a6) 已被弃用。
-
-#### Configuring the Amount of Shared Memory
-
-The shared memory and L1 cache share this hardware resource. CUDA provides two methods for configuring the size of L1 cache and shared memory:
-
-- Per-device configuration
-- Per-kernel configuration
-
-You can configure how much L1 cache and how much shared memory will be used by kernels launched on a given **device** with the following [runtime function](https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1g6c9cc78ca80490386cf593b4baa35a15):
-
-```c
-__host__ ​cudaError_t cudaDeviceSetCacheConfig ( cudaFuncCache cacheConfig )
-/*
-Sets the preferred cache configuration for the current device.
-
-###### Parameters
-cacheConfig
-- Requested cache configuration
-  */
-```
-
-The argument cacheConfig specifies how on-chip memory should be partitioned between the L1 cache and shared memory on the current CUDA device. The supported cache configurations are (See also [cudaFuncCache](https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html#group__CUDART__TYPES_1gb980f35ed69ee7991704de29a13de49b)):
-
-```c
-enum cudaFuncCache
-
-// CUDA function cache configurations
-// Values
-
-cudaFuncCachePreferNone = 0
-// Default function cache configuration, no preference
-
-cudaFuncCachePreferShared = 1
-// Prefer larger shared memory and smaller L1 cache
-
-cudaFuncCachePreferL1 = 2
-// Prefer larger L1 cache and smaller shared memory
-
-cudaFuncCachePreferEqual = 3
-// Prefer equal size L1 cache and shared memory
-```
-
-> 在 Professional C Programming Guide 中提到 register spill 在 Kepler 架构是用 L1 Cache，Fermi 架构是 local memory 但是会在 L1 Cache 暂存，[Device Memory Accesses](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#device-memory-accesses) 表明：Any variable if the kernel uses more registers than available (this is also known as _register spilling_)。CUDA 13 <a href="https://developer.nvidia.com/blog/how-to-improve-cuda-kernel-performance-with-shared-memory-register-spilling/#:~:text=In%20CUDA%2013.0%2C%20NVIDIA%20introduced%20shared%20memory%20register,utilizing%20on-chip%20shared%20memory%20for%20storing%20spilled%20values.">register spilling(Aug 27, 2025)</a> 提出用 shared memory。
-
-The CUDA runtime makes a best effort to use the requested device on-chip memory configuration, but it is free to choose a different configuration if required to execute a kernel function. A **per-kernel** configuration can also override the device-wide setting, and can be set using the following [runtime function](https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__EXECUTION.html#group__CUDART__EXECUTION_1g6699ca1943ac2655effa0d571b2f4f15):
-
-```c
-__host__ ​cudaError_t cudaFuncSetCacheConfig ( const void* func, cudaFuncCache cacheConfig )
-/*
-Sets the preferred cache configuration for a device function.
-
-###### Parameters
-func
-- Device function symbol
-
-cacheConfig
-- Requested cache configuration
-  */
-```
-
-> [!tip] Essence of Cache and Shared Memory
-> Even though L1 cache and shared memory are located in the same on-chip hardware, several things are quite different between them. Shared memory is accessed through 32 banks, while L1 cache is accessed by cache line. With shared memory, you have full control over what gets stored and where, while with L1 cache, data eviction is done by the hardware.
-
-> [!TIP] GPU CACHE VERSUS CPU CACHE
-> In general, GPU cache behavior is more difficult to reason about than CPU cache behavior. The GPU uses different heuristic algorithms to evict data. On GPUs, hundreds of threads share the same L1 cache, and thousands of threads share the same L2 cache; therefore, data eviction might occur more often and unpredictably on a GPU. You can **use GPU shared memory to explicitly manage data and guarantee locality to an SM**.
-
-#### Synchronization
-
-CUDA provides several runtime functions to perform intra-block synchronization. In general, there are two basic approaches to synchronization:
-
-- **Barriers**
-- **Memory fences**
-
-At a barrier, all calling threads wait for all other calling threads to reach the barrier point. At a memory fence, all calling threads stall until all modifications to memory are visible to all other calling threads.
-
-##### Weakly-Ordered Memory Model
-
-Modern memory architectures have a **relaxed** memory model. This means that the memory accesses are not necessarily executed in the order in which they appear in the program. CUDA adopts a **weakly-ordered memory model** to enable more aggressive compiler optimizations.
-
-- The order in which a GPU thread writes data to different memories, such as shared memory, global memory, page-locked host memory, or the memory of a peer device, is not necessarily the same order of those accesses in the source code.
-- The order in which a thread’s writes become visible to other threads may not match the actual order in which those writes were performed.
-- The order in which a thread reads data from different memories is not necessarily the order in which the read instructions appear in the program if instructions are independent of each other.
-
-To explicitly force a certain ordering for program correctness, memory fences and barriers must be inserted in application code. This is the only way to guarantee the correct behavior of a kernel that shares resources with other threads.
-
-##### Explicit Barrier
-
-> [!tip] Barrier
-> CUDA's `__syncthreads()` synchronizes threads within a block, requiring all to reach the same barrier point.
-
-You can specify a barrier point in a kernel by calling the following intrinsic function (See also [Synchronization Functions](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#synchronization-functions):
-
-```c
-void __syncthreads();
-```
-
-- `__syncthreads` acts as a barrier point at which **threads in a block** must wait until all threads have reached that point.
-- `__syncthreads` also ensures that **all global and shared memory accesses** made by these threads prior to the barrier point are visible to all threads in the same block.
-
-`__syncthreads` is used to coordinate communication **between the threads of the same block**. When some threads within a block access the same addresses in shared or global memory, there are potential hazards (read-after-write, write-after-read, and write-after-write) which will result in undefined application behavior and undefined state at those memory locations. This undesirable behavior can be avoided by synchronizing threads between conflicting accesses.
-
-You must be particularly careful when using `__syncthreads` in conditional code. It is only valid to call `__syncthreads` if a conditional is guaranteed to evaluate identically across the entire thread block. Otherwise execution is likely to hang or produce unintended side effects. For example, the following code segment may cause threads in a block to wait indefinitely for each other because all threads in a block never hit **the same barrier point**.
-
-```c
-if (threadID % 2 == 0) { __syncthreads(); }
-else { __syncthreads(); }
-```
-
-> 线程块内的线程并非全部到达**同一个** `__syncthreads()` 调用点（而是分散在两个不同的分支里）。两类线程永远等不到对方到达**自己所在的同步点**，最终导致**线程死锁**（程序卡住，无法继续执行）。
-
-By not allowing synchronization across blocks, **thread blocks can be executed in any order**, in parallel or in series, on any SM. This independent nature of block execution makes CUDA programming scalable across an arbitrary number of cores.
-
-If a CUDA kernel requires global synchronization across blocks, you can likely achieve the desired behavior by **splitting the kernel apart** at the synchronization point and performing multiple kernel launches. Because each successive kernel launch must wait for the preceding kernel launch to complete, this produces an implicit global barrier.
-
-##### Memory Fence
-
-> [!tip] Memory fence
-> Memory fence functions ensure that any memory write before the fence is visible to other threads after the fence.
-
-There are three variants of memory fences depending on the desired scope: block, grid, or system (See Also [Memory fence Functions](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#memory-fence-functions)).
-
-- You can create a memory fence within a thread **block** using the following intrinsic function:  `void __threadfence_block()` ensures that all writes to shared memory and global memory made by a calling thread before the fence are visible to other threads in the same block after the fence. Recall that memory fences do not perform any thread synchronization, and so it is not necessary for all threads in a block to actually execute this instruction.
-- You can create a memory fence at the **grid** level using the following intrinsic function:  `void __threadfence()` stalls the calling thread until all of its writes to global memory are visible to all threads in the same grid.
-- You can also set a memory fence across the **system** (including host and device) using the following intrinsic function:  `void __threadfence_system()`stalls the calling thread to ensure all its writes to global memory, page-locked host memory, and the memory of other devices are visible to all threads in all devices and host threads.
-
-> 现代 CPU 普遍采用强内存模型，硬件保证大部分内存一致性，CPU 硬件通过缓存一致性协议自动同步缓存，而在一些弱内存模型 CPU 中，弱代码有复杂依赖可能需要 fence，但日常开发通常已经封装了这些操作。
-> GPU 是弱内存模型，硬件无法保证高效的内存一致性。
-> 内存栅栏函数侧重于内存一致性，解决不同线程对内存读写的可见性问题，防止因内存访问顺序和可见性不一致导致的程序错误。
-
-##### Volatile Qualifier
-
-Declaring a variable in global or shared memory using the `volatile` qualifier prevents compiler optimization which might temporally cache data in registers or local memory. With the volatile qualifier, the compiler assumes that the variable’s value can be changed or used at any time by any other thread. Therefore, **any reference to this variable is compiled to a global memory read or global memory write instruction that skips the cache**.
-
 ## 异构编程模型
 
 CUDA 编程模型是一个异构模型，需要 CPU 和 GPU 协同工作。在 CUDA 中，**host**和**device**是两个重要的概念，我们用 host 指代 CPU 及其内存，而用 device 指代 GPU 及其内存。CUDA 程序中既包含 host 程序，又包含 device 程序，它们分别在 CPU 和 GPU 上运行。同时，host 与 device 之间可以进行通信，这样它们之间可以进行数据拷贝。典型的 CUDA 程序的执行流程如下：
@@ -739,6 +487,359 @@ Kernel 核函数编写有以下限制
 | cuda::thread_scope::thread_scope_system | All or any CUDA or CPU threads in the same system as the initiating thread synchronizes.    |
 
 这些线程作用域是在  [CUDA Standard C++](https://nvidia.github.io/libcudacxx/extended_api/memory_model.html#thread-scopes) 中作为标准 C++ 的扩展来实现的。
+
+## CUDA Execution Model
+
+The goal of learing execution model from the hardware perspective:
+
+- Developing kernels with a profile-driven approach
+- Understanding the nature of warp execution
+- Exposing more parallelism to the GPU
+- Mastering grid and block configuration heuristics
+- Learning various CUDA performance metrics and events
+- Probing dynamic parallelism and nested execution
+
+In general, an execution model provides **an operational view of how instructions are executed on a specific computing architecture**. The CUDA execution model exposes an abstract view of the GPU parallel architecture, allowing you to reason about **thread concurrency**. The CUDA execution model provides insights that are useful for writing efficient code in terms of both instruction throughput and memory accesses.
+
+### GPU Architecture Overview
+
+The GPU architecture is built around a scalable array of **Streaming Multiprocessors** (SM). GPU hardware parallelism is achieved through the replication of this architectural building block. Figure 3-1 illustrates the key components of a Fermi SM:
+
+- CUDA Cores
+- Shared Memory/L1 Cache
+- Register File
+- Load/Store Units
+- Special Function Units
+- Warp Scheduler
+
+![[file-20250920222613394.png]]
+
+Each SM in a GPU is designed to support concurrent execution of hundreds of threads, and there are generally multiple SMs per GPU, so it is possible to have thousands of threads executing concurrently on a single GPU. When a kernel grid is launched, **the thread blocks of that kernel grid are distributed among available SMs** for execution. Once scheduled on an SM, **the threads of a thread block execute concurrently only on that assigned SM**. Multiple thread blocks may be assigned to the same SM at once and are scheduled based on the availability of SM resources. Instructions within a single thread are **pipelined** to leverage instruction-level parallelism, in addition to the thread-level parallelism you are already familiar with in CUDA.
+
+> [!note] 并行性
+> - **线程级并行（Thread-Level Parallelism）**： “多 SM + 多线程块 + 多线程” 的并发 —— 一个 block 只能在一个 SM 上，一个 SM 可以分配多个 block；
+> - **指令级并行（Instruction-Level Parallelism）**：针对**单个线程**，GPU 会将其指令按流水线方式执行（比如 “取指 - 译码 - 执行 - 写回” 等步骤重叠），进一步提升单个线程的执行效率，补充线程级并行的性能。
+
+CUDA employs a **Single Instruction Multiple Thread (SIMT)** architecture to manage and execute threads in groups of 32 called warps. All threads in a warp execute the same instruction at the same time. Each thread has its own *instruction address counter and register state*, and carries out the current instruction on its own data. Each SM partitions the thread blocks assigned to it into 32-thread warps that it then schedules for execution on available hardware resources.
+
+> [!note] SIMT: block 被划分为 warp 调度
+
+CUDA 的**SIMT（单指令多线程）架构**及其与 SIMD（单指令多数据）的差异，可拆解为：
+
+- **线程分组：Warp（线程束）**
+	- CUDA 将线程按**32 个为一组**划分为“Warp”，这是线程调度和执行的基本单位。同一 Warp 内的所有线程**同时执行相同指令**（体现“单指令”），但每个线程拥有独立的“指令地址计数器”和“寄存器状态”，仅对**自身数据**进行运算（体现“多线程”的独立性）。
+- **SM 的角色**
+	- GPU 的核心计算单元“SM（流多处理器）”会先将分配给它的“线程块（Thread Block）”拆分为 32 线程 Warp，再根据硬件资源空闲情况调度这些 Warp 执行。
+- SIMT 与 SIMD 的核心共性与差异
+	- 二者本质都是通过“广播同一指令到多个执行单元”实现并行，但关键区别在于**执行单元的同步性与独立性**：
+
+| 维度     | SIMD（单指令多数据）                     | SIMT（单指令多线程）                      |
+| ------ | -------------------------------- | --------------------------------- |
+| 执行单元约束 | 要求“向量中的所有元素”在**统一同步组**内执行，无法独立行为 | 允许同一 Warp 内的线程**独立**执行（即使起始指令地址相同）  |
+| 编程灵活性  | 更侧重“数据级并行”，需显式处理向量数据             | 同时支持“线程级并行”（独立标量线程）和“数据级并行”（协同线程） |
+
+SIMT 的独特价值：SIMT 相比 SIMD，能让开发者更灵活地编写并行代码：无需像 SIMD 那样严格控制“向量数据的同步性”，可直接按“独立线程”逻辑编程（每个线程处理一个任务/数据），同时也能通过 Warp 的协同性实现数据并行——既简化了并行代码编写，又保留了线程独立处理特殊逻辑（如分支）的能力。
+
+The SIMT architecture is similar to the **SIMD (Single Instruction, Multiple Data)** architecture. Both SIMD and SIMT implement parallelism by broadcasting the same instruction to multiple execution units. A key difference is that SIMD requires that all vector elements in a vector execute together in a unified synchronous group, whereas SIMT allows multiple threads in the same warp to execute independently. Even though all threads in a warp start together at the same program address, it is possible for individual threads to have different behavior. **SIMT enables you to write thread-level parallel code for independent, scalar threads, as well as data-parallel code for coordinated threads.** The SIMT model includes three key features that SIMD does not:
+
+- Each thread has its own instruction address counter.
+- Each thread has its own register state.
+- Each thread can have an independent execution path.
+
+> [!note ] A MAGIC NUMBER: 32
+> The number 32 is a magic number in CUDA programming. It comes from hardware, and has a significant impact on the performance of software.  Conceptually, you can think of it as the granularity of work processed simultaneously in SIMD fashion by an SM. Optimizing your workloads to fit within the boundaries of a warp (group of 32 threads) will generally lead to more efficient utilization of GPU compute resources.
+
+> [!tip] SM
+> A thread block is scheduled on only one SM. Once a thread block is scheduled on an SM, it remains there until execution completes. An SM can hold more than one thread block at the same time.
+
+Figure 3-2 illustrates the corresponding components from the logical view and hardware view of CUDA programming.
+
+![[Fig3-2.png]]
+
+Shared memory and registers are precious resources in an SM. **Shared memory is partitioned among thread blocks resident on the SM and registers are partitioned among threads**. Threads in a thread block can cooperate and communicate with each other through these resources. While all threads in a thread block run logically in parallel, not all threads can execute physically at the same time. As a result, different threads in a thread block may make progress at a different pace.
+
+Sharing data among parallel threads may cause a race condition: Multiple threads accessing the same data with an undefined ordering, which results in unpredictable program behavior. CUDA provides a means to *synchronize threads within a thread block* to ensure that all threads reach certain points in execution before making further progress. However, **no** primitives are provided for *inter-block synchronization*.
+
+> [!tip] CUDA provides a means to synchronize threads within a block but no primitives to inter-block synchronization.
+
+While warps within a thread block may be scheduled in any order, the number of active warps is limited by SM resources. When a warp idles for any reason (for example, waiting for values to be read from device memory), the *SM is free to schedule another available warp* from any thread block that is resident on the same SM. Switching between concurrent warps has no overhead because hardware resources are partitioned among all threads and blocks on an SM, so the state of the newly scheduled warp is already stored on the SM.
+
+> [!tip] SM: THE HEART OF THE GPU ARCHITECTURE
+> The Streaming Multiprocessor (SM) is the heart of the GPU architecture. Registers and shared memory are scarce resources in the SM. CUDA partitions these resources among all threads resident on an SM. Therefore, these limited resources impose a strict restriction on the number of active warps in an SM, which corresponds to the amount of parallelism possible in an SM. Knowing some basic facts about the hardware components of an SM will help you organize threads and configure kernel execution to get the best performance.
+
+> [!note] SM 上 active warp 是有限的，而 warp 可以无开销地灵活调度
+
+### Case Study: Fermi and Kepler
+
+![[Fig3-3.png]]
+
+Figure 3-3 illustrates a logical block diagram of the Fermi architecture focused on GPU computing with graphics-specific components largely omitted.
+
+- Fermi features up to 512 accelerator cores, called **CUDA cores**. Each CUDA core has a fully pipelined integer arithmetic logic unit (ALU) and a floating-point unit (FPU) that executes one integer or floating-point instruction per clock cycle.
+- The CUDA cores are organized into 16 **streaming multiprocessors** (SM), each with 32 CUDA cores.
+- Fermi has six 384-bit GDDR5 DRAM memory interfaces supporting up to a total of 6 GB of global **on-board memory**, a key compute resource for many applications.
+- A host interface connects the GPU to the CPU via the **PCI Express bus**.
+- The GigaThread engine (shown in orange on the left side of the diagram) is **a global scheduler that distributes thread blocks to the SM warp schedulers**.
+- Fermi includes a coherent 768 KB **L2 cache**, shared by all 16 SMs.
+- Each SM in Figure 3-3 is represented by a vertical rectangular strip containing:
+	- **Execution units** (CUDA cores)
+	- **Scheduler and dispatcher** units that schedule warps
+	- **Shared memory, the register file, and L1 cache**
+	- Each multiprocessor has 16 **load/store units** (shown in Figure 3-1), allowing source and destination addresses to be calculated for 16 threads (a half-warp) per clock cycle.
+	- **Special function units (SFUs)** execute intrinsic instructions such as sine, cosine, square root, and interpolation. Each SFU can execute one intrinsic instruction per thread per clock cycle.
+	- Each SM features two **warp schedulers** and two **instruction dispatch units**. When a thread block is assigned to an SM, all threads in a thread block are divided into warps. The two warp schedulers select two warps and issue one instruction from each warp to a group of 16 CUDA cores, 16 load/store units, or 4 special function units (illustrated in Figure 3-4).
+
+> The Fermi architecture, compute capability 2.x, can simultaneously handle 48 warps per SM for a total of 1,536 threads resident in a single SM at a time.
+
+![[file-20250927152034660.png]]
+
+One key feature of Fermi is the 64 KB on-chip configurable memory, which is partitioned between shared memory and L1 cache. Shared memory allows threads within a block to cooperate, facilitates extensive reuse of on-chip data, and greatly reduces off-chip traffic.
+
+Fermi also supports **concurrent kernel execution: multiple kernels launched from the same application context executing on the same GPU at the same time**. Concurrent kernel execution allows programs that execute a number of small kernels to fully utilize the GPU, as illustrated in Figure 3-5. Fermi allows up to 16 kernels to be run on the device at the same time. Concurrent kernel execution makes the GPU appear more like a MIMD architecture from the programmer’s perspective.
+
+![[Fig3-5.png]]
+
+### UNDERSTANDING THE NATURE OF WARP EXECUTION
+
+Warps are the basic unit of execution in an SM. When you launch a grid of thread blocks, the thread blocks in the grid are distributed among SMs. Once a thread block is scheduled to an SM, threads in the thread block are further partitioned into warps. **A warp consists of 32 consecutive threads** and all threads in a warp are executed in Single Instruction Multiple Thread (SIMT) fashion; that is, all threads execute the same instruction, and each thread carries out that operation on its own private data. Figure 3-10 illustrates the relationship between the logical view and hardware view of a thread block.
+
+![[Fig3-10.png]]
+
+Thread blocks can be configured to be one-, two-, or three-dimensional. However, from the hardware perspective, all threads are arranged one-dimensionally. Each thread has a unique ID in a block. For a one-dimensional thread block, the unique thread ID is stored in the CUDA built-in variable `threadIdx.x`, and threads with consecutive values for `threadIdx.x `are grouped into warps. For example, a one-dimensional thread block with 128 threads will be organized into 4 warps as follows:
+
+```c
+Warp 0: thread 0, thread 1, thread 2, ... thread 31 
+Warp 1: thread 32, thread 33, thread 34, ... thread 63 
+Warp 3: thread 64, thread 65, thread 66, ... thread 95 
+Warp 4: thread 96, thread 97, thread 98, ... thread 127
+```
+
+The logical layout of a two or three-dimensional thread block can be converted into its one-dimensional physical layout by using the x dimension as the innermost dimension, the y dimension as the second dimension, and the z dimension as the outermost. For example, given a 2D thread block, a unique identifier for each thread in a block can be calculated using the built-in threadIdx and blockDim variables:  `threadIdx.y * blockDim.x + threadIdx.x`.  The same calculation for a 3D thread block is as follows:  `threadIdx.z * blockDim.y * blockDim.x + threadIdx.y * blockDim.x + threadIdx.x ` The number of warps for a thread block can be determined as follows:
+
+$$
+WarpPerBlock = ceil(\frac{ThreadsPerBlock}{warpSize})
+$$
+
+Thus, the hardware always allocates a discrete number of warps for a thread block. A warp is never split between different thread blocks. If thread block size is not an even multiple of warp size, some threads in the last warp are left inactive. Even though these threads are unused they still consume SM resources, such as registers.
+
+![[Fig3-11.png]]
+
+这里消耗的寄存器**并非函数的参数寄存器（args register），而是线程执行时分配的“本地通用寄存器”**，且核心与“线程块（block）级资源预分配”机制相关。
+
+在 CUDA 架构中，寄存器是 SM 上的高速片上存储，主要分为两类，需先区分：
+
+| 寄存器类型       | 用途                                  | 分配方式                  | 与“未使用线程消耗资源”的关联 |
+|------------------|---------------------------------------|---------------------------|------------------------------|
+| **参数寄存器**   | 仅用于传递核函数的参数（如 `__global__ void kernel(int a, float b)` 中的 `a` 和 `b`） | 核函数启动时统一分配，**全局共享**（所有线程共享同一批参数寄存器，无需为每个线程单独分配） | 无关联：参数寄存器不按线程分配，未使用线程不会额外消耗它 |
+| **本地通用寄存器**| 用于存储线程的**本地变量**（如核函数内定义的 `int temp`、`float arr[10]`）、中间计算结果 | 按**线程块（block）预分配**，每个线程会分配固定数量的通用寄存器 | 强关联：这是“未使用线程消耗的核心寄存器资源” |
+
+CUDA 的 SM 在调度线程时，**不按单个线程分配资源，而是按“线程块（block）”为单位预分配资源**，核心逻辑如下：
+
+1. **编译期确定“单线程寄存器需求”**：CUDA 编译器（nvcc）会根据核函数的代码逻辑（如本地变量数量、计算复杂度），分析出每个线程执行该核函数所需的**最小通用寄存器数量**（可通过 `nvcc --ptxas-options=-v` 查看，如 `ptxas info    : Used 24 registers, 32 bytes smem`）。
+2. **运行期按 block 预分配资源**：当核函数启动时（如 `kernel<<<gridDim, blockDim>>>(...)`），SM 会根据“单线程寄存器需求” × “block 内线程数（blockDim）”，计算出每个 block 需要的总寄存器数量，并为该 block**预分配全部寄存器**（无论线程是否实际执行有用逻辑）。
+3. **线程绑定寄存器，未使用也不释放**：每个线程在 block 内会被分配固定数量的通用寄存器（编译期确定的数量），即使线程因分支（如 `if (threadIdx.x % 2 == 0) { ... }`）进入“未执行有用代码”的分支，其绑定的寄存器也不会被回收——因为 SM 的资源调度是“block 级预分配 + 线程级绑定”，一旦分配就不会动态调整。
+
+### Warp Divergence
+
+> Threads in the same warp executing different instructions is referred to as warp divergence.
+
+If threads of a warp diverge, the warp serially executes each branch path, disabling threads that do not take that path. Warp divergence can cause significantly degraded performance.
+
+![[file-20250927160345386.png]]
+
+### Resource Partitioning
+
+The local execution context of a warp mainly consists of the following resources:
+
+- Program counters
+- Registers
+- Shared memory
+
+The execution context of each warp processed by an SM is maintained on-chip during the entire lifetime of the warp. Therefore, switching from one execution context to another has no cost.
+
+Each SM has a set of 32-bit registers stored in a register file that are partitioned among threads, and a fixed amount of shared memory that is partitioned among thread blocks. The number of thread blocks and warps that can simultaneously reside on an SM for a given kernel depends on the number of registers and amount of shared memory available on the SM and required by the kernel.
+
+Resource availability generally limits the number of resident thread blocks per SM. The number of registers and the amount of shared memory per SM vary for devices of different compute capability. If there are insufficient registers or shared memory on each SM to process at least one block, the kernel launch will fail.
+
+> 显卡的计算能力决定了并行能力
+
+![[Table4H100.png]]
+
+A thread block is called **an active block** when compute resources, such as registers and shared memory, have been **allocated** to it. The warps it contains are called **active warps**. Active warps can be further classified into the following three types:
+
+- **Selected warp**
+- **Stalled warp**
+- **Eligible warp**
+
+The warp schedulers on an SM select active warps on every cycle and dispatch them to execution units. A warp that is actively executing is called a **selected** warp. If an active warp is ready for execution but not currently executing, it is an **eligible** warp. If a warp is not ready for execution, it is a **stalled** warp. A warp is eligible for execution if both of the following two conditions is met:
+
+- Thirty-two CUDA cores are available for execution.
+- All arguments to the current instruction are ready.
+
+| 类型（Type） | 核心状态描述 | 关键逻辑 |
+|--------------|--------------|----------|
+| **选中 warp（Selected Warp）** | 正在执行 | 被 warp 调度器选中，已分派到 CUDA 核心等执行单元，是当前“正在干活”的 warp |
+| **合格 warp（Eligible Warp）** | 就绪但未执行 | 满足两个执行条件（32 个 CUDA 核心空闲 + 当前指令的所有参数就绪），等待被调度 |
+| **停滞 warp（Stalled Warp）** | 未就绪，无法执行 | 因资源不足（如核心忙）、参数未就绪（如等待内存数据）等，暂时无法执行 |
+
+If a warp stalls, the warp scheduler picks up an eligible warp to execute in its place. Because compute resources are partitioned among warps and kept onchip during the entire lifetime of the warp, switching warp contexts is very fast.
+
+Compute resource partitioning requires special attention in CUDA programming: The compute resources limit the number of active warps. Therefore, you must be aware of the restrictions imposed by the hardware, and the resources used by your kernel. In order to maximize GPU utilization, you need to maximize the number of active warps.
+
+> [!tip] Warp 雕塑
+> 当某个活动 warp 陷入“停滞”（Stalled）时，warp 调度器会立刻从“合格 warp”（Eligible）中选一个替换执行，避免硬件空闲。由于每个 warp 的计算资源（寄存器等）在其“生命周期”内始终在芯片（On-Chip）上分配且不释放，因此 warp 上下文切换几乎无额外开销，速度极快
+
+### Latency Hiding
+
+An SM relies on thread-level parallelism to maximize utilization of its functional units. Utilization is therefore directly linked to the number of resident warps. The number of clock cycles between an instruction being issued and being completed is defined as **instruction latency**. Full compute resource utilization is achieved when *all warp schedulers have an eligible warp at every clock cycle*. This ensures that the latency of each instruction can be hidden by issuing other instructions in other resident warps.
+
+Compared with C programming on the CPU, **latency hiding** is particularly important in CUDA programming. CPU cores are designed to **minimize latency** for one or two threads at a time, whereas GPUs are designed to handle a large number of concurrent and lightweight threads in order to maximize **throughput**. GPU instruction latency is hidden by computation from other warps.
+
+1. SM 的核心逻辑：靠“驻留线程束（Warps）”提升硬件利用率
+	- SM（GPU 的核心计算单元）的目标是让自身的功能单元（如计算单元、存储单元）最大化被利用，而实现方式是**线程级并行（Thread-Level Parallelism）**——即同时管理多个“线程束（Warp）”（注：Warp 是 GPU 的基本调度单位，通常包含 32 个并行线程）。
+	- 硬件利用率直接取决于**驻留线程束数量**：驻留的 Warp 越多，SM 可调度的并行任务就越多。
+2. 如何通过“隐藏延迟”实现资源满负荷利用
+	- 先明确概念：**指令延迟（Instruction Latency）** 指一条指令从“发出”到“执行完成”的时钟周期数（比如访问内存的指令，延迟通常较高）。
+	- 满负荷利用的条件：SM 中的每个“线程束调度器”，在**每个时钟周期都有可调度的 Warp**。
+	- 核心机制——**延迟隐藏**：当某个 Warp 的指令因延迟（如等内存数据）暂时无法推进时，调度器会立刻切换到其他“可执行的 Warp”并发出其指令。这样一来，前一个 Warp 的指令延迟就被其他 Warp 的计算“掩盖”了，硬件不会因等待而空闲。
+
+When considering instruction latency, instructions can be classified into two basic types:
+
+- Arithmetic instructions: Arithmetic instruction latency is the time between an arithmetic operation starting and its output being produced. (10-20 cycles for arithmetic operations)
+- Memory instructions: Memory instruction latency is the time between a load or store operation being issued and the data arriving at its destination. (10-20 cycles for arithmetic operations)
+
+Figure 3-15 illustrates a simple case for an execution pipeline in which warp 0 stalls. The warp scheduler picks up other warps to execute and then executes warp 0 when it is eligible again.
+
+![[file-20250927164011251.png]]
+
+You may wonder how to estimate the number of active warps required to hide latency. *Little’s Law* can provide a reasonable approximation. Originally a theorem in queue theory, it can also be applied to GPUs $Number of Required Warps = Latency × Throughput$.
+
+Figure 3-16 illustrates Little’s Law visually. Suppose the average latency for an instruction in your kernel is 5 cycles. To keep a throughput of 6 warps executed per cycle, you will need at least 30 warps in-flight.
+
+![[file-20250927164107677.png]]
+
+Throughput is specified in number of operations per cycle per SM, and one warp executing one instruction corresponds to 32 operations. Therefore, the required number of warps per SM to maintain full compute resource utilization can be calculated for Fermi GPUs as 640 ÷ 32 = 20 warps. Hence, the required parallelism for arithmetic operations can be expressed as either the number of operations or the number of warps. This simple unit conversion demonstrates that there are two ways to increase parallelism:
+
+- Instruction-level parallelism (ILP): More independent instructions within a thread
+- Thread-level parallelism (TLP): More concurrently eligible threads
+
+For memory operations, the required parallelism is expressed as the number of bytes per cycle required to hide memory latency.
+
+Because memory throughput is usually expressed as gigabytes per second, you need to first convert the throughput into gigabytes per cycle using the corresponding memory frequency. You can check your device’s memory frequency with the following command:  `nvidia-smi -a -q -d CLOCK | grep -A 3 "Max Clocks" | grep "Memory"`
+
+An example Fermi memory frequency (measured on a Tesla C2070) is 1.566 GHz. An example Kepler memory frequency (measured on a Tesla K20) is 1.6 GHz. Because 1 Hz is defined as one cycle per second, you then can convert the bandwidth from gigabytes per second to gigabytes per cycle as follows:  `144 GB/Sec ÷ 1.566 GHz ≅ 92 Bytes/Cycle`. Multiplying bytes per cycle by memory latency (800 cycles for kepler), you derive the required parallelism for Fermi memory operations at nearly 74 KB of memory I/O in-flight to achieve full utilization. This value is for the entire device, not per SM, because memory bandwidth is given for the entire device.
+
+Connecting these values to warp or thread counts depends on the application. Suppose each thread moves one float of data (4 bytes) from global memory to the SM for computation, you would require 18,500 threads or 579 warps to hide all memory latency on Fermi GPUs: `74 KB ÷ 4 bytes/thread ≅ 18,500 threads`.
+
+The Fermi architecture has 16 SMs. Therefore, you require 579 warps ÷ 16 SMs = 36 warps per SM to hide all memory latency. If each thread performed more than one independent 4-byte load, fewer threads would be required to hide the memory latency.  Much like instruction latency, you can increase the available parallelism by either creating more independent memory operations within each thread/warp, or creating more concurrently active threads/warps.
+
+Latency hiding depends on the number of active warps per SM, which is implicitly determined by the execution configuration and resource constraints (registers and shared memory usage in a kernel). Choosing an optimal execution configuration is a matter of striking a balance between latency hiding and resource utilization.
+
+> [!tip]
+> Because the GPU partitions compute resources among threads, switching between concurrent warps has very little overhead (on the order of one or two cycles) as the required state is already available on-chip. If there are sufficient concurrently active threads, you can keep the GPU busy in every pipeline stage on every cycle. In this situation, the latency of one warp is hidden by the execution of other warps. Therefore, exposing sufficient parallelism to SMs is beneficial to performance.
+
+### Occupancy
+
+Instructions are executed sequentially within each CUDA core. When one warp stalls, the SM switches to executing other eligible warps. Ideally, you want to have enough warps to keep the cores of the device occupied. **Occupancy** is the ratio of active warps to maximum number of warps, per SM.
+
+$$
+occupancy = \frac{active\ warp}{maximum\ waprs}
+$$
+
+You can check the maximum warps per SM for your device using the following function:  `cudaError_t cudaGetDeviceProperties(struct cudaDeviceProp *prop, int device);`. The CUDA Toolkit includes a spreadsheet, called the CUDA Occupancy Calculator, which assists you in selecting grid and block dimensions to maximize occupancy for a kernel.
+
+After you have specified the compute capability, the data in the physical limits section is automatically filled in. Next, you need to enter the following kernel resource information:
+
+- Threads per block (execution configuration)
+- Registers per thread (resource usage)
+- Shared memory per block (resource usage)
+
+The registers per thread and shared memory per block resource usage can be obtained from nvcc with the following compiler flag: `--ptxas-options=-v`
+
+The number of registers used by a kernel can have a significant impact on the number of resident warps. Register usage can be manually controlled using the following nvcc flag `–maxrregcount=NUM`.
+
+1. Small thread blocks: Too few threads per block leads to hardware limits on the number of warps per SM to be reached before all resources are fully utilized.
+	当每个线程块包含的线程数太少时：
+	- 单个 SM 能容纳的**warp 总数会提前达到硬件上限**（比如 SM 最多支持 64 个 warp），但此时 SM 的其他硬件资源（如寄存器、共享内存）还没被用完。
+	- 后果：SM 的计算单元无法被充分利用——因为 warp 数量不足，当部分 warp 因等待数据（如内存延迟）暂停时，没有足够多的备用 warp 可切换，导致 SM 出现“空闲时间”，算力浪费。
+2. Large thread blocks: Too many threads per block leads to fewer per-SM hardware resources available to each thread.
+	当每个线程块包含的线程数太多时：
+	- 单个线程块会占用更多 SM 资源（如每个线程需分配寄存器，线程块越大，总寄存器占用越多）。
+	- 后果：SM 能同时容纳的**线程块总数减少**，且分配给每个线程的硬件资源（如寄存器、共享内存）被压缩——可能导致线程因资源不足被迫“分时复用”，或需要频繁访问速度更慢的全局内存（替代共享内存），反而降低计算效率。
+
+Although each case will hit different hardware limits, both cause compute resources to be underutilized and hinder the creation of sufficient parallelism to hide instruction and memory latency. Occupancy focuses exclusively on the number of concurrent threads or warps per SM. However, full occupancy is not the only goal for performance optimization. Once a certain level of occupancy is achieved for a kernel, further increases may not lead to performance improvement. There are also many other factors you need to examine for performance tuning.
+
+> Block 大小设置会影响效率。Occupancy 是一个重要但非唯一的指标。
+
+### Scalability
+
+Threads within a thread block can share data through shared memory and registers. When sharing data between threads you need to be careful to avoid race conditions. Race conditions, or hazards, are unordered accesses by multiple threads to the same memory location. There is no thread synchronization among different blocks. The only safe way to synchronize across blocks is to use the global synchronization point at the end of every kernel execution; that is, terminate the current kernel and start a new kernel for the work to be performed after global synchronization.  By not allowing threads in different blocks to synchronize with each other, GPUs can execute blocks in any order. This enables CUDA programs to be scalable across massively parallel GPUs.
+
+> 注：随着架构的演进、又出现了许多新的同步方式。
+
+Scalability implies that providing additional hardware resources to a parallel application yields speedup relative to the amount of added resources. Scalability implies that performance can be improved with added compute cores. Parallel code has the potential to be scalable, but real scalability depends on algorithm design and hardware features.
+
+The ability to execute the same application code on a varying number of compute cores is referred to as **transparent scalability**. Scalability can be more important than efficiency. A scalable but inefficient system can handle larger workloads by simply adding hardware cores. An efficient but un-scalable system may quickly reach an upper limit on achievable performance.
+
+Figure 3-18 illustrates an example of the CUDA architecture’s scalability. On the left side, you have a GPU with two SMs that executes two blocks at the same time; on the right side, you have a GPU with four SMs that executes four blocks at the same time. Without any code changes, an application can run on different GPU configurations and the required execution time will scale according to the available resources.
+
+![[file-20250927212847756.png]]
+
+> [!note] CUDA 具有高效的透明的可扩展性，使得程序可以通过增加硬件核心数获得性能提升。
+
+### Exposing Parallelism TODO
+
+## AVOIDING BRANCH DIVERGENCE
+
+Sometimes, control flow depends on thread indices. Conditional execution within a warp may cause warp divergence that can lead to poor kernel performance. By rearranging data access patterns, you can reduce or avoid warp divergence. In this section, you will study basic techniques in avoiding branch divergence using a parallel reduction example.
+
+### The Parallel Reduction Problem
+
+Suppose you want to calculate the sum of an array of integers with N elements.
+
+```c
+int sum = 0;
+for (int i = 0; i < N; i++) {
+	sum += array[i];
+}
+```
+
+Due to the associative and commutative properties of addition, the elements of this array can be summed in any order. So you can perform parallel addition in the following way:
+
+1. Partition the input vector into smaller chunks.
+2. Have a thread calculate the partial sum for each chunk.
+3. Add the partial results from each chunk into a final sum.
+
+A common way to accomplish parallel addition is using an **iterative pairwise** implementation: A chunk contains only a pair of elements, and a thread sums those two elements to produce one partial result. These partial results are then stored **in-place** in the original input vector. These new values are used as the input to be summed in the next iteration. Because the number of input values halves on every iteration, a final sum has been calculated when the length of the output vector reaches one.
+
+Depending on where output elements are stored in-place for each iteration, pairwise parallel sum implementations can be further classified into the following two types:
+
+- Neighbored pair: Elements are paired with their immediate neighbor. Figure 3-19 illustrates the neighbored pair implementation. In this implementation, a thread takes two adjacent elements to produce one partial sum at each step. For an array with $N$ elements, this implementation requires $N − 1$ sums and $log_2 N$ steps.
+- Interleaved pair: Paired elements are separated by a given stride. Figure 3-20 illustrates the interleaved pair implementation. Note that in this implementation the inputs to a thread are strided by half the length of the input on each step.
+
+This general problem of performing a commutative and associative operation across a vector is known as the **reduction** problem. **Parallel reduction** is the parallel execution of this operation. Parallel reduction is one of the most common parallel patterns, and a key operation in many parallel algorithms.
+
+![[file-20250927233700491.png]]
+
+### Divergence in Parallel Reduction
+
+As a starting point, you will experiment with a kernel implementing the neighbored pair approach illustrated in Figure 3-21. Each thread adds two adjacent elements to produce a partial sum.
+
+In this kernel, there are two global memory arrays: one large array for storing the entire array to reduce, and one smaller array for holding the partial sums of each thread block. Each thread block operates independently on a portion of the array. One iteration of a loop performs a single reduction step. The reduction is done in-place, which means that the values in global memory are replaced by partial sums at each step. The `__syncthreads` statement ensures that all partial sums for every thread in the current iteration have been saved to global memory before any threads in the same thread block enter the next iteration. All threads that enter the next iteration consume the values produced in the previous step. After the final round, the sum for the entire thread block is saved into global memory.
+
+The distance between two neighbor elements, stride, is initialized to 1 at first. After each reduction round, this distance is multiplied by 2. After the first round, the even elements of idata will be replaced by partial sums. After the second round, every fourth element of idata will be replaced with further partial sums. Because there is no synchronization between thread blocks, the partial sum produced by each thread block is copied back to the host and summed sequentially there, as illustrated in Figure 3-22.
+
+![[file-20250928134748223.png]]
+
+> 代码见 `basics/reduce/reduceInteger.cu`
+
+![[file-20250928135050667.png]]
+
+![[file-20250928135100824.png]]
+
+### Improving Divergence in Parallel Reduction TODO
+
+Examine the kernel reduceNeighbored and note the following conditional statement:  `if ((tid % (2 * stride)) == 0)`.  Because this statement is only true for even numbered threads, it causes highly divergent warps. In the first iteration of parallel reduction, only even threads execute the body of this conditional statement but all threads must be scheduled. On the second iteration, only one fourth of all threads are active but still all threads must be scheduled. Warp divergence can be reduced by rearranging the array index of each thread to force neighboring threads to perform the addition. Figure 3-23 illustrates this implementation. Comparing with Figure 3-21, the store location of partial sums has not changed, but the working threads have been updated.
 
 ## Compute Capability
 

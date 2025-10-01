@@ -2,6 +2,8 @@
 dateCreated: 2025-07-08
 dateModified: 2025-08-15
 ---
+八股： https://moyutianzun.cn/archives/llm-infra-ba-gu-quan-ji#llm-inference
+https://www.zhihu.com/column/c_1903483612977927815
 
 https://zhuanlan.zhihu.com/p/1907536883430437857
 

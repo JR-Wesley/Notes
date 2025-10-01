@@ -18,6 +18,7 @@ makefile 定义了一系列规则来指定编译规则，make 是解释 makefile
 3. 如果这个工程的头文件被改变了，那么我们需要编译引用了这几个头文件的 C 文件，并链接目标程序。
 
 ## Makefile 规则
+
 **核心概念**
    - **目标（Target）**：需要生成的文件或执行的命令标签。
    - **依赖（Dependencies/prerequisites）**：目标构建所需的文件或其他目标。
@@ -153,6 +154,7 @@ make 命令执行后有三个推出码：
 make 寻找默认的 Makefile 执行，也可以指定文件 `make -f xx.mk`，指定目标。
 
 ## 检查规则
+
 - `-n --just-print --dry-run --recon` 不执行，只打印，不管目标是否更新，把规则和连带规则下的命令打印不执行。
 - `-t --touch` 把目标文件的时间更新，但不更改目标文件。make 假装编译目标，但不真正编译，只是把目标变成已编译的状态。
 - `-q --question` 找目标，如果目标存在则不输出也不编译；若不存在，则打印出错信息。
@@ -289,6 +291,7 @@ endif
 变量声明需要赋初值，使用时加上 `$`，最好用小括号或花括号包括。如果要使用 `$` 字符，需要用 `$$` 表示。变量会在使用它的地方精确地展开
 
 ## 定义
+
 1. `a=`，变量可以嵌套，而且没有定义顺序
 
 ```makefile
@@ -318,6 +321,7 @@ endef
 ```
 
 ## 高级用法
+
 1. 替换
 `$(var:a=b)`，将变量 `var` 中所有以 `a` 字符结尾的 `a` 替换成 `b`
 `$(var:%.o=%.*c*)` 使用静态模式，要求模式中有一个 `%` 匹配。
@@ -430,6 +434,7 @@ make -p -f /dev/null | grep '^[A-Z]' | sort
 调用：`(<func> <arg>)`
 
 ## 字符串处理
+
 1. `$(wildcard *.c)` 获取所有 `.c` 文件
 2. `$(subst <from>, <to>, <text>)` 把字符串中进行替换，返回被替换的字符串。
 3. `$(pathsubst <pattern>, <replacement>, <text>)` 查找并替换。可以包含 `%` 通配符，如果替换前后都包含，则匹配的部分不变。
@@ -456,10 +461,12 @@ make -p -f /dev/null | grep '^[A-Z]' | sort
 7. `$(join <list1>, <list2>)` 把两个字符串依次添加
 
 ## 循环
+
 1. `$(foreach <var>, <list>, <text>)` 把 `list` 中的单词逐一取出放到 `var` 指定变量，然后执行 `text`，返回的字符串以空格分隔。注意 `var` 是一个临时变量
 2. `$(if <condition>, <then-part>, <else-part>)` 返回两个部分
 
 ## 其它
+
 - `$(call <expr>, <param1>, <param2>,…)` 用来创建新的参数化的函数。`expr` 读取变量如 `$(1), $(2)`，返回值是 `call` 的返回值。
 - `$(origin <var>)` 返回变量的来源
 - `$(shell <expr>)` 执行 shell 命令
@@ -486,7 +493,6 @@ cc main.c -o main
 # Misc
 
 ## MAKEFILE_LIST
-
 
 当使用 `sed 's/vitis-run/\/opt\/vitis/g' Makefile | make -f -` 和直接执行 `make` 时，`MAKEFILE_LIST` 变量的内容会有明显不同。下面为你详细分析：
 
@@ -563,14 +569,12 @@ MAKEFILE_LIST: - config.mk tools.mk
 
 你可以在 Makefile 中添加一个目标来打印 `MAKEFILE_LIST`：
 
-
 ```makefile
 print-makefiles:
     @echo "MAKEFILE_LIST: $(MAKEFILE_LIST)"
 ```
 
 然后分别执行以下两个命令进行验证：
-
 
 ```bash
 # 直接执行 make
@@ -588,3 +592,7 @@ sed 's/vitis-run/\/opt\/vitis/g' Makefile | make -f - print-makefiles
 |`sed '…' \| make -f -`|`- config.mk tools.mk`|标准输入用 `-` 表示|
 
 这种差异在编写需要依赖 Makefile 路径的 Makefile 时需要特别注意，建议优先使用变量或者环境变量来指定路径，而不是依赖 `MAKEFILE_LIST`。
+
+# Cmake
+
+https://zhuanlan.zhihu.com/p/570430778
