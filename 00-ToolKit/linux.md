@@ -10,6 +10,10 @@ list
 from "00-ToolKit"
 ```
 
+中科大 linux 101 https://101.lug.ustc.edu.cn/
+
+
+
 https://vim.wxnacy.com/#docs/get_started
 
 https://www.runoob.com/linux/linux-vim.html
@@ -87,83 +91,6 @@ touch [参数][文件名]	创建新文件
 ```
 
 磁盘管理
-
-# Tee
-
-```shell
-tee [OPTION]... [FILE]...
-# 从标准输入中复制到每一个文件，并输出到标准输出
-```
-
-## Q1、如何在 Linux 上使用这个命令？
-
-假设因为某些原因，你正在使用 `ping` 命令。
-
-```text
-ping google.com
-```
-
-然后同时，你想要输出的信息也同时能写入文件。这个时候，`tee` 命令就有其用武之地了。
-
-```text
-ping google.com | tee output.txt
-```
-
-这个输出内容不仅被写入 `output.txt` 文件，也被显示在标准输出中。
-
-## Q2、如何确保 Tee 命令追加信息到文件中？
-
-默认情况下，在同一个文件下再次使用 `tee` 命令会覆盖之前的信息。如果你想的话，可以通过 `-a` 命令选项改变默认设置。
-
-```text
-[command] | tee -a [file]
-```
-
-基本上，`-a` 选项强制 `tee` 命令追加信息到文件。
-
-## **Q3、如何让 Tee 写入多个文件？**
-
-这非常之简单。你仅仅只需要写明文件名即可。
-
-```text
-[command] | tee [file1] [file2] [file3]
-```
-
-比如：
-
-```text
-ping google.com | tee output1.txt output2.txt output3.txt
-```
-
-## **Q4. 如何让 Tee 命令的输出内容直接作为另一个命令的输入内容？**
-
-使用 `tee` 命令，你不仅可以将输出内容写入文件，还可以把输出内容作为另一个命令的输入内容。比如说，下面的命令不仅会将文件名存入 `output.txt` 文件中，还会通过 `wc` 命令让你知道输入到 `output.txt` 中的文件数目。
-
-```text
-ls file* | tee output.txt | wc -l
-```
-
-## **Q5. 如何使用 Tee 命令提升文件写入权限？**
-
-假如你使用 [Vim 编辑器](https://link.zhihu.com/?target=https%3A//www.howtoforge.com/vim-basics) 打开文件，并且做了很多更改，然后当你尝试保存修改时，你得到一个报错，让你意识到那是一个 root 所拥有的文件，这意味着你需要使用 `sudo` 权限保存修改。
-
-如此情况下，你可以（在 Vim 内）使用 `tee` 命令来提高权限。
-
-```text
-:w !sudo tee %
-```
-
-上述命令会向你索要 root 密码，然后就能让你保存修改了。
-
-## **Q6. 如何让 Tee 命令忽视中断？**
-
-`-i` 命令行选项使 `tee` 命令忽视通常由 `ctrl+c` 组合键发起的中断信号（`SIGINT`）。
-
-```text
-[command] | tee -i [file]
-```
-
-当你想要使用 `ctrl+c` 中断该命令，同时让 `tee` 命令优雅的退出，这个选项尤为实用。
 
 # Petalinux
 
@@ -931,6 +858,15 @@ https://codezhangborui.com/2024/06/solve-china-arch-linux-install-yay-network-is
     - Windows：`ipconfig /flushdns`
     - MacOS：`sudo killall -HUP mDNSResponder`
     - Linux：`sudo systemd-resolve --flush-caches`
+
+
+[experimental]
+autoMemoryReclaim=gradual  
+networkingMode=mirrored
+dnsTunneling=true
+firewall=true
+autoProxy=true
+
 
 # Yarn
 

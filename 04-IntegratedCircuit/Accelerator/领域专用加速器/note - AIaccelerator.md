@@ -2,13 +2,15 @@
 dateCreated: 2025-02-12
 dateModified: 2025-04-15
 ---
+
 # 参考
+
 > https://eyeriss.mit.edu/tutorial-previous.html
 
 # EE 290
 
-
 # Basics
+
 - Dennard scaling allowed voltage to shrink with transistor size
 - Dark Silicon: Not turn on all transistors on the chip
 
@@ -120,6 +122,7 @@ Positional Encoding (PE)
 Memory is expensive and low bit-width operations are cheap. Quantization is the process of constraining an input from a continuous or large set of values to a discrete set.
 
 ## Numeric Data Types
+
 - Fixed-point number
 - IEEE 765 Single Precision Float Point (FP 32) : (1+8+23) $Value = (-1)^{Sign}\times 2^{e-127}\times (1+\sum_{i=1}^{23}b_{23-i}2^{-i})$
 	- Exponent Width -> Range; Fraction Width-> Precision
@@ -169,17 +172,17 @@ Instruction Set Architectures:
 
 ![](TPU%20MM%20uarch.png)
 
-![](../AIsys/assets/TPUsystolic.png)
+![[TPUchsys.png]]
 
-![](../AIsys/assets/TPUchsys.png)
+![[TPUsystolic.png]]
 
 For multiple input and output channels, it takes $(m-k+1)*(m-k+1)*(k*k*iC*oC))$ ops to complete a CONV in the systolic array.
 
 Systolic array contains multiple PEs. Each filter element is placed on the local buffer of each PE.
 
-![](../AIsys/assets/TPUsysdata.png)
+![[TPUsysdata.png]]
 
-![](../AIsys/assets/TPUsyscal.png)
+![[TPUsyscal.png]]
 
 ## Dataflow DNN Accelerator
 
@@ -224,7 +227,7 @@ Basic ideas of Reconfigurable computing: a spatial array of processing elements 
 
  FPGA overlay[Hong, MICRO, 2022], FlightLLM[Zeng, FPGA, 2024], HLS
 
-![](../AIsys/assets/FPGAoverlay.png)
+![[FPGAoverlay.png]]
 
 Challenges of FPGAs on LLM Inference
 
@@ -246,13 +249,14 @@ GPU = Graphics Processing Units, accelerates computer graphics rendering and ras
 - Separate DRAM memory spaces: CPU (system memory) and the GPU (device memory)
 - Integrated GPU share Cache with CPU.
 
-![](../AIsys/assets/GPUarch.png)
+![[GPUarch.png]]
 
 # Tensor Core
 
 See Lecture 7
 
 # Sparse DNN Accelerator
+
 ## Compressed Sparse Row (CSR) Format
 
 A matrix M (m * n) is represented by three 1-D vectors
@@ -261,13 +265,16 @@ A matrix M (m * n) is represented by three 1-D vectors
 - The IA vector: stores the cumulative number of non-zero elements with size $m+1$.
 $IA[0]=0, IA[i]=IA[i-1]+ \# of non-zero elements in (i-1) th row of the M$
 - The JA vector: stores the column index of each element in the A vector
-![](../AIsys/assets/CSRcase.png)
+
+![[CSRcase.png]]
+
 - The sparsity of the matrix: $(total \#- non-zero \#)/total \#$
 - The direct array based representation requires memory $3*NNZ(non-zero\#)$
 - CSR format requires $2*NNZ + m + 1$
 - CSR matrices are memory efficient when $NNZ<(m*(n-1) - 1)/2$
 
 ## Compressed Sparse Column (CSC) Format
+
 - A matrix M (m * n) is represented by three 1-D vectors
 - The A vector stores values of non-zero elements, column-by-column traversing order
 - The IA vector stores the cumulative number of non-zero elements with size $n + 1$
@@ -276,7 +283,7 @@ $IA[0] = 0, IA[i] = IA[I - 1] + \# of non-zero elements in (i-1) th column of th
 
 ## Sparse Matrix Vector Multiplication (SpMV)
 
-![](../AIsys/assets/SpMV.png)
+![[SpMV.png]]
 
 ## Efficient Inference Engine (EIE)
 
@@ -285,17 +292,19 @@ The first DNN accelerator for sparse data, compressed model
 - for matrices up to 50% dense
 - exploit both weight sparsity and activation sparsity
 - skipping zero, compressing data
-![](../AIsys/assets/EIEuarch.png)
+
+![[EIEuarch.png]]
 
 ## Cnvlutin
+
 - Work on CONV layer
 - skips zero to shorten the execution time
 
 ## Nvidia Tensor Core
 
-![](../AIsys/assets/NVtensor.png)
+![[NVtensor.png]]
 
-![](../AIsys/assets/NVtensorMN.png)
+![[NVtensorMN.png]]
 
 ## TorchSparse (TODO)
 

@@ -1,8 +1,7 @@
 ---
-dateCreated: 2025-08-08
-dateModified: 2025-08-08
+tags:
+  - AI
 ---
-
 
 # MoE 原理概述
 

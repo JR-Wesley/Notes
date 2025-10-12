@@ -1,41 +1,55 @@
 ---
-dateCreated: 2025-02-27
-dateModified: 2025-08-09
+tags:
+  - SelfDevelopment
+  - AI
+  - Architecture
+  - CS
 ---
 
-# 📜 A High Performance Computing Explorer's Atlas | Ongoing Learning Repository
+<div align="center">
+    <img src="./00-ToolKit/assets/2436x1125_0bc7b5cd302841f5a0463ab8e55c3d02.jpg" alt="Logo" width="1500" height="780">
+  <h3 align="center">欢迎来到数字公园</h3>
+  <p align="center">
+    探索计算机体系结构、高性能计算、机器学习系统。
+  </p>
+  <p align="center">
+ <em style="color: #0088FF;">Where nanoseconds meet neurons</em>
+  </p>
+</div>
 
-**Status**: Actively Curating (Knowledge lava cooling into crystallized notes)
+# 📜 A High Performance Computing Explorer's Atlas | Ongoing Learning Repository
 
 > *"Standing on the shoulders of giants and occasionally peeking through their notes"*
 > — An evolving handbook for hardware-centric learning
 
-> Recommended to use Git shallow clone:
-> `git clone --depth=1 https://github.com/JR-Wesley/Notes`
-
 ---
 
-## 📜 Repository Manifesto
+## 📊 Overview
 
-> *"Where nanoseconds meet neurons"*
-This repository archives my (**not well organized**) learning journey through **VLSI Digital IC design**, incorporating:
+| **Attribute**      | **Details**                                                                           |
+| ------------------ | ------------------------------------------------------------------------------------- |
+| **Status**         | Actively Curating (Knowledge lava cooling into crystallized, organized notes)         |
+| **Core Focus**     | VLSI Digital IC Design + High Performance Computing (HPC) + AI System Optimization    |
+| **Ethical Note**   | Contains reconstructed knowledge from cited sources—strictly for educational purposes |
+| **Digital Garden** | [Here is my digital garden](https://jr-wesley.github.io/MyDigitalGarden/)             |
+
+## Repository Manifesto
+
+>This repository archives my (**not well organized**) learning journey through **VLSI Digital IC design**, incorporating:
 
 - 🧠 **Heterogeneous Computing**: GPU/FPGA/CGRA workload partitioning
 - ⚙️ **AI-Tailored Architectures**: Tensor cores to neuromorphic accelerators
 - 🔗 **RISC-V Ecosystem**: Custom extension development (Vector, AI/ML)
 - 🚨 **VLSI-Scale Verification**: Formal methods for billion-gate designs
 
-**Ethical Note**: Contains reconstructed knowledge from cited sources - strictly for educational purposes.
+## Guiding Principles for AI-Era Learning
 
-## Learning in the Era of AI
+In the age of LLMs, permanent learning requires intentional practices to avoid superficial understanding. These four pillars shape the structure of this repository:
 
-In the era of LLM, I believe there are severel highlight that should be practices during permenant studying:
-
-1. Systemic View: Bidirectional Insight from Top-Down and Bottom-Up
-2. First Principles: The Cornerstone of Critical Thinking
-3. Hands-On Practice: Acquiring True Knowledge Through 'Getting Hands Dirty'
-4. AI Assistance: Co-Evolution with LLMs
-
+1. **Systemic View**: Bidirectional insight from _top-down_ (system architecture) and _bottom-up_ (circuit-level details) to connect isolated concepts.
+2. **First Principles**: Ground all learning in fundamental laws (e.g., digital logic, parallel computing fundamentals) to enable critical thinking.
+3. **Hands-On Practice**: Prioritize "getting hands dirty"—from code implementation to hardware design—to turn theoretical knowledge into skill.
+4. **AI Assistance**: Treat LLMs as co-evolutionary tools (not replacements) for accelerating research, debugging, and knowledge synthesis.
 
 ---
 
@@ -43,21 +57,29 @@ In the era of LLM, I believe there are severel highlight that should be practice
 
 ```shell
 .
+├── 00-ToolKit
+│   ├── assets
+│   ├── Scripts
+│   └── Template
 ├── 01-ComputerScience
 │   ├── Architecture
 │   ├── Network
 │   ├── OperatingSystem
 │   ├── Programming
+│   ├── SoC
 │   └── SystemBasics
 ├── 02-AISystem
+│   ├── Acceleration
+│   ├── AICompiler
 │   ├── AISysReview
 │   ├── AlgorithmAndModel
+│   ├── ClusterAndHardware
 │   ├── Distributed
-│   ├── Framework
 │   ├── GPU
-│   ├── HardwareAndCompiler
 │   ├── HPCBasics
-│   └── JobInterview
+│   ├── JobInterview
+│   ├── MLFramework
+│   └── Quantization
 ├── 03-Algorithm
 │   ├── BasicAlgorithm
 │   ├── Compression
@@ -67,19 +89,19 @@ In the era of LLM, I believe there are severel highlight that should be practice
 ├── 04-IntegratedCircuit
 │   ├── Accelerator
 │   ├── AsicFlow
-│   ├── BasicsAndApplication
-│   ├── DSP
-│   ├── JobInterview
-│   ├── SoC
-│   └── StandardAndProtocol
+│   ├── Basics
+│   └── IP
 ├── 05-SelfDevelopment
-│   ├── career
-│   ├── language
-│   ├── medicine
+│   ├── Career
+│   ├── Civilization
+│   ├── Language
+│   ├── Literature
+│   ├── Medicine&Food
+│   ├── Philosophy
+│   ├── Psychology
 │   ├── Reading
-│   └── recreation
-└── ToolKit
-    ├── assets
+│   └── Recreation
+└── Educated
 ```
 
 ![[Knowledge Matrix.png]]
@@ -101,40 +123,17 @@ I've arranged my notes into 6 parts:
 - 🗂️ [[00-ToolKit|00-ToolKit]]: Essential tools, scripts, and assets to boost productivity.
 	- Enabling high efficiency using Linux, shell, etc.
 
-See Also <a href="https://www.zhihu.com/people/turing-48-20/columns">Zhihu columns</a>.
-
 ### Recommended Exploration Paths
 
 - **System of Computer Science**
-    1. **Foundation**: Start with [[01-ComputerScience/SystemBasics]] for fundamental concepts.
-    2. **Architecture**: Deepen understanding of hardware interaction via [[01-ComputerScience/Architecture]].
-    3. **Management**: Explore resource management through [[01-ComputerScience/OperatingSystem]].
-    4. **Communication**: Understand data exchange with [[01-ComputerScience/Network]].
-    5. **Application**: Apply principles through practical coding in [[01-ComputerScience/Programming]].
+
 - **AI Full-Stack System Optimization**
-    1. **Tensor Programming**: Begin with low-level computation in [[02-AISystem/GPU]] and [[03-Algorithm/BasicAlgorithm]], focusing on parallel operations.
-    2. **Framework**: Study high-level abstractions and optimization passes in [[02-AISystem/Framework]].
-    3. **Integration**: Analyze full-stack performance, bottlenecks, and co-design principles in [[02-AISystem/AISysReview]] and [[02-AISystem/Distributed]].
-- **Operator or Backend Acceleration**
-    1. **Identify**: Identify core compute-intensive algorithms from [[03-Algorithm]] (e.g., [[03-Algorithm/BasicAlgorithm]], [[03-Algorithm/Vision]]).
-    2. **Profile**: Study hardware capabilities and constraints in [[02-AISystem/GPU]] and [[04-IntegratedCircuit/Accelerator]].
-    3. **Optimize**: Explore efficient implementation techniques and compiler optimizations in [[02-AISystem/HardwareAndCompiler]].
-    4. **Implement**: Design and optimize specific operators leveraging [[02-AISystem/AlgorithmAndModel]] insights.
+
 - **High Performance CPU Design**
-    1. **Foundation**: Build foundation with [[04-IntegratedCircuit/BasicsAndApplication]] and [[04-IntegratedCircuit/DSP]].
-    2. **Paradigms**: Explore specialized compute paradigms in [[04-IntegratedCircuit/Accelerator]] and reconfigurable architectures (CGRA).
-    3. **Requirements**: Study AI-specific hardware requirements and dataflow in [[02-AISystem/AISysReview]], [[02-AISystem/GPU]], and [[02-AISystem/Distributed]].
-    4. **Patterns**: Investigate core algorithmic patterns for acceleration, particularly in [[03-Algorithm/HDC]].
-    5. **Synthesize**: Synthesize knowledge to design a high-performance CPU microarchitecture.
+
 - **Hardware Accelerator Design**
-    1. **Target**: Identify target application domains and algorithms (e.g., from [[03-Algorithm/Vision]], [[03-Algorithm/Encryption]], [[02-AISystem/AlgorithmAndModel]]).
-    2. **Define**: Define accelerator specifications and architecture based on computational needs.
-    3. **Design**: Design the datapath and control logic, leveraging concepts from [[04-IntegratedCircuit/BasicsAndApplication]] and [[01-ComputerScience/Architecture]].
-    4. **Integrate**: Explore integration possibilities within larger systems ([[04-IntegratedCircuit/SoC]]).
+
 - **Silicon Implementation Flow**
-    1. **Flow**: Start with the complete design process in [[04-IntegratedCircuit/AsicFlow]].
-    2. **Timing**: Master timing analysis and closure techniques in [[04-IntegratedCircuit/AsicFlow]] (assuming STA - Static Timing Analysis is a key part).
-    3. **Integration**: Learn system integration and physical design methodologies from [[04-IntegratedCircuit/SoC]], potentially using a case study like [[SoC/pulp_VLSI]].
 
 ## 🔐 License Matrix
 

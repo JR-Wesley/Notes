@@ -11,6 +11,8 @@ views:
       - category
       - banner
     sort:
+      - property: tags
+        direction: ASC
       - property: file.path
         direction: DESC
       - property: banner

@@ -2,6 +2,16 @@
 tags:
   - AI
 ---
+<div align="center">
+    <img src="https://www.kojimaproductions.jp/sites/default/files/2024-02/ds2_sop2024_screenshot015.jpg" alt="Logo" width="1520" height="880">
+  <h3 align="center">欢迎来到数字公园</h3>
+  <p align="center">
+    探索计算机体系结构、高性能计算、机器学习系统。
+  </p>
+  <p align="center">
+ <em style="color: #0088FF;">Where nanoseconds meet neurons</em>
+  </p>
+</div>
 
 本目录旨在提供一个结合面向高性能硬件加速、深度学习框架、分布式并行加速的 AI sys 概述。
 
@@ -33,13 +43,17 @@ tags:
 - Megatron/vllm
 
 # 学习资源
+
 ## 博客
 
+https://www.byhand.ai/
+https://spaces.ac.cn/
 图解大模型系列： https://www.zhihu.com/people/aaron-73-65/posts
 
-AI系列整理 https://www.zhihu.com/people/ruilibuaa
+AI 系列整理 https://www.zhihu.com/people/ruilibuaa
 
 孟元系列 https://www.zhihu.com/people/lemonround
+
 ## 并行计算理论
 
 并行算法设计与性能优化 刘文志 著：对理论于传统并行优化方法有全面介绍。

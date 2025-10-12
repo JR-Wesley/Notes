@@ -13,7 +13,7 @@ category: Summary
 - 视频课程推荐——Programming Massively Parallel Processors A Hands-on Approach 及 CMPS224 课程。
 - 在有了一定上面的基础变成后，推荐性能分析——C++ best Practice, NCU profiling guide，以及深入了解 CUDA toolkit 或 PTX/SASS。
 - 强烈推荐——性能优化和 tensor core 英文博客，见 [[cutlass与GEMM]]。
-- 选择看其他书籍或者个人博客，注意有一些旧的资料可能会有一些过时的内容，要和官方文档同步。鉴于大部分中文博客都是搬运的不推荐看。
+- 选择看其他书籍或者个人博客，注意有一些旧的资料可能会有一些过时的内容，要和官方文档同步。不推荐看照搬英文文章的中文博客。
 
 # 推荐资源
 
@@ -38,6 +38,7 @@ category: Summary
     - [NVIDIA Code Examples](https://github.com/NVIDIA/cuda-samples)
     - [CUDA Optimization Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/)
 - **在线课程和书籍**：
+	- 【推荐】一个详尽的总结性的 现代 GPU 架构和高效GEMM加速： https://www.aleksagordic.com/blog/matmul
     - 【【精译⚡GPU 计算】贝鲁特美国大学•CMPS224•2021】https://www.bilibili.com/video/BV1Rx4y147Dp/?p=5&share_source=copy_web&vd_source=fd37be71d17f708cc53476cbd29e590f
 	    - 基于 Programming Massively Parallel Processors A Hands-on Approach 4th Edition 的 GPU 课程，老师的讲解很深入有见解，PPT 可以见 https://www.elsevier.com/books-and-journals/book-companion/9780323912310。
 	- Programming Massively Parallel Processors A Hands-on Approach
@@ -46,7 +47,6 @@ category: Summary
 		- https://www.olcf.ornl.gov/calendar/cuda-shared-memory/ **美国橡树岭领导计算设施 (Oak Ridge Leadership Computing Facility, OLCF)** 发布的关于 **CUDA 培训系列**
 		- https://www.olcf.ornl.gov/cuda-training-series/
 	- 一个基础的 GPU 介绍课程：https://cvw.cac.cornell.edu/gpu-architecture
-	- 可选 - 谭升的博客，翻译的 Professional C programming：[https://face2ai.com/program-blog/#GPU编程（CUDA）](https://link.zhihu.com/?target=https%3A//face2ai.com/program-blog/%23GPU%25E7%25BC%2596%25E7%25A8%258B%25EF%25BC%2588CUDA%25EF%25BC%2589)
 - **开源项目**：
 	- NV 6G GPU https://docs.nvidia.com/aerial/cuda-accelerated-ran/latest/index.html
 	- leetgpu
@@ -60,6 +60,8 @@ category: Summary
 		- DeepSpeed 微软开源的深度学习分布式训练加速引擎。
 
 https://people.maths.ox.ac.uk/gilesm/cuda/index.html
+
+[NVIDIA CUDA Tutorial 1: Introduction](https://www.youtube.com/watch?v=m0nhePeHwFs&list=PLKK11Ligqititws0ZOoGk3SW-TZCar4dK)
 
 # 其他参考
 

@@ -1,10 +1,12 @@
 ---
-dateCreated: 2024-11-13
-dateModified: 2025-08-03
+tags:
+  - Tool
 ---
 
 <a href=" https://devhints.io/vim">cheatsheet vim</a>
+
 https://zhuanlan.zhihu.com/p/382092667
+
 https://github.com/northgreen/ictye-nvim-cfg
 
 vscode
@@ -33,7 +35,9 @@ vscode
 `0(begin) $(end) ^(第一个非空字符)`
 
 `gg` moves to the first line.
+
 `G` moves to the end of the file.
+
 `<num> G` moves to that line number.
 
 - search and substitute
@@ -327,7 +331,7 @@ nvim 中的 copilot 插件
 
 在 WSL 环境下使用 Neovim (nvim) 时，复制粘贴需要处理 WSL 与 Windows 系统剪贴板的交互问题。出现类似错误通常是因为剪贴板工具配置不兼容 WSL 环境，解决方法如下：
 
-### 1. 安装必要工具
+## 1. 安装必要工具
 
 WSL 中需要通过特殊工具桥接 Windows 剪贴板，推荐安装 `win32yank` 或使用 WSL 自带的剪贴板工具：
 
@@ -342,7 +346,7 @@ chmod +x /tmp/win32yank.exe
 sudo mv /tmp/win32yank.exe /usr/local/bin/
 ```
 
-### 2. 配置 Neovim 剪贴板
+## 2. 配置 Neovim 剪贴板
 
 在你的 Neovim 配置文件（通常是 `~/.config/nvim/init.vim` 或 `init.lua`）中添加以下配置，让 nvim 正确识别 WSL 环境的剪贴板：
 
@@ -388,7 +392,7 @@ vim.g.clipboard = {
 }
 ```
 
-### 3. 替代方案（不依赖 win32yank）
+## 3. 替代方案（不依赖 win32yank）
 
 如果不想安装额外工具，可以直接使用 WSL 内置的 Windows 命令（`clip.exe` 和 `powershell`）：
 
@@ -409,7 +413,7 @@ let g:clipboard = {
   \ }
 ```
 
-### 4. 测试验证
+## 4. 测试验证
 
 重启 Neovim 后测试：
 
@@ -424,6 +428,24 @@ let g:clipboard = {
 
 通过以上配置，Neovim 就能在 WSL 环境下正常与 Windows 剪贴板交互了。
 
-# 一个发行版
+# 其他发行版
 
 现代 nvim 配置：https://zhuanlan.zhihu.com/p/382092667
+
+## Vscode
+
+<a href="https://zhuanlan.zhihu.com/p/354829366">vscode 快捷键</a>
+
+- `ctrl` 控制屏幕与光标移动
+- `Shift` 相当于「拖动鼠标」
+- `Alt 与上下键结合，英文叫做「copy line」，相当于拖着这一行上下移动。
+- `Ctrl + Alt + 上下 ` 是 **多光标** 。注意使用 Escape 退出多光标模式。
+- `Shift + Alt + 上下`，复制这一行。
+
+### **切换窗口**
+
+处于一堆、相互重叠的文件，VS code 称其为一个「group」。我们通常要用到「group 的组内切换」和「group 间切换」。
+
+`Ctrl + <你要去的 group 编号>` 来把光标（的注意力 focus）集中到你要去的 group 上。上面 `Ctrl + 1` 切换到左边的 group；`Ctrl + 2` 切换到右边的 group。
+
+而 `Alt + <数字>` 则是在 group 内切换标签页。

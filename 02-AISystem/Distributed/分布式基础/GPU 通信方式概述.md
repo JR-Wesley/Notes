@@ -3,6 +3,10 @@ dateCreated: 2025-08-07
 dateModified: 2025-08-15
 ---
 
+https://mp.weixin.qq.com/s/klvPhCv1boETZOqDkBiP2g
+
+https://www.chaspark.com/#/hotspots/1188900699634163712
+
 # GPU 通信方式概述
 
 GPU 中涉及的各种通信方式和技术可以大致分为**硬件互连（物理层）**、**网络通信协议**和**软件通信库/编程模型**三大类。

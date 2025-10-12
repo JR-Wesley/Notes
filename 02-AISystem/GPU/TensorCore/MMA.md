@@ -8,8 +8,9 @@ category: Summary
 >- <a href="https://docs.nvidia.com/cuda/parallel-thread-execution/index.html
 ">NVIDIA CUDA PTX ISA</a>  9.7.14
 
+在了解了基本的 GEMM 优化方法即 block/warp/thread 多级 tile 后，我们就在 warp 这一级转向使用基于 tensor core 使用使用 MMA 指令加速，相应的数据存、取、算都由对应的指令来完成。
 
-参考： https://zhuanlan.zhihu.com/p/1906775725278737888
+> 参考：[(45 封私信 / 85 条消息) 【CUDA编程】关于矩阵乘加操作的四个指令（ldmatrix、mma、stmatrix、movmatrix）详解 - 知乎](https://zhuanlan.zhihu.com/p/1906775725278737888)
 
 # Warp Level Matrix Multiply-Accumulate Instructions
 
@@ -27,160 +28,245 @@ category: Summary
 mma 对比 wmma 能够解决 bank conflict 等问题。`mma` 相比 `wmma` 提供了更细粒度的对存储的控制，所以 `wmma` 只做了解，本系列关注 `mma`。
 
 > [!tip] mma
-> `mma` 要求 warp 中的所有线程协同执行计算（和 `wmma` 类似），不过矩阵元素在 warp 中不同线程间的分配需要显式地在调用 `mma` 操作前完成。`mma` 指令既支持密集也支持稀疏矩阵 A，稀疏的变体可以在稀疏矩阵 A 是结构化稀疏矩阵时使用，如 [Sparse matrix storage](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#warp-level-sparse-matrix-storage)。
+> `mma` 要求 warp 中的所有线程协同执行计算（和 `wmma` 类似），但在调用 `mma` 操作之前，需要显式地在 warp 中的不同线程之间分配矩阵元素。`mma` 指令既支持密集也支持稀疏矩阵 A，稀疏的变体可以在稀疏矩阵 A 是结构化稀疏矩阵时使用，如 [Sparse matrix storage](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#warp-level-sparse-matrix-storage)。
 
 ## PTX Mma 指令格式和数据类型
 
-9.7.14.1 给出了支持的矩阵形状、9.7.14.2 给出了支持的数据类型。
+> The matrix multiply and accumulate operations support a limited set of shapes for the operand matrices A, B and C. The shapes of all three matrix operands are collectively described by the tuple `MxNxK`, where A is an `MxK` matrix, B is a `KxN` matrix, while C and D are `MxN` matrices.
+> 在 [PTX warp level mat intruction](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#warp-level-matrix-instructions) 9.7.14.1 给出了支持的矩阵形状、9.7.14.2 给出了支持的数据类型。
 
 <a href="https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#warp-level-matrix-instructions-for-mma">9.7.14.5 MMA operation</a> 给出了 `mma` 运算执行的矩阵 fragment 的形状和分布。
 
-## CUDA 提供的 MMA 接口层次
+### Ldmatrix
 
-CUDA 对 MMA 的支持分为**硬件级 PTX 指令**和**CUDA C++ intrinsic 函数**两个层次，前者是底层汇编指令，后者是 C++ 级别的封装（更易用）。
+> https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#warp-level-matrix-instructions-ldmatrix
 
-### 1. 硬件级 PTX 指令：`mma.sync`
+Collectively load one or more matrices from shared memory for `mma` instruction
 
-PTX（Parallel Thread Execution）是 CUDA 的中间汇编语言，`mma.sync` 是 Tensor Core 的核心 MMA 指令，直接控制硬件执行矩阵乘加操作。其基本功能是：
+`ldmatrix` 是 PTX ISA 中用于从共享内存加载矩阵数据的同步指令，主要为 `mma` 矩阵乘法指令提供数据输入，需由 warp 内所有线程协同执行。
 
-对两个小型矩阵（如 16x16x16）执行乘法，再与第三个矩阵累加，即 D=A×B+C。
+#### Syntax
 
-`mma.sync` 的指令格式随 GPU 架构演进（支持的数据类型和矩阵尺寸逐渐扩展），以最常见的**Ampere 架构（Sm80）** 为例，指令格式如下（简化版）：
+```c
+ldmatrix.sync.aligned.shape.num{.trans}{.ss}.type r, [p];
 
-```ptx
-mma.sync.aligned.m16n16k16.row.col.f16.f16.f32.f32 d, a, b, c;
-``` 
+ldmatrix.sync.aligned.m8n16.num{.ss}.dst_fmt.src_fmt        r, [p];
+ldmatrix.sync.aligned.m16n16.num.trans{.ss}.dst_fmt.src_fmt r, [p];
 
-- **参数含义**：
-    - `m16n16k16`：矩阵尺寸，即 A(16×16)×B(16×16)（实际维度为 m×k×k×n，此处 m=16,n=16,k=16）。
-    - `row.col`：矩阵 A、B 的布局（行优先 / 列优先）。
-    - `f16.f16.f32.f32`：数据类型，A 和 B 为 fp16，累加结果 C 和输出 D 为 fp32。
-    - `d, a, b, c`：寄存器中的矩阵数据（需按硬件要求对齐）。
+.shape   = {.m8n8, .m16n16};
+.num     = {.x1, .x2, .x4};
+.ss      = {.shared{::cta}};
+.type    = {.b16, .b8};
+.dst_fmt = { .b8x16 };
+.src_fmt = { .b6x16_p32, .b4x16_p64 };
+```
+
+Collectively load one or more matrices across all threads in a warp from the location indicated by the address operand `p`, from `.shared` state space into destination register `r`. If no state space is provided, generic addressing is used, such that the address in `p` points into `.shared` space. If the generic address doesn’t fall in `.shared` state space, then the behavior is undefined.
+
+在一个线程束的所有线程中，从地址操作数 `p` 所指示的位置（即 `.shared` 状态空间）共同加载一个或多个矩阵到目标寄存器 `r` 中。如果未指定状态空间，则使用通用寻址，此时 `p` 中的地址指向 `.shared` 空间。如果通用地址不在 `.shared` 状态空间内，那么其行为是未定义的。
+
+下面是指令各段的解析：
+
+- The `.shape` qualifier indicates the dimensions of the matrices being loaded. Each matrix element holds 16-bit or 8-bit or 6-bit or 4-bit data. Following table shows the matrix load case for each `.shape`.
+
+| .shape    | Matrix shape | Element size            |
+| --------- | ------------ | ----------------------- |
+| `.m8n8`   | 8x8          | 16-bit                  |
+| `.m16n16` | 16x16        | 8-bit or 6-bit or 4-bit |
+| `.m8n16`  | 8x16         | 6-bit or 4-bit          |
+
+- The values `.x1`, `.x2` and `.x4` for `.num` indicate one, two or four matrices respectively. When `.shape` is `.m16n16`, only `.x1` and `.x2` are valid values for `.num`.
+- The mandatory `.sync` qualifier indicates that `ldmatrix` causes the executing thread to wait until all threads in the warp execute the same `ldmatrix` instruction before resuming execution.
+- The mandatory `.aligned` qualifier indicates that all threads in the warp must execute the same `ldmatrix` instruction. In conditionally executed code, an `ldmatrix` instruction should only be used if it is known that all threads in the warp evaluate the condition identically, otherwise the behavior is undefined. The behavior of `ldmatrix` is undefined if all threads do not use the same qualifiers, or if any thread in the warp has exited.
+- The destination operand `r` is a brace-enclosed vector expression consisting of 1, 2, or 4 32-bit registers as per the value of `.num`. Each component of the vector expression holds a fragment from the corresponding matrix.
+- Supported addressing modes for `p` are described in [Addresses as Operands](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#addresses-as-operands).
+
+> [!tip] 矩阵格式和数据类型
+>  - **矩阵形状**：支持 `.m8n8`（8x8，16 位元素）、`.m16n16`（16x16，8/6/4 位元素）、`.m8n16`（8x16，6/4 位元素）等形状。
+>  - **加载数量**：通过 `.num` 指定加载 1（.x1）、2（.x2）或 4（.x4）个矩阵，其中 `.m16n16` 形状仅支持 .x1 和 .x2。 `r` 是一个 32-bit 的向量寄存器，其数量也由 `.num` 决定。
+
+#### Layout
+
+Consecutive instances of row need not be stored contiguously in memory. The eight addresses required for each matrix are provided by eight threads, depending upon the value of `.num` as shown in the following table. Each address corresponds to the start of a matrix row. Addresses addr0–addr7 correspond to the rows of the first matrix, addresses addr8–addr15 correspond to the rows of the second matrix, and so on.
+
+行的连续实例无需在内存中连续存储。每个矩阵所需的八个地址由八个线程提供，具体取决于如下表所示的 `.num` 的值。每个地址对应一个矩阵行的起始位置。地址 addr0–addr7 对应第一个矩阵的行，地址 addr8–addr15 对应第二个矩阵的行，依此类推。
+
+| `.num` | Threads 0–7 | Threads 8–15 | Threads 16–23 | Threads 24–31 |
+| ------ | ----------- | ------------ | ------------- | ------------- |
+| `.x1`  | addr0–addr7 | –            | –             | –             |
+| `.x2`  | addr0–addr7 | addr8–addr15 | –             | –             |
+| `.x4`  | addr0–addr7 | addr8–addr15 | addr16–addr23 | addr24–addr31 |
+
+> [!Note] For .target `sm_75` or below, all threads must contain valid addresses. Otherwise, the behavior is undefined. For `.num = .x1` and `.num = .x2`, addresses contained in lower threads can be copied to higher threads to achieve the expected behavior.
+
+When reading 8x8 matrices, a group of four consecutive threads loads 16 bytes. The matrix addresses must be naturally aligned accordingly.
+
+Each thread in a warp loads fragments of a row, with thread 0 receiving the first fragment in its register `r`, and so on. A group of four threads loads an entire row of the matrix as shown in [Figure 104](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#mma-ldmatrix-fragments).
+
+![[file-20251008153245541.png]]
+
+> Figure 104 ldmatrix fragment layout for one 8x8 Matrix with 16-bit elements
+> 其他尺寸可见 PTX guide
+
+结合上一节的语法定义：
+
+- 指令定义：`.m8n8` 支持 16-bit，对于 `.x1`，一共 `64*2`byte
+- 输入地址：矩阵中连续行不需要在内存中连续，每行有一个首地址，共 8 个地址，通过 `0-7` 线程给出。
+- 数据加载：四个连续的线程加载一行 16 byte，矩阵地址对齐。
+- 数据输出：分给 32 个线程，每个线程读取两个输入元素到一个 float 寄存器 `r` 中。
+
+注，地址是指令的输入参数，提供给 8/16/32 个线程的，线程对应的这个行的地址是指令定义的，每个线程加载的数据的位置也是该指令定义的。也就是说上面这个例子，给前 8 个线程 8 个行的地址，32 个线程就可以各自去加载各自对应的位置的元素。
+
+When `.num` = `.x2`, the elements of the second matrix are loaded in the next destination register in each thread as per the layout in above table. Similarly, when `.num` = `.x4`, elements of the third and fourth matrices are loaded in the subsequent destination registers in each thread.
+
+> [!tip] 内存存储规则、线程分工
+> 矩阵的**连续行无需在内存中连续存储**，每个矩阵所需的 8 个行起始地址（对应 8 行）由 8 个线程提供，地址分组与矩阵数量挂钩（通过 `.num` 参数控制）
+> `ldmatrix` 依赖 GPU 的 **warp 线程组**（通常 32 个线程）协作，核心规则：
+> - 加载 **8x8 矩阵**：4 个连续线程为一组，共同加载 16 字节数据；每个线程加载矩阵某一行的“片段”（如线程 0 加载行的第一个片段），4 个线程协作完成一整行加载。
+> - 加载 **16x16 矩阵**：需指定 2 个 32 位目标寄存器（`r0`/`r1`），每个寄存器存 4 个 8 位元素；4 个连续线程为一组加载一整行，且每个线程会跨 2 行加载 4 个连续列。
+> - 加载 **8x16 矩阵**：仅需 1 个 32 位目标寄存器，4 个连续线程为一组加载一整行，每个线程加载 4 个连续列。
+
+- **列优先加载（.trans 限定符）**：
+  - 可选 `.trans` 表示矩阵按“列优先”格式加载；
+  - 加载 **16x16 矩阵时，.trans 是强制要求**（必须按列优先加载）。
+
+The `ldmatrix` instruction is treated as a **weak** memory operation in the [Memory Consistency Model](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#memory-consistency-model).
+
+`ldmatrix` 属于“弱内存操作”，需遵循 PTX 内存一致性模型的相关规则（如可能需额外同步确保数据可见性）。
+
+#### Example
+
+了解了上面指令的规范后，我们知道要使用指令，需要明确：
+
+- 确定需要使用的指令格式，输入矩阵的尺寸、数据类型、数量等信息
+- 每个线程，给出 8/16/32 个行的地址（因为不同行的地址不保证连续，所以需要计算给出）
+- 给出需要载入的 32bit 寄存器
+
+> 代码如
+
+```cpp
+
+#define LDMATRIX_X4(R0, R1, R2, R3, addr)   \
+asm volatile("ldmatrix.sync.aligned.x4.m8n8.shared.b16  \
+    {%0, %1, %2, %3}, [%4];\n" :    \
+    "=r"(R0), "=r"(R1), "=r"(R2), "=r"(R3) : "r"(addr))
+
+    uint32_t RA[4];
+    uint32_t load_smem_a_ptr = // ; 
+    LDMATRIX_X4(RA[0], RA[1], RA[2], RA[3], load_smem_a_ptr);
+```
+
+### `mma`
+
+Perform matrix multiply-and-accumulate operation
+
 - **支持的架构与扩展**：
     - Volta（Sm70）：首次引入，仅支持 fp16 输入、fp32 累加，矩阵尺寸固定为 16x16x16。
     - Ampere（Sm80）：新增 tf32（Tensor float32）、bf16（脑浮点）支持，扩展矩阵尺寸（如 32x8x16）。
     - Hopper（Sm90）：支持 fp8（8 位浮点）、int4 等低精度类型，进一步提升 AI 推理效率。
 
-### 2. CUDA C++ Intrinsic 函数：`__mma_sync`
+#### Syntax
 
-为简化开发，CUDA 提供了 C++ 级别的 `__mma_sync` intrinsic 函数，封装了 `mma.sync` PTX 指令，开发者无需直接编写 PTX。这些函数按数据类型和矩阵尺寸分为多个变体，核心功能与底层指令一致，但更易集成到 C++ 代码中。
+> 以 [Half precision floating point type](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#warp-level-matrix-fragment-mma-16816-float) 为例，
+> 更多格式见 [mma 格式](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#warp-level-matrix-instructions-mma)
 
-#### 常用 `__mma_sync` 函数示例
+```
+mma.sync.aligned.m8n8k4.alayout.blayout.dtype.f16.f16.ctype  d, a, b, c;
+mma.sync.aligned.m16n8k8.row.col.dtype.f16.f16.ctype  d, a, b, c;
+mma.sync.aligned.m16n8k16.row.col.dtype.f16.f16.ctype d, a, b, c;
 
-- **半精度输入，单精度累加（最常用）**：
-    计算 D=A×B+C，其中 A(16×16)、B(16×16) 为 fp16，、 为 fp32。
+.alayout = {.row, .col};
+.blayout = {.row, .col};
+.ctype   = {.f16, .f32};
+.dtype   = {.f16, .f32};
 
-    ```cpp
-    #include <mma.h>
-    using namespace nvcuda;
+```
+
+以 `mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 d, a, b, c` 为例，
+
+- **参数含义**：
+    - `m16n16k8`：矩阵尺寸，即 A(16×8)×B(8×16)。
+    - `row.col`：矩阵 A、B 的布局（行优先 / 列优先）。
+    - `f16.f16.f16.f16`：数据类型，A 和 B 为 fp16，累加结果 C 和输出 D 为 fp16。
+    - `d, a, b, c`：寄存器中的矩阵数据（需按硬件要求对齐）。
+
+A warp executing `mma.m16n8k16` floating point types will compute an MMA operation of shape `.m16n8k16`.
+
+Elements of the matrix are distributed across the threads in a warp so each thread of the warp holds a fragment of the matrix.
+
+- Multiplicand A:
     
-    // 定义矩阵片段（片段是Tensor Core的输入/输出格式，需按硬件要求组织数据）
-    __half a_frag[16][16];  // A矩阵（fp16）
-    __half b_frag[16][16];  // B矩阵（fp16）
-    float  c_frag[16][16];  // C矩阵（fp32，累加输入）
-    float  d_frag[16][16];  // D矩阵（fp32，输出）
-    
-    // 执行MMA操作（16x16x16）
-    __mma_sync(
-      d_frag,    // 输出矩阵D
-      a_frag,    // 输入矩阵A
-      b_frag,    // 输入矩阵B
-      c_frag,    // 累加矩阵C
-      0, 0, 0    // 对齐参数（通常为0）
-    );
-    ```
+    - `.f16` and `.bf16` :
 
-- **其他数据类型变体**：
-    - `__mma_sync` 支持 bf16（`__nv_bfloat16`）、tf32（`__tf32`）、int8 等类型，函数名和参数类型相应调整，例如：
+|.atype|Fragment|Elements (low to high)|
+|---|---|---|
+|`.f16` / `.bf16`|A vector expression containing four `.f16x2` registers, with each register containing two `.f16` / `.bf16` elements from the matrix A.|a0, a1, a2, a3, a4, a5, a6, a7|
 
-        ```cpp
-        // bf16输入，fp32累加
-        __nv_bfloat16 a_bf16[16][16];
-        __nv_bfloat16 b_bf16[16][16];
-        __mma_sync(d_frag, a_bf16, b_bf16, c_frag, 0, 0, 0);
-        ```
+#### Layout
 
-- **矩阵尺寸变体**：
-    除 16x16x16 外，Ampere 及以上架构支持更大或更灵活的尺寸（如 32x8x16），通过函数模板参数指定，例如：
+The layout of the fragments held by different threads is shown in [Figure 79](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#mma-16816-a-f16).
 
-    ```cpp
-    // 32x8x16尺寸的MMA（A:32x16, B:16x8, C/D:32x8）
-    __mma::fragment<__mma::matrix_a, 32, 16, 16, __half, __mma::row_major> a_frag;
-    __mma::fragment<__mma::matrix_b, 16, 8, 16, __half, __mma::col_major> b_frag;
-    __mma::fragment<__mma::accumulator, 32, 8, 16, float> c_frag, d_frag;
-    
-    __mma_sync(d_frag, a_frag, b_frag, c_frag);
-    ```
+![[file-20251008164804092.png]]
 
+> Figure 79 MMA .m16n8k16 fragment layout for matrix A with `.f16` / `.bf16` type.
+> 其他格式和数据类型见 ptx guide。
 
+The row and column of a matrix fragment can be computed as:
 
+```c
+groupID           = %laneid >> 2
+threadID_in_group = %laneid % 4
 
-在 CUDA 的 MMA（矩阵乘加）编程模型中，除了核心的 `__mma_sync`（矩阵乘加运算），还包含一系列配套的 API 用于**数据加载（load）、数据存储（store）、片段（fragment）操作**等，这些 API 共同构成了完整的 MMA 工作流。它们主要定义在 `nvcuda::mma` 命名空间中，用于处理 Tensor Core 的输入输出数据格式、内存交互和中间状态管理。
+row =      groupID            for ai where  0 <= i < 2 || 4 <= i < 6
+          groupID + 8         Otherwise
 
-Understanding the core low-level instructions for Tensor Cores is essential for advanced CUDA programming, especially when you need to achieve maximum performance and fine-grained control. While high-level libraries like CUTLASS abstract these details, knowing what's happening under the hood is crucial for debugging and optimization.
+col =  (threadID_in_group * 2) + (i & 0x1)          for ai where i <  4
+(threadID_in_group * 2) + (i & 0x1) + 8      for ai where i >= 4
+```
 
-The key to Tensor Core programming revolves around three types of instructions:
+MMA 指令的核心是定义了 **warp（线程束）执行 `mma.m16n8k8` 指令时，矩阵 A（.f16/.bf16 类型）的元素如何在 32 个线程间分配**，：
 
-- **MMA** (Matrix Multiply-Accumulate)
-- **LDMatrix** (Load Matrix from shared memory)
-- **STMatrix** (Store Matrix to shared memory)
+- 指令定义：`.m8n8` 支持 16-bit，对于 `.x1`，一共 `64*2`byte
+- 输入：A 有 `16*8*2`byte，每个线程包含两个 `.f16 x2` 寄存器，即两个 32 位寄存器，各包含两个 `.f16` 的 A 中的元素，共 4 个元素，这里定义为 `a0, a1, a2, a3`。
+- 映射规则：这些寄存器和原有的矩阵对应方式是通过线程在 warp 中的 **`%laneid`（线程在束内的 ID，0~31）**，计算当前线程持有元素在矩阵 A 中的具体行列，
+	1. 先将 32 个线程按“4 个为一组”划分：
+		   - 组 ID `groupID = %laneid >> 2`（右移 2 位=除以 4，结果 0~7，共 8 组）；
+		   - 组内线程 ID `threadID_in_group = %laneid % 4`（取余 4，结果 0~3，每组 4 个线程）。
+	2. 计算“行（row）”：
+		   - 线程持有的 `a0、a1` 对应矩阵 A 的 **`groupID` 行**（0~7 行）；
+		   - 线程持有的 `a2、a3` 对应矩阵 A 的 **`groupID + 8` 行**（8~15 行）；
+		   （刚好覆盖矩阵 A 的 16 行）。
+	3. 计算“列（col）”：
+		   - 对 `a0~a3` 中的每个元素 `ai`（i=0~3），列号 `col = threadID_in_group * 2 + (i & 0x1)`；
+		   - 解释：每组 4 个线程，每个线程负责 2 列（`*2`），`(i&0x1)` 区分同一线程内 `ai` 的两个元素（0 或 1，对应 2 列中的左/右）；
+		   （刚好覆盖矩阵 A 的 8 列）。
 
-These are not standard C++ functions but rather low-level instructions from the Parallel Thread Execution (PTX) intermediate language, which is what the CUDA C++ compiler (`nvcc`) generates.
+同样的，MMA 指令的四个操作数都需要按照上面定义的映射规则对应。简言之：32 个线程通过“分组 +ID 映射”，刚好把矩阵拆分成 32 个元素片段，每个线程负责其中一块，协同完成 `mma.m16n8k8` 的乘加运算。
 
+#### Example
 
-# **1. The MMA Instruction**
+```cpp
+uint32_t RC[2] = {0, 0};
+uint32_t RA[4];
+uint32_t RB[2];
 
-The `mma` instruction is the heart of the Tensor Core. It performs a warp-level matrix multiplication and accumulation. A single `mma` instruction performs the following operation:
+#define HMMA16816(RD0, RD1, RA0, RA1, RA2, RA3, RB0, RB1, RC0, RC1) \
+asm volatile("mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16     \
+    {%0, %1}, {%2, %3, %4, %5}, {%6, %7}, {%8, %9};\n" :            \
+    "=r"(RD0), "=r"(RD1) : "r"(RA0), "r"(RA1), "r"(RA2), "r"(RA3),  \
+    "r"(RB0), "r"(RB1), "r"(RC0), "r"(RC1))
 
-D=A×B+C
+HMMA16816(RC[0], RC[1], RA[0], RA[1], RA[2], RA[3], RB[0], RB[1], RC[0], RC[1]);
+```
 
-Where A, B, C, and D are small matrix "fragments" held in the registers of a single warp.
+### Stmatrix
 
-- **Warp-Level Operation:** A key concept here is that the operation is executed by the entire warp (32 threads) collaboratively. The matrix fragments A, B, C, and D are distributed across the registers of all 32 threads in the warp. Each thread holds only a small, specific part of each matrix fragment.
-    
-- **Data Types and Shapes:** The `mma` instruction supports a wide variety of data types, including `FP16`, `BF16`, `TF32`, and integer types like `INT8` and `INT4`. The sizes of the matrices (M, N, K) are also specified in the instruction, for example, a common shape is `m16n8k16`, which represents multiplying an M=16xK=16 matrix by a K=16xN=8 matrix, resulting in an M=16xN=8 output.
-    
-- **Example (Conceptual):** Imagine a `mma` instruction for `FP16` types. A warp of 32 threads collectively holds 16x16 matrices A and B, and a 16x16 matrix C. The `mma` instruction will perform the multiplication and accumulation, storing the result in the 16x16 matrix D, all within the warp's registers.
+> 参考 PTX guide
 
-The `mma` instruction is incredibly efficient because it leverages the specialized Tensor Core hardware units. The GPU can issue these instructions to the Tensor Cores, while other functional units on the same Streaming Multiprocessor (SM) can execute other instructions, such as loads and stores, in parallel. This concurrency is vital for high-performance kernels.
+## bank conflict
 
-# **2. The LDMatrix Instruction**
+了解了基本的 MMA 指令的用法后，其实我发现最大的问题在于需要手动处理指令每个线程的输入数据，计算索引，处理数据排布等等，这个过程是复杂容易出错的。
 
-The `ldmatrix` instruction is a specialized, warp-level load instruction. Its sole purpose is to efficiently load matrix fragments from **shared memory** into the registers of a warp, where they can be used as operands for a subsequent `mma` instruction.
-
-- **Warp-Level Load:** Similar to `mma`, this is a collective operation. A single `ldmatrix` instruction initiated by a thread will cause all 32 threads in the warp to load their respective portions of a matrix from a shared memory location.
-    
-- **Optimized Access Pattern:** This instruction is designed to understand the complex memory layout required by the `mma` instruction. It handles the data partitioning and reordering automatically, ensuring that the loaded data is in the correct format within the registers of the warp.
-    
-- **Shared Memory Tiling:** The `ldmatrix` instruction is a critical part of the tiling strategy in high-performance GEMM kernels. Data is first loaded from global memory into a shared memory "tile." Then, warps repeatedly use `ldmatrix` to fetch their required portions from this fast shared memory, dramatically reducing the number of slow global memory accesses.
-    
-- **Asynchronous Loading:** On Hopper and Blackwell architectures, this functionality is a core part of the **Tensor Memory Accelerator (TMA)** and the `cp.async` instructions. This allows the GPU to initiate a large, warp-level copy from global to shared memory and from shared to register asynchronously, overlapping the data movement with the computation.
-
-# **3. The STMatrix Instruction**
-
-The `stmatrix` instruction is the inverse of `ldmatrix`. It's a specialized, warp-level store instruction that writes the results of a matrix computation (typically from an `mma` instruction) from a warp's registers back to shared memory.
-
-- **Warp-Level Store:** Again, this is a collective operation where all threads in the warp cooperate to store their respective parts of the resulting matrix fragment.
-    
-- **Formatted Store:** The instruction handles the specific data layout required to reconstruct the matrix in shared memory from the fragmented data in the registers.
-    
-- **From Shared to Global:** After a thread block has computed its entire shared memory tile, the data is then written back to global memory. This is typically done with standard `st.global` instructions, but as in the case of `ldmatrix`, specialized instructions like those from the TMA on Hopper and Blackwell architectures are used to optimize this final data movement.
-
-# **Summary: A Typical High-Performance Workflow**
-
-A typical high-performance GEMM kernel using these instructions would follow a pattern like this:
-
-1. **Global to Shared:** The kernel first loads a large tile of data from global memory into a shared memory array. This can be done either with standard `ld.global` instructions or with a modern asynchronous copy engine like the TMA.
-    
-2. **LDMatrix:** Warps within the thread block repeatedly use `ldmatrix` to load small matrix fragments (e.g., A and B) from the shared memory tile into their registers.
-    
-3. **MMA:** Each warp then repeatedly executes `mma` instructions on the register fragments, performing the multiply-accumulate operations and building up the result in a new register fragment (D).
-    
-4. **STMatrix:** Once the result fragment (D) is complete, the warps use `stmatrix` to write it back to a shared memory array.
-    
-5. **Shared to Global:** Once the entire thread block's shared memory tile is full with the final results, it's written back to global memory, completing a portion of the overall matrix multiplication.
-
-This `ldmatrix` -> `mma` -> `stmatrix` loop is the heart of what allows Tensor Cores to achieve their massive performance. The elegance of this system is that it maps the problem of dense linear algebra directly to the specialized hardware, bypassing the need for a general-purpose instruction set and enabling staggering levels of parallelism and throughput.
 
 
 # MMA 使用
@@ -196,7 +282,7 @@ This `ldmatrix` -> `mma` -> `stmatrix` loop is the heart of what allows Tensor C
 - **核心地位**：
   MMA 是 NVIDIA Tensor Core 的底层指令，**仍然是当前及未来 GPU 架构（如 Hopper、Ada）的核心计算单元**。
   - **Hopper 架构**（H 100）引入了 **FP 8 和 BF 16 支持**，进一步扩展了 MMA 的适用范围。
-  - **Ada 架构**（RTX 40 系列）增强了对 **DLSS 3 和光线追踪** 的支持，MMA 在 AI ch推理和图形计算中仍然关键。
+  - **Ada 架构**（RTX 40 系列）增强了对 **DLSS 3 和光线追踪** 的支持，MMA 在 AI ch 推理和图形计算中仍然关键。
 - **推荐使用方式**：
   - **通过 CUTLASS 3. x 或 cuTENSOR**：NVIDIA 推荐使用更高层的库（如 CUTLASS 3. x）来封装 MMA 操作，而非直接调用底层指令。
   - **FP 8 支持**：Hopper 的 MMA 指令支持 FP 8，能显著提升大模型训练和推理的吞吐量（如 LLM 和扩散模型）。
@@ -356,12 +442,10 @@ This `ldmatrix` -> `mma` -> `stmatrix` loop is the heart of what allows Tensor C
 
 WMMA 封装了 Tensor Core 的底层操作（如数据加载、矩阵乘法、结果存储），简化了开发者对 Tensor Core 的使用。它通过 warp-level 的 fragment 操作，提供更简洁的编程接口。
 
-
 - **数据加载**：`load_matrix_sync`（从全局内存或共享内存加载数据到 fragment）。
 - **矩阵乘法**：`mma_sync`（执行 `D = A * B + C` 操作）。
 - **结果存储**：`store_matrix_sync`（将结果写回全局内存或共享内存）。
 - **Fragment 抽象**：通过 `wmma::fragment` 定义矩阵分块（如 `16x16x16`）。
-
 
 ---
 
@@ -373,7 +457,6 @@ MMA 是 **底层 PTX 指令**，直接调用 GPU 的 Tensor Core 硬件资源，
 - **矩阵乘法**：`__mma_sync`（执行 `D = A * B + C` 操作）。
 - **结果存储**：`__stmatrix_sync`（将结果写回内存）。
 - **线程级控制**：每个线程需明确负责的数据和计算任务。
-
 
 ```cpp
 __half2 a[8][8], b[8][8], c[8][8];
@@ -394,398 +477,3 @@ __stmatrix_sync(global_memory_ptr_c, c, …); // 存储结果
 - **性能提升**：通过 Warpgroup 并行化，接近 Tensor Core 的理论算力上限。
 
 ---
-
-# WMMA
-
----
-
-## **1. 核心组件**
-
-WMMA API 定义在 `nvcuda::wmma` 命名空间中，围绕 “**warp 级矩阵块处理**” 设计（一个 warp 包含 32 个线程，共同协作处理一个矩阵块）。核心组件包括：
-
-- **Fragment**：矩阵分块的数据结构，用于存储矩阵 A、B 和累加器（accumulator）。
-- **Load/Store 操作**：从全局内存或共享内存加载数据到 fragment，或存储结果。
-- **Matrix Multiply-Accumulate (MMA)**：执行矩阵乘法累加操作。
-
-### 片段（Fragment）：矩阵数据的容器
-
-Fragment 是 WMMA 的核心数据结构，它抽象了矩阵的分块（tile），并封装了 Tensor Core 的寄存器布局，代表一个由 warp 处理的矩阵块（或其部分），是 Tensor Core 可直接操作的数据格式。
-
-“片段” 是 WMMA 中最核心的概念片段的类型由以下属性定义：
-
-- **矩阵角色**：`matrix_a`（输入矩阵 A）、`matrix_b`（输入矩阵 B）、`accumulator`（累加矩阵 C/D）。
-- **尺寸**：支持固定的小矩阵尺寸（如 16x16x16、32x8x16 等，随 GPU 架构扩展），对应 Tensor Core 的硬件处理单元。
-- **数据类型**：输入矩阵（A/B）支持 `half`（fp16）、`nv_bfloat16`（bf16）、`int8` 等；累加矩阵（C/D）通常为 `float`（fp32）或 `int32`，保证计算精度。
-- **布局**：内存中的数据布局（`row_major` 行优先 / `col_major` 列优先）。
-
-片段类型需通过模板参数显式定义，例如：
-
-```cpp
-// 定义A矩阵的片段：16x16x16，fp16，行优先
-using FragA = nvcuda::wmma::fragment<
-nvcuda::wmma::matrix_a,    // 角色：A矩阵
-16, 16, 16,                // 尺寸：m=16, n=16, k=16（A为m×k，B为k×n，C为m×n）
-half,                      // 数据类型：fp16
-nvcuda::wmma::row_major    // 内存布局
-> ;
-
-// 定义累加器片段：16x16x16，fp32（累加结果）
-using FragC = nvcuda::wmma::fragment<
-nvcuda::wmma::accumulator, 
-16, 16, 16, 
-float
-> ;
-```
-
-常见的 fragment 类型包括：
-
-- `wmma::fragment<wmma::matrix_a, M, N, K, T, Layout>`：矩阵 A 的分块（row-major）。
-- `wmma::fragment<wmma::matrix_b, M, N, K, T, Layout>`：矩阵 B 的分块（col-major）。
-- `wmma::fragment<wmma::accumulator, M, N, K, T>`：累加器（结果矩阵 C 的分块）。
-
-**参数说明**：
-- `M, N, K`：矩阵的维度（必须符合 Tensor Core 的约束，如 16x16x16）。
-- `T`：数据类型（如 `__half`, `float`）。
-- `Layout`：内存布局（`row_major` 或 `col_major`）。
-
-**示例**：
-
-```cpp
-using namespace wmma;
-fragment<matrix_a, 16, 16, 16, half, row_major> a_frag;
-fragment<matrix_b, 16, 16, 16, half, col_major> b_frag;
-fragment<accumulator, 16, 16, 16, float> acc_frag;
-```
-
-### 数据加载：`load_matrix_sync`
-
-将全局内存或共享内存中的矩阵数据加载到 fragment 中，自动处理内存布局到片段格式的转换（如对齐、维度适配）。
-
-**函数原型**：
-
-```cpp
-template <typename FragmentType>
-void load_matrix_sync(
-FragmentType& frag,        // 输出：加载到的片段
-const typename FragmentType::element_type* ptr,  // 输入：内存中矩阵的起始地址
-int ldm,                   // 输入：矩阵的领先维度（内存中每行/列的实际长度）
-nvcuda::wmma::layout_t layout = FragmentType::layout  // 输入：内存布局
-);
-```
-
- - 支持 `row_major` 或 `col_major` 布局。
- - **示例**：从全局内存加载 A 矩阵到片段：
-
-```cpp
-half* A_global;  // 全局内存中A矩阵（16x16，行优先）的起始地址
-FragA a_frag;    // A矩阵的片段
-
-// 加载A矩阵到片段（ldm=16表示A矩阵每行实际长度为16）
-nvcuda::wmma::load_matrix_sync(a_frag, A_global, 16);
-
-load_matrix_sync(a_frag, A_global, K, row_major);
-load_matrix_sync(b_frag, B_global, K, col_major);
-```
-
-### 数据存储：`store_matrix_sync`
-
-将片段中的计算结果（如累加后的矩阵 D）存储回全局内存或共享内存，转换为常规布局（如行优先）。
-
-- **函数原型**：
-
-```cpp
-template <typename FragmentType>
-void store_matrix_sync(
-typename FragmentType::element_type* ptr,  // 输出：存储到的内存地址
-const FragmentType& frag,                  // 输入：要存储的片段
-int ldm,                                   // 输入：矩阵的领先维度
-nvcuda::wmma::layout_t layout = FragmentType::layout  // 输入：内存布局
-);
-```
-
-- **`store_matrix_sync`**：将 fragment 中的结果存储回全局内存或共享内存。
-- **示例**：将累加器片段存储到全局内存：
-
-```cpp
-float* D_global;  // 全局内存中存储结果D的地址
-FragC d_frag;     // 计算完成的累加器片段
-
-// 存储片段到全局内存（行优先，ldm=16）
-nvcuda::wmma::store_matrix_sync(D_global, d_frag, 16);
-store_matrix_sync(C_global, acc_frag, N, row_major);
-```
-
-### 核心乘加：`mma_sync`
-
-WMMA 的核心函数，执行矩阵块乘加操作：C=A×B+C，其中 A、B 是输入片段，C 是累加片段（输入输出两用）。
-
-- **`mma_sync`**：执行 `acc = A * B + acc` 操作。
-- **函数原型**：
-
-```cpp
-template <typename AccumulatorFragment, typename MatrixAFragment, typename MatrixBFragment>
-void mma_sync(
-AccumulatorFragment& c,    // 输入输出：累加矩阵（C = A×B + C）
-const MatrixAFragment& a,  // 输入：矩阵A
-const MatrixBFragment& b,  // 输入：矩阵B
-const AccumulatorFragment& c_initial  // 输入：初始C矩阵（通常与c相同，用于累加）
-);
-```
-
-- **示例**：执行 16x16x16 的矩阵乘加：
-
-```cpp
-// 假设a_frag和b_frag已加载数据，c_frag已初始化
-nvcuda::wmma::mma_sync(c_frag, a_frag, b_frag, c_frag);  // c_frag = a_frag × b_frag + c_frag
-mma_sync(acc_frag, a_frag, b_frag, acc_frag);
-```
-
-### 片段初始化：`fill_fragment`
-
-初始化累加器片段（如填充 0），作为 `mma_sync` 的初始值（避免未定义行为）。
-
-- **函数原型**：
-
-```cpp
-template <typename FragmentType>
-void fill_fragment(
-FragmentType& frag,                // 输出：要初始化的片段
-const typename FragmentType::element_type& value  // 输入：初始值
-);
-```
-
-- **示例**：初始化累加器片段为 0：
-
-```cpp
-FragC c_frag;
-nvcuda::wmma::fill_fragment(c_frag, 0.0f);  // 累加器初始值为0
-```
-
----
-
-## **2. 使用流程**
-
-以 **半精度矩阵乘法（HGEMM）** 为例（`C = A * B`，`A: M×K`, `B: K×N`, `C: M×N`）：
-
-### **3.1 初始化**
-
-- 确定矩阵分块尺寸（如 `16x16x16`）。
-- 分配全局内存并初始化矩阵 `A`、`B`、`C`。
-
-### **3.2 Kernel 函数**
-
-- **线程块设计**：每个 warp 负责一个 `16x16` 的 tile。
-- **步骤**：
-  1. **加载数据**：从全局内存加载 `A` 和 `B` 的分块到 fragment。
-  2. **执行 MMA**：调用 `mma_sync` 进行矩阵乘法累加。
-  3. **存储结果**：将结果写回全局内存。
-
-**示例代码**：
-
-```cpp
-__global__ void wmma_hgemm(const half *A, const half *B, half *C, int M, int N, int K) {
-    // 定义 fragment
-    using namespace wmma;
-    fragment<matrix_a, 16, 16, 16, half, row_major> a_frag;
-    fragment<matrix_b, 16, 16, 16, half, col_major> b_frag;
-    fragment<accumulator, 16, 16, 16, float> acc_frag;
-
-    // 计算当前 warp 的 tile 坐标
-    int warp_id = threadIdx.x / 32; // 每个 warp 有 32 threads
-    int warp_row = warp_id / (N / 16); // 行索引
-    int warp_col = warp_id % (N / 16); // 列索引
-
-    // 加载 A 和 B 的 tile
-    load_matrix_sync(a_frag, A + warp_row * K * 16, K, row_major);
-    load_matrix_sync(b_frag, B + warp_col * K * 16, K, col_major);
-
-    // 初始化累加器
-    fill_fragment(acc_frag, 0.0f);
-
-    // 执行矩阵乘法
-    mma_sync(acc_frag, a_frag, b_frag, acc_frag);
-
-    // 存储结果到全局内存
-    store_matrix_sync(C + (warp_row * 16) * N + warp_col * 16, acc_frag, N, row_major);
-}
-```
-
-### **3.3 主机代码调用**
-
-```cpp
-// 分配内存并初始化 A, B, C
-// …
-
-// 启动 kernel
-int block_size = 256; // 每个 block 有 16 warps
-int grid_size = (M * N) / (16 * 16) / 16; // 根据矩阵尺寸调整
-wmma_hgemm<<<grid_size, block_size>>>(d_A, d_B, d_C, M, N, K);
-```
-
-## WMMA 的使用流程（以 GEMM 为例）
-
-WMMA 的核心是 “warp 级协作”（一个 warp 处理一个矩阵块），使用时需遵循固定流程。以下是一个完整示例：用 WMMA 实现 16x16x16 的矩阵乘法 C=A×B（A 和 B 为 fp16，C 为 fp32）。
-
-### 步骤 1：定义矩阵尺寸与片段类型
-
-cpp
-
-运行
-
-```cpp
-#include <mma.h>
-#include <cuda_fp16.h>  // 用于half类型
-using namespace nvcuda;
-
-// 矩阵尺寸（需与WMMA支持的尺寸匹配，如16x16x16）
-const int M = 16;  // C的行数 = A的行数
-const int N = 16;  // C的列数 = B的列数
-const int K = 16;  // A的列数 = B的行数
-
-// 定义片段类型
-using FragA = wmma::fragment<wmma::matrix_a, M, N, K, half, wmma::row_major>;
-using FragB = wmma::fragment<wmma::matrix_b, M, N, K, half, wmma::col_major>;
-using FragC = wmma::fragment<wmma::accumulator, M, N, K, float>;
-```
-
-### 步骤 2：编写核函数（warp 级处理）
-
-一个 warp（32 线程）协作处理一个 16x16x16 的矩阵块：
-
-cpp
-
-运行
-
-```cpp
-__global__ void wmma_gemm_kernel(const half* A, const half* B, float* C) {
-// 1. 初始化累加器片段（C的初始值为0）
-FragC c_frag;
-wmma::fill_fragment(c_frag, 0.0f);
-
-// 2. 加载A和B矩阵到片段（假设A是行优先，B是列优先）
-FragA a_frag;
-FragB b_frag;
-wmma::load_matrix_sync(a_frag, A, K);  // A的领先维度为K（每行长度）
-wmma::load_matrix_sync(b_frag, B, N);  // B的领先维度为N（每列长度）
-
-// 3. 执行矩阵乘加：c_frag = a_frag × b_frag + c_frag
-wmma::mma_sync(c_frag, a_frag, b_frag, c_frag);
-
-// 4. 将结果存储到全局内存C
-wmma::store_matrix_sync(C, c_frag, M, wmma::row_major);  // C的领先维度为M
-}
-```
-
-### 步骤 3：主机端调用
-
-cpp
-
-运行
-
-```cpp
-#include <iostream>
-
-int main() {
-// 1. 分配主机内存并初始化
-half* h_A = new half[M * K];
-half* h_B = new half[K * N];
-float* h_C = new float[M * N];
-// 初始化A和B（示例：A=1, B=1，预期C=16×1=16）
-for (int i = 0; i < M*K; ++i) h_A[i] = 1.0f;
-for (int i = 0; i < K*N; ++i) h_B[i] = 1.0f;
-
-// 2. 分配设备内存
-half *d_A, *d_B;
-float *d_C;
-cudaMalloc(&d_A, M*K*sizeof(half));
-cudaMalloc(&d_B, K*N*sizeof(half));
-cudaMalloc(&d_C, M*N*sizeof(float));
-
-// 3. 复制数据到设备
-cudaMemcpy(d_A, h_A, M*K*sizeof(half), cudaMemcpyHostToDevice);
-cudaMemcpy(d_B, h_B, K*N*sizeof(half), cudaMemcpyHostToDevice);
-
-// 4. 启动核函数（1个block，1个warp=32线程）
-wmma_gemm_kernel<<<1, 32>>>(d_A, d_B, d_C);
-cudaDeviceSynchronize();
-
-// 5. 复制结果回主机并验证
-cudaMemcpy(h_C, d_C, M*N*sizeof(float), cudaMemcpyDeviceToHost);
-std::cout << "C[0][0] = " << h_C[0] << "（预期16.0）" << std::endl;  // 输出16.0
-
-// 6. 释放内存
-delete[] h_A; delete[] h_B; delete[] h_C;
-cudaFree(d_A); cudaFree(d_B); cudaFree(d_C);
-return 0;
-}
-```
-
----
-
-## **4. 关键特性**
-
-### **4.1 Warp-Level 并行**
-
-- 每个 warp 处理一个 `16x16` 的 tile，充分利用 Tensor Core 的硬件资源。
-- 多个 warp 并行处理不同 tile，实现高吞吐量。
-
-### **4.2 数据类型支持**
-
-- 支持 FP16（`__half`）、FP32（`float`）、INT8（`int8_t`）等数据类型。
-- 示例：`__half2` 用于 FP16 计算，`int4` 用于 INT8 计算。
-
-### **4.3 内存优化**
-
-- **全局内存对齐**：确保数据地址对齐到 128 字节（Tensor Core 要求）。
-- **共享内存中转**：对于复杂场景，可通过共享内存暂存数据，减少全局内存访问延迟。
-
----
-
-## **5. 注意事项**
-
-1. **GPU 架构要求**：
-   - 支持 Tensor Core 的 GPU（Volta、Turing、Ampere 等）。
-   - 示例：Tesla V100（sm_70）、RTX 2080（sm_75）、A100（sm_80）。
-
-2. **矩阵分块约束**：
-   - 分块尺寸必须符合 Tensor Core 的要求（如 `16x16x16`）。
-   - 矩阵总尺寸需能被分块尺寸整除（否则需处理边界）。
-
-3. **编译器设置**：
-   - 编译时指定目标架构：
-
-```bash
-nvcc -arch=sm_70 wmma_kernel.cu
-```
-
-1. **性能调优**：
-   - 合理设计线程块和网格，避免资源争用。
-   - 利用共享内存减少全局内存访问。
-
-2. **矩阵尺寸限制**：WMMA 仅支持固定尺寸（如 16x16x16、32x8x16 等），具体取决于 GPU 架构：
-
-- Volta（Sm70）：仅支持 16x16x16。
-- Ampere（Sm80+）：支持 16x16x16、32x8x16、8x32x16 等。
-larger 矩阵需手动分块（如 1024x1024 矩阵分为 64 个 16x16 子块）。
-1. **线程映射**：一个 warp（32 线程）必须完整处理一个片段，核函数的线程块大小需为 32 的倍数（如 32、64 等）。
-2. **内存对齐**：输入矩阵的内存地址需按数据类型对齐（如 fp16 对齐到 2 字节，bf16 对齐到 2 字节），否则会导致未定义行为。
-3. **数据类型组合**：不同架构支持的类型组合不同（如 Hopper 支持 fp8 输入），需参考 CUDA 文档确认兼容性。
-
----
-
-## **7. 与 cuBLAS/CUTLASS 的对比**
-
-| **特性**         | **WMMA API**                  | **cuBLAS**                  | **CUTLASS**                |
-|------------------|-------------------------------|-----------------------------|----------------------------|
-| **抽象层级**     | 底层（warp-level）| 高级（GEMM 接口）| 中级（模板化 GEMM）|
-| **灵活性**       | 高（可自定义分块和内存布局）| 低（固定接口）| 中（模板参数配置）|
-| **开发难度**     | 高（需手动管理内存和分块）| 低（直接调用函数）| 中（模板编程）|
-| **性能**         | 高（接近硬件上限）| 高（高度优化）| 高（可定制优化）|
-
----
-
-## **总结**
-
-WMMA API 是直接操作 Tensor Core 的强大工具，适合需要精细控制矩阵计算的场景。通过 fragment 抽象和 warp-level 的并行设计，开发者可以充分发挥 Tensor Core 的性能潜力。然而，其使用门槛较高，需结合内存优化和分块策略，推荐在 cuBLAS/CUTLASS 无法满足需求时使用。
-
-CUDA 的 WMMA API 是基于 Tensor Core 的核心矩阵操作接口，通过 “片段” 抽象封装了矩阵加载、乘加、存储等流程，适合在 warp 级别实现高性能矩阵运算。使用时需遵循 “定义片段→加载数据→执行乘加→存储结果” 的流程，并注意尺寸限制和线程协作。对于大多数场景，推荐优先使用 CUTLASS（基于 WMMA）以降低开发成本；若需定制特殊逻辑，则可直接使用 WMMA。

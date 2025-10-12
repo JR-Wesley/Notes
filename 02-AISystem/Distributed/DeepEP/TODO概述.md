@@ -2,26 +2,26 @@
 dateCreated: 2025-08-15
 dateModified: 2025-08-20
 ---
+
 # Deepep
+
 参考：
 
 [https://www.msn.cn/zh-cn/news/other/%E5%A6%82%E4%BD%95%E7%9C%8B%E5%BE%85deepseek%E6%96%B0%E5%BC%80%E6%BA%90%E7%9A%84%E7%AC%AC%E4%BA%8C%E4%B8%AA%E9%A1%B9%E7%9B%AEdeepep/ar-AA1zRFBQ?ocid=BingNewsSerp](https://www.msn.cn/zh-cn/news/other/%E5%A6%82%E4%BD%95%E7%9C%8B%E5%BE%85deepseek%E6%96%B0%E5%BC%80%E6%BA%90%E7%9A%84%E7%AC%AC%E4%BA%8C%E4%B8%AA%E9%A1%B9%E7%9B%AEdeepep/ar-AA1zRFBQ?ocid=BingNewsSerp)
 
 [https://zhuanlan.zhihu.com/p/26204046487](https://zhuanlan.zhihu.com/p/26204046487)
 
-# 51
-
 https://www.51cto.com/article/809246.html
 
 这篇文章主要深入分析了 **DeepSeek 开源的 EP 通信库 DeepEP**，特别是其在 **专家并行 (Expert Parallelism, EP)** 模式下的实现细节、技术挑战和优化策略。
 
-### 1. DeepEP 与 EP 并行的核心目的
+## 1. DeepEP 与 EP 并行的核心目的
 
 - **解决 MoE 模型的瓶颈**：传统的模型并行（如张量并行 TP、流水线并行 PP）难以高效处理混合专家模型（MoE）中动态选择专家的特性，容易导致 GPU 计算利用率低和显存带宽成为瓶颈。
 - **优化通信与计算**：DeepEP 是一个专门为 MoE 模型训练和推理设计的 EP 通信库，旨在提高计算利用率，减少 GPU 闲置，使更大规模的 MoE 模型训练和推理更高效。
 - **显存带宽是瓶颈**：文章指出，如果为处理少量 token 而加载高达 44MB 的专家权重，会非常不划算，并且容易占满显存带宽。
 
-### 2. DeepEP 的关键技术实现
+## 2. DeepEP 的关键技术实现
 
 文章从代码层面详细剖析了 DeepEP 的核心组件：
 
@@ -34,18 +34,19 @@ https://www.51cto.com/article/809246.html
     - **Double-Batch Overlapping**：通过 `hook()` 机制实现，可以在不占用 SM（流式多处理器）的情况下进行通信重叠，提高效率。
     - **低延迟 Dispatch/Combine**：文章给出了 `low_latency_dispatch` 函数的 Python 和 C++ 实现，展示了其如何通过 `SEND PHASE` 和 `RECV PHASE` 来管理通信。
 
-### 3. 硬件与网络技术
+## 3. 硬件与网络技术
 
 - **RDMA 技术**：DeepEP 大量使用了 RDMA（远程直接内存访问）技术来实现高效的节点间通信。
 - **InfiniBand (IB) 与 RoCE**：DeepSeek 在其系统中采用了 InfiniBand 技术。虽然 DeepEP 在 GitHub 上声称理论上兼容 RoCE (RDMA over Converged Ethernet)，但文章指出在 RoCE 上运行会面临诸多挑战，如 Multi-Rail 拓扑问题、incast 拥塞、RC (可靠连接) 兼容性以及 In-Network Computing 的实现难题。
 
-### 4. 其他重要细节
+## 4. 其他重要细节
 
 - **FP8 细粒度量化**：在通信过程中使用了 FP8 量化来减少数据传输量，并提到了为 TMA (Tensor Memory Accelerator) 加载优化而进行的内存布局调整（如保证 token 数能被 4 整除）。
 - **与 DeepSeek-V3 论文的关联**：文章提到，要完全理解 DeepEP 的设计和潜在的硬件缺陷，需要结合 DeepSeek-V3 论文中的建议一起看。
 - **未来展望**：文章作者提到后续会分析 FlashMLA 和 DeepGEMM，后者是用于 MoE 专家矩阵计算的库，与 DeepEP 配合使用。
 
 **总结**：这篇文章是一篇非常深入的技术分析，揭示了 DeepSeek 在优化大规模 MoE 模型基础设施方面的前沿工作。DeepEP 不仅仅是一个通信库，它通过精心设计的内核、对 CUDA Graph 的兼容性、对 RDMA 的深度利用以及对量化技术的整合，系统性地解决了 MoE 模型在扩展性和效率上的关键挑战。
+
 # **1. Overview**
 
 - **目标**：
@@ -140,7 +141,6 @@ deepseek solution
 
 3）针对非对称域带宽转发（如从 NVLink 域到 RDMA 域），提供优化内核，适合训练和推理 Prefill 任务。允许直接内存访问，减少 CPU 介入。DeepEP 的优化确保数据在不同域之间高效传输，特别适用于大规模混合卡的分布式训练。
 
-
 Secondly, we develop efficient cross-node all-to-all communication kernels
 
 to fully utilize IB and NVLink bandwidths and conserve Streaming Multiprocessors (SMs)
@@ -173,7 +173,7 @@ being blocked by subsequently arriving tokens.
 
 // One channel use two blocks, even-numbered blocks for sending, odd-numbered blocks for receiving.
 
-### Warp Specialization
+## Warp Specialization
 
 20 个 SM 分成 10 个 communication channels
 
@@ -191,7 +191,7 @@ During combining process：
 
 使用 PTX 指令，自动调节 chunk size，减少 L 2 cache 使用，以及对其他 SM 的干扰
 
-### Deployment Strategy
+## Deployment Strategy
 
 redundant experts：
 
@@ -227,12 +227,11 @@ computing this routing scheme is almost negligible.
 
 展开源码
 
-## **3.1 Normal Kernels with NVLink and RDMA forwarding**
+# **3.1 Normal Kernels with NVLink and RDMA forwarding**
 
 **The normal kernels can be used in model training or the inference prefilling phase (without the backward part) as the below example code shows.**
 
-
-## **3.2 Low-latency Kernels with Pure RDMA**
+# **3.2 Low-latency Kernels with Pure RDMA**
 
 **The low latency kernels can be used in the inference decoding phase as the below example code shows.**
 
@@ -240,12 +239,11 @@ computing this routing scheme is almost negligible.
 
 | |
 
-
 |---|
 
 | `if` `self.runtime.get_num_rdma_ranks() >` `1` `or low_latency_mode:`<br><br> `# Enable IBGDA` `for` `the low latency mode, which refers to` `"no package forwarding between NVLink and RDMA"`<br><br> `if` `low_latency_mode:`<br><br> `assert` `num_qps_per_rank >` `0`<br><br> `os.environ[``'NVSHMEM_DISABLE_P2P'``] =` `'1'`<br><br> `os.environ[``'NVSHMEM_IB_ENABLE_IBGDA'``] =` `'1'`<br><br> `os.environ[``'NVSHMEM_IBGDA_NIC_HANDLER'``] =` `'gpu'`<br><br> `os.environ[``'NVSHMEM_IBGDA_NUM_RC_PER_PE'``] = f``'{num_qps_per_rank}'`<br><br> `# Make sure QP depth is always larger than the number of on-flight WRs, so that we can skip WQ slot check`<br><br> `os.environ[``'NVSHMEM_QP_DEPTH'``] =` `'1024'`<br><br> `# NOTES: NVSHMEM initialization requires at least` `256` `MiB`<br><br> `os.environ[``'NVSHMEM_CUMEM_GRANULARITY'``] = f``'{2 ** 29}'`<br><br> `# Disable PCIe relaxed ordering to avoid out-of-order messages`<br><br> `os.environ[``'NVSHMEM_IB_ENABLE_RELAXED_ORDERING'``] =` `'0'`<br><br> `# NOTES: make sure AR (Adaptive Routing) is turned off` `while` `running normal kernels, as we cannot verify AR status in the code`<br><br> `# Synchronize using the root ID`<br><br> `nvshmem_unique_ids = [None,] * self.group_size`<br><br> `if` `(low_latency_mode and self.rank ==` `0``) or (not low_latency_mode and self.runtime.get_rdma_rank() ==` `0``):`<br><br> `root_unique_id = self.runtime.get_local_nvshmem_unique_id()`<br><br> `dist.all_gather_object(nvshmem_unique_ids, root_unique_id, group)`<br><br> `root_unique_id = nvshmem_unique_ids[``0` `if` `low_latency_mode` `else` `self.runtime.get_root_rdma_rank(True)]` |
 
-### buffer.dispatch () Callstack
+## buffer.dispatch () Callstack
 
 test_intranode. py:: test_main ()
 
@@ -323,13 +321,13 @@ Buffer:: intranode_dispatch (C++ Layer)
 
 └─── Event handle
 
-## **3.3 Undefined-behavior PTX usage**
+# **3.3 Undefined-behavior PTX usage**
 
 - For extreme performance, we discover and use an undefined-behavior PTX usage: using read-only PTX `[[ld.global.nc](http://ld.global.nc/)]([http://ld.global.nc/](http://ld.global.nc/)).L1::no_allocate.L2::256B` to **read volatile data**. The PTX modifier `.nc` indicates that a non-coherent cache is used. But the correctness is tested to be guaranteed with `.L1::no_allocate` on Hopper architectures, and performance will be much better. The reason we guess may be: the non-coherent cache is unified with L 1, and the L 1 modifier is not just a hint but a strong option, so that the correctness can be guaranteed by no dirty data in L 1.
 - Initially, because NVCC could not automatically unroll volatile read PTX, we tried using `__ldg` (i.e., `[[ld.nc](http://ld.nc/)]([http://ld.nc/](http://ld.nc/))`). Even compared to manually unrolled volatile reads, it was significantly faster (likely due to additional compiler optimizations). However, the results could be incorrect or dirty. After consulting the PTX documentation, we discovered that L 1 and non-coherent cache are unified on Hopper architectures. We speculated that `.L1::no_allocate` might resolve the issue, leading to this discovery.
 - If you find kernels not working on some other platforms, you may add `DISABLE_AGGRESSIVE_PTX_INSTRS=1` to `setup.py` and disable this, or file an issue.
 
-### **GPU 通信技术**
+## **GPU 通信技术**
 
 NVLink（200-300 GB/s 带宽）
 
@@ -343,7 +341,7 @@ RDMA（InfiniBand/RoCE，40-50 GB/s 带宽）
 
 ---
 
-#### **3. 技术要点**
+### **3. 技术要点**
 
 **3.1 架构设计**
 
@@ -398,7 +396,7 @@ combined_hidden, event, hook = buffer.low_latency_combine(recv_hidden, handle)
 
 ---
 
-#### **4. 实践指南**
+### **4. 实践指南**
 
 **4.1 部署要求**
 
@@ -418,7 +416,7 @@ combined_hidden, event, hook = buffer.low_latency_combine(recv_hidden, handle)
 
 ---
 
-#### **5. 参考资料**
+### **5. 参考资料**
 
 - **项目文档**: [DeepEP GitHub Wiki]([https://github.com/deepseek-ai/DeepEP/wiki](https://github.com/deepseek-ai/DeepEP/wiki))
 - **相关论文**:
@@ -456,7 +454,7 @@ Actions（下周三 check 完成进度）：
 - [Intranode && Internode]([https://conf01.birentech.com/pages/viewpage.action?pageId=234842262#id-1.DeepEP%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5%E7%AE%80%E4%BB%8B-Intranode&&Internode](https://conf01.birentech.com/pages/viewpage.action?pageId=234842262#id-1.DeepEP%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5%E7%AE%80%E4%BB%8B-Intranode&&Internode))
 - [NVSHMEM]([https://conf01.birentech.com/pages/viewpage.action?pageId=234842262#id-1.DeepEP%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5%E7%AE%80%E4%BB%8B-NVSHMEM](https://conf01.birentech.com/pages/viewpage.action?pageId=234842262#id-1.DeepEP%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5%E7%AE%80%E4%BB%8B-NVSHMEM))
 - [DeepEP]([https://conf01.birentech.com/pages/viewpage.action?pageId=234842262#id-1.DeepEP%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5%E7%AE%80%E4%BB%8B-DeepEP](https://conf01.birentech.com/pages/viewpage.action?pageId=234842262#id-1.DeepEP%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5%E7%AE%80%E4%BB%8B-DeepEP))
-- [BR 200 native DeepEP 工作展望]([https://conf01.birentech.com/pages/viewpage.action?pageId=234842262#id-1.DeepEP%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5%E7%AE%80%E4%BB%8B-BR200nativeDeepEP%E5%B7%A5%E4%BD%9C%E5%B1%95%E6%9C%9B](https://conf01.birentech.com/pages/viewpage.action?pageId=234842262#id-1.DeepEP%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5%E7%AE%80%E4%BB%8B-BR200nativeDeepEP%E5%B7%A5%E4%BD%9C%E5%B1%95%E6%9C%9B))
+
 
 ## **基础概念**
 
@@ -478,23 +476,7 @@ MOE 是一种稀疏激活的模型架构，通过将大模型拆分为多个子�
 - 工作原理：输入数据经过 Gate 后，会得到一个概率分布，表示每个 Token 分配到每个 Expert 的概率。通常会使用 Top-K 选择策略，例如 Top-2，即选择概率最高的两个 Expert。
 - 重要性：Gate 的设计和训练效果直接影响 MoE 模型的性能，因为它决定了数据如何被分配到不同的 Experts，进而影响模型的计算效率和负载均衡。Router 的设计需要考虑如何在保证模型性能的同时，实现高效的负载均衡，避免某些 Experts 被过度使用，而其他 Experts 则闲置。
 
-关键步骤
-
-1. 计算门控值（Gating）：
-
-展开源码
-
-1. Top-k 选择：
-
-展开源码
-
-Model 视图如下：
-
-**![]([https://conf01.birentech.com/download/attachments/234842262/image2025-7-25_16-0-42.png?version=1&modificationDate=1753430443000&api=v2](https://conf01.birentech.com/download/attachments/234842262/image2025-7-25_16-0-42.png?version=1&modificationDate=1753430443000&api=v2))**
-
 ### MoE EP Gate/Router
-
-**![]([https://conf01.birentech.com/download/attachments/234842262/image2025-7-25_16-1-10.png?version=1&modificationDate=1753430471000&api=v2](https://conf01.birentech.com/download/attachments/234842262/image2025-7-25_16-1-10.png?version=1&modificationDate=1753430471000&api=v2))**
 
 - **通信优化**
 - Device limited Routing: 将 routing 的 experts 限定在 M 个设备上 (减少通信范围，从而降低通信开销)
@@ -509,10 +491,6 @@ Model 视图如下：
 - 非均衡 all to all: 每张卡不确定需要接收的 size，可先做一次 all to all 拿到接收的 size
 
 ### Dispatch && Combine
-
-下图是 Operator 调用：
-
-**
 
 - **D****ispatch**：
 - 将输入数据分发到不同的专家 experts 进行处理
@@ -534,8 +512,6 @@ Intranode 指的是在同一计算节点（Node）内部的操作或通信。具
 Internode 指的是不同计算节点之间的操作或通信。具体来说，它涉及多个物理机器或计算节点之间的交互。
 
 - 通信方式：节点间的通信通常通过网络接口（如 InfiniBand、Ethernet）进行，具有较高的延迟和较低的带宽，但可以通过优化协议（如 RDMA）来提高效率。
-
-![]([https://conf01.birentech.com/download/attachments/234842262/image2025-7-29_14-37-56.png?version=1&modificationDate=1753771076000&api=v2](https://conf01.birentech.com/download/attachments/234842262/image2025-7-29_14-37-56.png?version=1&modificationDate=1753771076000&api=v2))
 
 |**数据传输路径**|数据通过主机内存传输，CPU 可能参与数据准备和传输|数据直接在 GPU 和 RDMA 网络设备之间传输，绕过主机内存和 CPU|
 
@@ -561,11 +537,7 @@ IBGDA（InfiniBand GPUDirect Async）是一种优化的通信技术，用于进�
 
 目前我们的 cmodel 仅仅支持 GPU 之间直连以及通过 Switch 桥接，两种通信模式。GPU 直接 trigger RDMA 目前在 cmodel 无法验证功能 (RDMA br 200 是 vendor (GPU 制造商) 提供的，它的 init sequence 以及设计我们无从得知，目前 CModel 仅支持自研模块的开发建模)。
 
-具体的可以参考之前 liyao 分享的文档：[4. D 2 D/P 2 P/Intranode/Internode]([https://conf01.birentech.com/pages/viewpage.action?pageId=220676756](https://conf01.birentech.com/pages/viewpage.action?pageId=220676756))
-
 ### NVSHMEM
-
-![]([https://conf01.birentech.com/download/attachments/234842262/image2025-7-29_14-15-5.png?version=1&modificationDate=1753769706000&api=v2](https://conf01.birentech.com/download/attachments/234842262/image2025-7-29_14-15-5.png?version=1&modificationDate=1753769706000&api=v2))
 
 - 将**多个** **GPU** 的内存组合成一个分区的**全局地址****空间**
 - 可通过 **NVSHMEM API** 访问将输入数据分发到不同的专家 experts 进行处理
@@ -575,23 +547,15 @@ IBGDA（InfiniBand GPUDirect Async）是一种优化的通信技术，用于进�
 
 和 NCCL 对比：
 
-| | | |
-
-|---|---|---|
-
-|**特性**|**NCCL**|**NVSHMEM**|
-
-|**主要用途**|针对集合通信（如 AllReduce、Broadcast）优化，专为深度学习分布式训练设计。|基于 PGAS 模型的细粒度内存访问，支持任意 GPU/节点间的直接内存读写。|
-
-|**设计**|强调高吞吐、低延迟的集合操作，适合紧密同步的并行任务。|提供全局地址空间抽象，支持灵活的异步通信，适合非规则或动态通信模式。|
-
-|**通信协议**|基于 BLink/RDMA 优化集合通信算法（如 Ring AllReduce）。|利用 PGAS (Partitioned Global Address Space) 模型 (提供了逻辑上统一的全局地址空间，允许程序员像在共享内存系统中一样访问数据) 和<br><br>CUDA-aware 技术 (MPI 接口可以直接在 GPU 内存之间传输数据)，直接操作远程内存地址。|
-
-|**通信粒度**|基于集体操作（如 AllReduce、AllGather），需要所有进程参与同一操作。|支持单边通信（Put/Get/Atomics），允许单个 GPU 直接读写远程内存。|
-
-|**同步机制**|隐式同步，操作完成后自动保证数据一致性。|需显式同步（如 nvshmem_fence 或 nvshmem_quiet）确保内存可见性。|
-
-|**编程范式**|通过显式调用通信函数（如 ncclAllReduce）。|类似共享内存的地址直接访问（如 nvshmem_put）。|
+|          |                                                |                                                                                                                                                    |
+| -------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **特性**   | **NCCL**                                       | **NVSHMEM**                                                                                                                                        |
+| **主要用途** | 针对集合通信（如 AllReduce、Broadcast）优化，专为深度学习分布式训练设计。 | 基于 PGAS 模型的细粒度内存访问，支持任意 GPU/节点间的直接内存读写。                                                                                                            |
+| **设计**   | 强调高吞吐、低延迟的集合操作，适合紧密同步的并行任务。                    | 提供全局地址空间抽象，支持灵活的异步通信，适合非规则或动态通信模式。                                                                                                                 |
+| **通信协议** | 基于 BLink/RDMA 优化集合通信算法（如 Ring AllReduce）。      | 利用 PGAS (Partitioned Global Address Space) 模型 (提供了逻辑上统一的全局地址空间，允许程序员像在共享内存系统中一样访问数据) 和<br><br>CUDA-aware 技术 (MPI 接口可以直接在 GPU 内存之间传输数据)，直接操作远程内存地址。 |
+| **通信粒度** | 基于集体操作（如 AllReduce、AllGather），需要所有进程参与同一操作。    | 支持单边通信（Put/Get/Atomics），允许单个 GPU 直接读写远程内存。                                                                                                         |
+| **同步机制** | 隐式同步，操作完成后自动保证数据一致性。                           | 需显式同步（如 nvshmem_fence 或 nvshmem_quiet）确保内存可见性。                                                                                                     |
+| **编程范式** | 通过显式调用通信函数（如 ncclAllReduce）。                   | 类似共享内存的地址直接访问（如 nvshmem_put）。                                                                                                                      |
 
 ## **DeepEP**
 
@@ -615,21 +579,17 @@ IBGDA（InfiniBand GPUDirect Async）是一种优化的通信技术，用于进�
 
 **DeepEP** **Requirements**
 
-CUDA >=12.3 → **SUPA/SUDA** ([[https://gitlab.birentech.com/software/suda](https://gitlab.birentech.com/software/suda)]([https://gitlab.birentech.com/software/suda](https://gitlab.birentech.com/software/suda)))
+CUDA >=12.3
 
-NVLink for intranode communication → **BLink**
+NVLink for intranode communication
 
-RDMA network for internode communication → **BR****机间都是****RDMA**
+RDMA network for internode communication →
 
-DeepEP 依赖库: NVSHMEM，我们开发对应的**SUSHMEM，**[[https://gitlab.birentech.com/software/SUSHMEM](https://gitlab.birentech.com/software/SUSHMEM)]([https://gitlab.birentech.com/software/SUSHMEM](https://gitlab.birentech.com/software/SUSHMEM))
+DeepEP 依赖库: NVSHMEM，
 
 **DeepEP** **PTX****操作**
 
 utils. cuh 定义了大量的 PTX 操作 ([PTX ISA instructions performance]([https://conf01.birentech.com/display/SOF/PTX+ISA+instructions+performance](https://conf01.birentech.com/display/SOF/PTX+ISA+instructions+performance)))，如 LD/ST 采用了 acquire/relaxed，在 kernel 中大量使用，进一步提高的处理效率
-
-BR 可用内嵌汇编实现类似功能 ([[https://gitlab.birentech.com/software/br_DeepEP2.0/-/blob/develop_br200/csrc/kernels/utils.cuh?ref_type=heads](https://gitlab.birentech.com/software/br_DeepEP2.0/-/blob/develop_br200/csrc/kernels/utils.cuh?ref_type=heads)]([https://gitlab.birentech.com/software/br_DeepEP2.0/-/blob/develop_br200/csrc/kernels/utils.cuh?ref_type=heads](https://gitlab.birentech.com/software/br_DeepEP2.0/-/blob/develop_br200/csrc/kernels/utils.cuh?ref_type=heads)))。
-
-整体的 BR 200 的 DeepEP 的验证流程后续如下：
 
 # Api
 
@@ -642,7 +602,6 @@ BR 可用内嵌汇编实现类似功能 ([[https://gitlab.birentech.com/software
 - [combine]([https://conf01.birentech.com/pages/viewpage.action?pageId=234846381#id-2.DeepEPAPI%E5%8A%9F%E8%83%BD%E7%AE%80%E4%BB%8B-combine](https://conf01.birentech.com/pages/viewpage.action?pageId=234846381#id-2.DeepEPAPI%E5%8A%9F%E8%83%BD%E7%AE%80%E4%BB%8B-combine))
 - [cached_notify_combine]([https://conf01.birentech.com/pages/viewpage.action?pageId=234846381#id-2.DeepEPAPI%E5%8A%9F%E8%83%BD%E7%AE%80%E4%BB%8B-cached_notify_combine](https://conf01.birentech.com/pages/viewpage.action?pageId=234846381#id-2.DeepEPAPI%E5%8A%9F%E8%83%BD%E7%AE%80%E4%BB%8B-cached_notify_combine))
 
-
 API 的接口见：[[https://gitlab.birentech.com/software/br_DeepEP2.0/-/blob/develop_br200/csrc/deep_ep.hpp?ref_type=heads](https://gitlab.birentech.com/software/br_DeepEP2.0/-/blob/develop_br200/csrc/deep_ep.hpp?ref_type=heads)]([https://gitlab.birentech.com/software/br_DeepEP2.0/-/blob/develop_br200/csrc/deep_ep.hpp?ref_type=heads](https://gitlab.birentech.com/software/br_DeepEP2.0/-/blob/develop_br200/csrc/deep_ep.hpp?ref_type=heads))
 
 ## **DeepEP Internode**
@@ -654,7 +613,6 @@ API 的接口见：[[https://gitlab.birentech.com/software/br_DeepEP2.0/-/blob/d
 折叠源码
 
 | |
-
 
 |---|
 
@@ -708,7 +666,6 @@ get_dispatch_layout 是一个用于分布式专家混合模型（MoE）调度的
 
 | |
 
-
 |---|
 
 | `[[``0``,` `1``], # Token0选择专家``0``和``1` <br><br> `[``1``,` `2``], # Token1选择专家``1``和``2` <br><br> `[``2``,` `3``], # Token2选择专家``2``和``3` <br><br> `[``0``,` `3``]] # Token3选择专家``0``和``3` |
@@ -734,7 +691,6 @@ is_token_in_rank 矩阵如下：
 折叠源码
 
 | |
-
 
 |---|
 
@@ -821,7 +777,6 @@ is_token_in_rank 矩阵如下：
 
 | |
 
-
 |---|
 
 | `# 掩码无效值`<br><br>`mask = x <` `0` `# 标记所有负值为无效` <br><br>`x_padded = x.masked_fill(mask, num_slots) # 临时将无效值设为num_slots（避免干扰计数）` <br><br>`# 统计频次`<br><br>`# 对每行的值进行直方图统计（统计``0``~num_slots-``1``的出现次数）` <br><br>`bin_count.scatter_add_(``1``, x_padded, torch.ones_like(x_padded))` <br><br>`# 排序和过滤`<br><br>`# 按频次降序排序，频次为``0``的槽位设为-``1` <br><br>`sorted_bin_idx.masked_fill_(sorted_bin_count ==` `0``, -``1``)` <br><br>`# 输出格式化`<br><br>`# 只保留前num_slots个有效值，其余填-``1` <br><br>`x[:,:valid_len] = sorted_bin_idx[:,:valid_len]` |
@@ -831,7 +786,6 @@ Demo
 折叠源码
 
 | |
-
 
 |---|
 
@@ -907,7 +861,6 @@ deepEP 中的 notify_dispatch 接口是一个用于 MoE（Mixture of Experts）�
 
 | |
 
-
 |---|
 
 | `buffer_ptrs[``0``] → Rank0 的缓冲区（本地）` <br><br>`buffer_ptrs[``1``] → Rank1 的缓冲区（远程）` <br><br>`…` <br><br>`buffer_ptrs[k] → Rankk 的缓冲区` |
@@ -922,7 +875,6 @@ Sample 说明
 
 | |
 
-
 |---|
 
 | `void``* buffer_ptrs[``2``];` <br><br>`cudaMalloc(&buffer_ptrs[``0``], max_tokens *` `1024` `* sizeof(``float``));` `// Rank0 的缓冲区` <br><br>`cudaMalloc(&buffer_ptrs[``1``], max_tokens *` `1024` `* sizeof(``float``));` `// Rank1 的缓冲区` |
@@ -932,7 +884,6 @@ Sample 说明
 折叠源码
 
 | |
-
 
 |---|
 
@@ -955,7 +906,6 @@ Sample 说明
 
 | |
 
-
 |---|
 
 | `task_fifo_ptrs[rank][``0``] → 专家ID` <br><br>`task_fifo_ptrs[rank][``1``] → token 起始位置（在缓冲区中的偏移）` <br><br>`task_fifo_ptrs[rank][``2``] → token 数量` <br><br>`task_fifo_ptrs[rank][``3``] → 下一个任务（专家ID）` <br><br>`…` |
@@ -972,7 +922,6 @@ Sample 说明
 
 | |
 
-
 |---|
 
 | `int``* task_fifo_ptrs[``2``];` <br><br>`cudaMalloc(&task_fifo_ptrs[``0``],` `100` `*` `3` `* sizeof(``int``));` `// Rank0 的任务队列` <br><br>`cudaMalloc(&task_fifo_ptrs[``1``],` `100` `*` `3` `* sizeof(``int``));` `// Rank1 的任务队列` |
@@ -982,7 +931,6 @@ Sample 说明
 折叠源码
 
 | |
-
 
 |---|
 
