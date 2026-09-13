@@ -15,6 +15,7 @@ tags:
 
 ## 关键笔记
 
+- [[02-AISystem/cluster-and-hardware/05-DMA与IOMMU：设备如何访问内存|DMA 与 IOMMU：设备如何访问内存]]：CPU VA/PA、DMA address/IOVA、映射生命周期与 GPU/NIC 排障
 - [[01-ComputerScience/operating-system/操作系统核心|操作系统核心]]：OS 核心概念梳理
 - [[01-ComputerScience/operating-system/进程与线程|进程与线程]]：调度与并发基础
 - [[01-ComputerScience/operating-system/虚拟内存|虚拟内存]]：地址空间与分页

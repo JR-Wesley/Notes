@@ -41,12 +41,12 @@ A：RDMA 使用基础
 | PUT/GET、blocking/NBI、completion、visibility、ordering | B02 | 已详细覆盖 |
 | signal/wait、producer-consumer、槽位复用 | B02、B04 | 已详细覆盖 |
 | thread/warp/CTA/SM、GPU-initiated communication | B03 | 已详细覆盖；SM 与 QP 的实现映射留给 D02/D03 |
-| remote AMO、counter、allocator、scheduler | B04 给出 fetch-add 边界；B05 系统讲解原子协调 | 已详细覆盖 API 与协议层；实现追踪留给 D04 |
+| remote AMO、counter、allocator、scheduler | B04 给出 fetch-add 边界；B05 系统讲解原子协调；D04 追踪 IBGDA 实现 | 已覆盖 API、协议与固定源码实现；硬件 opcode trace 留待实验 |
 | Team、broadcast/reduce/all-to-all/fcollect | B00/B03 覆盖参与和执行边界；B06 系统讲解 Team 与数据 collective | 已详细覆盖 API 语义与数据布局；具体实现算法留待固定源码或实验 |
 | initialization、bootstrap、GPU/NIC discovery、heap/endpoint setup | B00、C01 提供概览；C00 系统讲解初始化控制面 | 已详细覆盖公开状态与职责；内部调用链留待固定源码 |
-| P2P、IB、GPUDirect RDMA、proxy、IBGDA | A01—A04、C01 建模；C02 建立部署证据链；D00—D03 进入实现 | API、路径与核验方法已覆盖；D00 已建立固定源码总图，逐请求追踪仍待 D01—D03 |
-| QP/WQE/CQ/doorbell、RC/DCI/DCT、并发队列 | D00—D03 | D00 已在 NVSHMEM v3.7.2-0 固定 commit 上建立对象与队列总图；细节分析待 D01—D03 |
-| MoE、halo/stencil、性能与 overlap | E01—E02 | 已规划 |
+| P2P、IB、GPUDirect RDMA、proxy、IBGDA | A01—A04、C01 建模；C02 建立部署证据链；D00—D03 进入实现 | API、路径与核验方法已覆盖；D00—D03 已完成实现总图、单请求、并发队列与 RC/DC 资源映射 |
+| QP/WQE/CQ/doorbell、RC/DCI/DCT、并发队列 | D00—D04 | 已在固定 commit 上覆盖对象、请求、并发状态机、RC/DC 连接、AMO/signal 与 ordering/consistency |
+| MoE、halo/stencil、性能与 overlap | E01—E02 | 已覆盖测量方法、规则邻居交换与动态稀疏重分发；应用实验仍待执行 |
 | persistent kernel、graph、distributed work queue | B03/B04 只有基础机制 | 新增 E03，补足综合应用与活性分析 |
 
 ## 前置依赖
@@ -84,12 +84,12 @@ NVSHMEM/
 ├── c01-host-rdma-to-gpudirect-and-ibgda.md                  [已有]
 ├── c02-transport-verification-and-topology.md               [已有]
 ├── d00-ibgda-implementation-overview.md                     [已有]
-├── d01-ibgda-request-lifecycle.md                           [规划]
-├── d02-ibgda-concurrency-and-queue-management.md            [规划]
-├── d03-ibgda-rc-dc-and-resource-management.md               [规划]
-├── d04-ibgda-atomics-signals-and-ordering.md                [规划]
-├── e01-performance-measurement-and-overlap.md               [规划]
-├── e02-halo-and-moe-communication.md                        [规划]
+├── d01-ibgda-request-lifecycle.md                           [已有]
+├── d02-ibgda-concurrency-and-queue-management.md            [已有]
+├── d03-ibgda-rc-dc-and-resource-management.md               [已有]
+├── d04-ibgda-atomics-signals-and-ordering.md                [已有]
+├── e01-performance-measurement-and-tuning.md                [已有]
+├── e02-halo-and-moe-communication.md                        [已有]
 ├── e03-persistent-kernels-graph-and-work-queues.md           [规划]
 ├── experiments/
 │   ├── experiment-a01-rdma-env-and-rping.md                 [规划]
@@ -157,19 +157,19 @@ A03 沿 WR → SGE → WQE → CQE/WC 跟踪请求，区分软件描述、队列
 
 [D00：IBGDA 实现总览](d00-ibgda-implementation-overview.md)固定 NVIDIA 官方 NVSHMEM `v3.7.2-0`、commit `3f4c6d81225f45f9c42ed9af09bdb3c61eb356d4`，从 plugin 装载、endpoint/QP/CQ 创建和 device state 交接进入稳态 RMA dispatch，建立地址/lkey/rkey、RC 与 DCI/DCT、WQ/WQE、DBREC/UAR、collapsed CQ，以及 `resv_head → ready_head → prod_idx → cons_idx` 多生产者协议的总图。课程同时区分 IBGDA transport selection、GPU NIC handler 与 CPU handler fallback；正文仅完成静态源码核对，没有编译或硬件运行。
 
-D01 沿用 D00 的固定 NVSHMEM commit 逐步追踪一次 PUT，再与 GET、fetch-AMO 比较地址准备、WQE 填充、doorbell、排序和完成。不得在没有源码证据时把 `quiet` 描述成“等待某一条 CQE”。
+[D01：从一次 PUT 追踪 IBGDA 请求生命周期](d01-ibgda-request-lifecycle.md)沿用 D00 的固定 NVSHMEM commit，在明确排除 P2P/TMA、logical endpoint 与 proxy transport 的代表性场景中，从 `nvshmem_putmem` 追踪到 address/key lookup、RC/DCI WQE 布局、`resv_head → ready_head → prod_idx → cons_idx`、GPU/CPU handler doorbell 分叉和 collapsed CQ 完成边界。课程用 WQE 100 与 next-boundary 101 解释索引差异，并与 GET 的 fenced DUMP consistency 路径、fetching AMO 的内部结果槽比较；公开 API 保证与固定实现中的更强等待严格分开，正文仅做静态源码核对。
 
-D02 将 GPU 多生产者提交拆成预留、填充、ready 发布、提交、完成与回收，分析并发空洞、队列回绕、背压和批处理。纸面死锁与越界反例只做状态推演，不直接运行。
+[D02：IBGDA 多生产者并发与发送队列管理](d02-ibgda-concurrency-and-queue-management.md)沿用 D00/D01 的固定 commit，把共享 QP 提交拆成逻辑预留、物理槽位可用性等待、WQE 填充、连续 ready 发布、batch doorbell 与 collapsed CQ 回收。课程特别指出 `resv_head` 先增长再等待，因此它可以暂时超过 `cons_idx + depth`；安全性来自写槽位前的完成边界检查，而不是限制 reservation 数量。正文同时分析跨 CTA flush、publication hole、warp coalescing、WQEBB 粒度 batch、16/64-bit 索引回绕和活性前提，仅做源码与状态机静态推演。
 
-D03 对比 RC 与 DCI/DCT 的连接与资源模型，通过受控配置实验研究 QP 共享、连接规模和资源成本；实验观测与 API 保证分开记录。
+[D03：IBGDA 的 RC、DCI/DCT 与资源管理](d03-ibgda-rc-dc-and-resource-management.md)沿用同一固定 commit，对比 RC 的 per-peer connection state 与 DC 的可复用 DCI、远端 DCT AV，追踪 DCT handle `allgather`、RC handle `alltoall`、device state 下发及 `ibgda_get_qp` 的 RC 优先选择。课程推导 RC endpoint 与 DC metadata 的增长阶，分析 CTA/SM/warp/DCT mapping、exclusive/shared DCI、multi-device 轮转和多 QP ordering 成本，并明确记录该 commit 中 `RC_MAP_BY` 已解析但默认 `ibgda_get_rc` 仍通过共享计数器轮转这一证据边界；未执行配置或硬件实验。
 
-D04 在与 D01 相同的固定 NVSHMEM commit 上，分别追踪 fetching/non-fetching AMO、put-with-signal、signal-op、fence 和 quiet 的地址/key、WQE opcode 或软件 fallback、完成记录与 ordering 边界。课程必须允许不同 transport 或 capability 走不同实现，不能先验断言所有 NVSHMEM atomic 都映射为原生 mlx5 atomic WQE。
+[D04：IBGDA 原子操作、Signal 与排序](d04-ibgda-atomics-signals-and-ordering.md)在与 D01 相同的固定 NVSHMEM commit 上，分别追踪 fetching/non-fetching AMO 的 result buffer ownership、put-with-signal 的 WRITE→atomic 发布链、独立 signal-op dispatch、GET consistency 的 DUMP/CST，以及单/多 QP fence 和 quiet。课程区分 API 最低保证与源码内部更强等待，并把超大分块 put-with-signal fallback 的跨 QP ordering 保留为待动态核查问题；未执行硬件实验。
 
 ### E：应用与性能
 
-E01 建立延迟、带宽和 overlap 的测量口径，控制消息粒度、并发、批处理、预热、重复次数和基线。只有真实计算与通信时间线重叠并减少端到端时间，才能称为有效 overlap。
+[E01：NVSHMEM 性能测量与调优](e01-performance-measurement-and-tuning.md)建立 latency、bandwidth、message rate 和端到端时间的独立口径，区分 issue、completion 与 protocol 计时边界，并规定消息粒度、并发、批处理、预热、重复、统计和 transport/topology 控制变量。课程用底层链路、NVSHMEM 微基准、通信 pattern 和应用四层基线定位瓶颈，只有同工作量下计算通信并发确实减少端到端时间，才称为有效 overlap；示例命令未实际运行。
 
-E02 把前述寻址、同步、ownership 和测量方法用于 halo 与 MoE 数据交换。应用课必须先画依赖与槽位协议，再选择 NVSHMEM RMA、signal、collective 或其他通信库。
+[E02：Halo 与 MoE 数据交换](e02-halo-and-moe-communication.md)把寻址、同步、ownership 和测量方法用于两类相反的通信图：halo/stencil 的固定邻居、固定边界与 generation 槽位，以及 MoE dispatch/combine 的动态 counts、offsets、capacity、publication 和 token identity。课程先证明 ready/ack 与 buffer reuse，再比较 PUT/GET、fixed-count collective、padding 和变长 RMA；不预设 NVSHMEM 必然优于其他通信组件，也未运行应用实验。
 
 E03 把 B03—B05 的前进性、槽位协议和原子预留用于 persistent kernel、图遍历与 distributed work queue，分析 termination detection、负载不均、抢占/驻留、publication hole 和失败传播。它关注综合正确性，不与 E01 的基准测试或 E02 的 halo/MoE 模式重复。
 
@@ -252,11 +252,16 @@ E03 把 B03—B05 的前进性、槽位协议和原子预留用于 persistent ke
 | [C01](c01-host-rdma-to-gpudirect-and-ibgda.md) | 已写；作者自检 | 官方 NVSHMEM 3.7.2 发布周期文档、CUDA 13.4 GPUDirect RDMA Guide 与当前 CUDA P2P 文档已核对；非固定源码 commit | 路径模型静态检查 | 未开始 | 未开始 | 未确认 |
 | [C02](c02-transport-verification-and-topology.md) | 已写；作者自检 | 官方 NVSHMEM 3.7.2 发布周期文档、CUDA GPUDirect RDMA Guide 与 `nvidia-smi` 文档已核对；非固定源码 commit | transport 证据层、拓扑映射与 A/B 流程静态检查 | 未开始 | 未开始 | 未确认 |
 | [D00](d00-ibgda-implementation-overview.md) | 已写；作者自检 | 已核对 NVIDIA NVSHMEM v3.7.2-0 / `3f4c6d81225f45f9c42ed9af09bdb3c61eb356d4` | 初始化/dispatch、地址/key、QP/WQE/doorbell/CQ 与多生产者状态静态检查 | 未开始 | 未开始 | 未确认 |
-| D01–D04 | 未开始 | 沿用 D00 固定 commit | 未开始 | 未开始 | 未开始 | 未确认 |
-| E01–E03 | 未开始 | — | 未开始 | 未开始 | 未开始 | 未确认 |
+| [D01](d01-ibgda-request-lifecycle.md) | 已写；作者自检 | 已核对 NVIDIA NVSHMEM v3.7.2-0 / `3f4c6d81225f45f9c42ed9af09bdb3c61eb356d4` | PUT 请求生命周期及 GET/fetch-AMO 差异静态检查 | 未开始 | 未开始 | 未确认 |
+| [D02](d02-ibgda-concurrency-and-queue-management.md) | 已写；作者自检 | 已核对 NVIDIA NVSHMEM v3.7.2-0 / `3f4c6d81225f45f9c42ed9af09bdb3c61eb356d4` | 多生产者队列、batch、回绕与活性状态推演 | 未开始 | 未开始 | 未确认 |
+| [D03](d03-ibgda-rc-dc-and-resource-management.md) | 已写；作者自检 | 已核对 NVIDIA NVSHMEM v3.7.2-0 / `3f4c6d81225f45f9c42ed9af09bdb3c61eb356d4` | RC/DC 连接、资源数量与 QP selector 静态检查 | 未开始 | 未开始 | 未确认 |
+| [D04](d04-ibgda-atomics-signals-and-ordering.md) | 已写；作者自检 | 已核对 NVIDIA NVSHMEM v3.7.2-0 / `3f4c6d81225f45f9c42ed9af09bdb3c61eb356d4` | AMO/signal、result ownership、CST 与跨 QP ordering 静态检查 | 未开始 | 未开始 | 未确认 |
+| [E01](e01-performance-measurement-and-tuning.md) | 已写；作者自检 | 当前官方性能指南及固定 v3.7.2-0 perftest 源码 | 指标、计时边界、overlap 公式与调优因果静态检查 | 未开始 | 未开始 | 未确认 |
+| [E02](e02-halo-and-moe-communication.md) | 已写；作者自检 | NVIDIA NVSHMEM API、Jacobi 示例与现有模型背景 | halo generation/ack 与 MoE dispatch/combine 协议静态推演 | 未开始 | 未开始 | 未确认 |
+| E03 | 未开始 | — | 未开始 | 未开始 | 未开始 | 未确认 |
 | [实验 B01](experiments/experiment-b01-symmetric-addressing-and-put.md) | 初稿 | — | 静态检查 | 未验证 | 未验证 | 未确认 |
 | 其余实验 | 未开始 | 按实验决定 | 未开始 | 未开始 | 未开始 | 未确认 |
 
 ## 当前阅读入口
 
-完整主线应依次阅读 [A01：从零开始理解 RDMA 通信模型](a01-rdma-communication-model.md)、[A02：RDMA 资源、内存注册与建连生命周期](a02-rdma-resources-and-memory-registration.md)、[A03：RDMA 请求、完成与缓冲区协议](a03-rdma-requests-and-buffer-protocol.md)和 [A04：从 rping 源码追踪一轮完整 RDMA 通信](a04-rping-full-rdma-flow.md)。完成 A 模块后继续阅读 [B00：NVSHMEM 编程模型](b00-nvshmem-programming-model.md)、[B01：NVSHMEM 对称对象与远端寻址](b01-symmetric-objects-and-remote-addressing.md)、[B02：完成、排序与可见性](b02-completeness-ordering-and-visibility.md)、[B03：CUDA 执行域、协作通信与前进性](b03-cuda-execution-and-cooperation.md)、[B04：数据发布、缓冲区所有权与有界流水协议](b04-data-publishing-and-buffer-ownership.md)、[B05：远程原子操作与分布式协调](b05-atomic-operations-and-distributed-coordination.md)和 [B06：NVSHMEM Team 与集合通信](b06-teams-and-collective-communication.md)，依次解决基础 API 的参与、寻址、完成、前进性、ownership、原子协调和 collective 数据布局。随后阅读 [C00：NVSHMEM 运行时初始化与控制平面](c00-runtime-initialization-and-control-plane.md)、[C01：从 host RDMA 到 GPUDirect RDMA 与 IBGDA](c01-host-rdma-to-gpudirect-and-ibgda.md)和 [C02：NVSHMEM Transport 与 GPU–NIC 拓扑核验](c02-transport-verification-and-topology.md)，依次理解第一个 PUT 前的控制面、稳态请求的提交与 payload 路径，以及如何用运行证据确认实际 transport。然后进入 [D00：IBGDA 实现总览](d00-ibgda-implementation-overview.md)，在固定 NVSHMEM commit 上建立 host control plane、device dispatch、QP/WQE/doorbell/CQ 与多生产者队列的源码地图；下一篇应继续 D01 的具体请求追踪。已有 [实验 B01](experiments/experiment-b01-symmetric-addressing-and-put.md)可用于纸面推演或环境验证；其余配套实验仍是规划，不能据正文状态推断已运行。
+完整主线应依次阅读 A01—A04 建立 RDMA 基础，阅读 B00—B06 掌握 NVSHMEM 编程语义，通过 C00—C02 理解初始化、GPU 网络路径和 transport/topology 核验，再以 D00—D04 闭合 IBGDA 请求、队列、连接、AMO、signal 与 consistency 实现。应用部分先读 [E01：NVSHMEM 性能测量与调优](e01-performance-measurement-and-tuning.md)建立可复现基线，再读 [E02：Halo 与 MoE 数据交换](e02-halo-and-moe-communication.md)，把 completion、ownership 和 overlap 用于固定邻居与动态稀疏通信；下一篇应进入 E03 的 persistent kernel、graph 与 distributed work queue。已有 [实验 B01](experiments/experiment-b01-symmetric-addressing-and-put.md)可用于纸面推演或环境验证；其余配套实验仍是规划，不能据正文状态推断已运行。

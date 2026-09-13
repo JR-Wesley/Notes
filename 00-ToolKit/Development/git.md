@@ -51,8 +51,6 @@ git push -u origin main
 
 `git config --global url.ssh://git@github.com/.insteadOf https://github.com/` 把默认 htpps 改成 ssh。<a href="https://stackoverflow.com/questions/11200237/how-do-i-get-git-to-default-to-ssh-and-not-https-for-new-repositories">参考</a>
 
-![](Git工作区域.png)
-
 ## 检出仓库
 
 执行如下命令以创建一个本地仓库的克隆版本：
@@ -153,7 +151,15 @@ git branch -M main
 
 <a href=" https://blog.csdn.net/m0_63230155/article/details/134471033">通过 `. gitignore` 忽视指定文件</a>
 
-## Lazygit
+## Cached
+
+git rm -r --cached .
+
+git add .
+
+git status
+
+# Lazygit
 
 <a href=" https://github.com/jesseduffield/lazygit/blob/master/docs/Config.md">lazygit 默认配置</a>
 

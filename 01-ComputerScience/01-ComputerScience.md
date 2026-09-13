@@ -22,7 +22,7 @@ tags:
 ## 关键笔记
 
 - [[01-ComputerScience/CS-diy|CS-diy]]：计算机科学自学路线总览
-- [[01-ComputerScience/前端|前端]]：HTML/Web 前端入门笔记
+- [[Programming/web/前端|前端]]：HTML/Web 前端入门笔记
 
 ## 学习路径
 
