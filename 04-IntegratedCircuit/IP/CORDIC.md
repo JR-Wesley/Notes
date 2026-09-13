@@ -52,13 +52,13 @@ The CORDIC algorithm introduces **a scale factor to the amplitude of the result*
 
 Supported User Interfaces: AXI4-Stream.
 
-![](CORDICport.png)
+[](CORDIC-port.png)
 
 s_axis_cartesian_tdata: Depending on Functional Configuration, this port has one or two subfields; X_IN and Y_IN. These are the Cartesian operands. Each subfield is Input_Width bits wide, padded to the next byte width before being concatenated.
 
 m_axis_dout_tdata: Depending on Functional Configuration this port contains the following subfields; X_OUT, Y_OUT, PHASE_OUT. Each subfield is Output_Width bits wide, padded to the next byte width before concatenation.
 
-![](CORDICfield.png)
+[](CORDIC-field.png)
 
 ## AXI 4 Stream Options
 

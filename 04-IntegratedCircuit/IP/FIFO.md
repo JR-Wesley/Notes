@@ -51,7 +51,7 @@ FIFO 全称 `First In First Out`，即先进先出先入先出存储器，功�
 
 ## IO
 
-![[assests/FIFO.png]]
+![[assets/FIFO.png]]
 
 数据端口：除时钟外, 它还包含数据输入 (din)、写入使能 (write)、数据输出 (doubt) 和读出使能 (read) 等信号。每次写入使能有效，将当时数据输入端的数据写入，同时 FIFO 中有效数据的数量增 1；每次读出使能有效，最先写入的、还未读出的数据将读出到数据输出口，同时 FIFO 中有效数据的数量减 1。
 
@@ -85,7 +85,7 @@ FIFO 全称 `First In First Out`，即先进先出先入先出存储器，功�
 
 ## 实现
 
-![[assests/scFIFO.png]]
+![[assets/scFIFO.png]]
 
 同步 FIFO 可以用简双口 RAM 实现，写入读出地址各一个计数器，计数器由读写信号驱动增一。虽然计数在计满时会溢出回 0，但只要计数模为 $2^{AW}$，不发生过写过读，就能保证数据计数不出错。
 
@@ -101,7 +101,7 @@ FIFO 全称 `First In First Out`，即先进先出先入先出存储器，功�
 
 通过格雷码将写/读计数传递到另一侧 (另一时钟域)，每侧都有读写计数，写入侧的读计数是跨域传递而来，是有两个周期延迟的，同样读出侧的写计数也是跨域传递而来，也有两个周期延迟。
 
-![[assests/async_FIFO.png]]
+![[assets/async_FIFO.png]]
 
 [【原创】异步FIFO设计原理详解 (含RTL代码和Testbench代码)_异步fifo testbench-CSDN博客](https://blog.csdn.net/qq_40807206/article/details/109555162)
 

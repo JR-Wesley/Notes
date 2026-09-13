@@ -11,9 +11,18 @@ tags:
 
 ## Parallel Computing
 
+随着新技术与新流程逐渐普及，高性能计算（HPC）领域格局一直在发生变化，高性能计算的定义也随之演变。一般而言，它指利用多个处理器或多台计算机，以高吞吐量、高效率并发完成复杂任务。通常认为，高性能计算不仅是一种计算架构，更是一套要素集合，涵盖硬件系统、软件工具、编程平台以及并行编程范式。过去十年间，高性能计算实现了重大发展，GPU‑CPU 异构架构的出现尤为关键，它推动并行编程发生了根本性的范式转变。本章将带领读者开启对异构并行编程的学习。
+
 The **high-performance computing** (HPC) landscape is always changing as new technologies and processes become commonplace, and the definition of HPC changes accordingly. In general, it pertains to the use of multiple processors or computers to accomplish a complex task concurrently with high throughput and efficiency. It is common to consider HPC as not only a computing architecture but also as a set of elements, including hardware systems, software tools, programming platforms, and parallel programming paradigms.  Over the last decade, high-performance computing has evolved significantly, particularly because of the emergence of GPU-CPU heterogeneous architectures, which have led to a fundamental paradigm shift in parallel programming. This chapter begins your understanding of **heterogeneous parallel programming**.
 
+从纯计算角度来看，并行计算可定义为一类同时执行多项运算的计算方式，其遵循的原理是：大型问题通常可以拆解为若干较小的子问题，再对这些子问题进行同步求解。
+
 From a pure calculation perspective, **parallel computing** can be defined as a form of computation in which many calculations are carried out simultaneously, operating on the principle that *large problems can often be divided into smaller ones*, which are then solved concurrently.
+
+事实上，并行计算通常涉及两个截然不同的计算技术领域：
+
+- 计算机体系结构（硬件层面）
+- 并行编程（软件层面）
 
 In fact, parallel computing usually involves two distinct areas of computing technologies:
 
@@ -27,6 +36,7 @@ Most modern processors implement the Harvard architecture, as shown in Figure 1-
 - Memory (instruction memory and data memory)
 - Central processing unit (control unit and arithmetic logic unit)
 - Input/Output interfaces
+
 ![[file-20251004132826912.png]]
 
 The key component in high-performance computing is the central processing unit (CPU), usually called the core. In the early days of the computer, there was only one core on a chip. This architecture is referred to as a **uniprocessor**. Nowadays, the trend in chip design is to integrate multiple cores onto a single processor, usually termed **multicore**, to support parallelism at the architecture level. Therefore, programming can be viewed as the process of mapping the computation of a problem to available cores such that parallel execution is obtained.
@@ -114,7 +124,7 @@ Host code runs on CPUs and device code runs on GPUs. An application executing on
 
 可以看到 GPU 包括更多的运算核心，其特别适合数据并行的计算密集型任务，如大型矩阵运算，而 CPU 的运算核心较少，但是其可以实现复杂的逻辑运算，因此其适合控制密集型任务。另外，CPU 上的线程是重量级的，上下文切换开销大，但是 GPU 由于存在很多核心，其线程是轻量级的。因此，基于 CPU+GPU 的异构计算平台可以优势互补，CPU 负责处理逻辑复杂的串行程序，而 GPU 重点处理数据密集型的并行计算程序，从而发挥最大功效。
 
-![](CPU+GPU异构计算.png)
+[](CPU-GPU异构计算.png)
 
 There are two important features that describe GPU capability:
 
@@ -132,6 +142,7 @@ The CPU is optimized for dynamic workloads marked by short sequences of computat
 
 - Parallelism level
 - Data size
+
 If a problem has a small data size, sophisticated control logic, and/or low-level parallelism, the CPU is a good choice because of its ability to handle complex logic and instruction-level parallelism. If the problem at hand instead processes a huge amount of data and exhibits massive data parallelism, the GPU is the right choice because it has a large number of programmable cores, can support massive multi-threading, and has a larger peak bandwidth compared to the CPU.
 
 ![[file-20251004140346730.png]]
@@ -198,3 +209,106 @@ CUDA 并行程序模型主要为克服这一挑战而设计，其对于程序员
 
 > [!note] SM
 > 注意：GPU 是围绕一系列流式多处理器 (SM: Streaming Multiprocessors) 构建的（有关详细信息，请参 [阅硬件实现](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#hardware-implementation)）。多线程程序被划分为彼此独立执行的线程块，因此具有更多多处理器的 GPU 将比具有更少多处理器的 GPU 在更短的时间内完成程序执行。
+
+
+## 三、GPU 产品家族与 Fermi / Kepler 规格
+
+NVIDIA GPU 计算平台覆盖以下产品家族：
+
+- **Tegra**：移动与嵌入式（平板、手机）；Tegra K1 内含 Kepler GPU。
+- **GeForce**：消费级图形。
+- **Quadro**：专业可视化。
+- **Tesla**：数据中心并行计算（本书示例主要运行于此家族）。
+
+> "Fermi, released by NVIDIA in 2010, is the world's first complete GPU computing architecture. … Kepler, the current generation of GPU computing architecture after Fermi, released in the fall of 2012, offers much higher processing power."
+
+| 规格（TABLE 1-1） | Fermi (Tesla C2050) | Kepler (Tesla K10) |
+|---|---|---|
+| CUDA Cores | 448 | 2 × 1536 |
+| Memory | 6 GB | 8 GB |
+| Peak Performance* | 1.03 Tflops | 4.58 Tflops |
+| Memory Bandwidth | 144 GB/s | 320 GB/s |
+
+\* Peak single-precision floating point performance。本书多数示例可在 Fermi 与 Kepler 上运行；少数需要 Kepler 专属架构特性。
+
+## 四、Compute Capability（计算能力，补）
+
+> "NVIDIA uses a special term, compute capability, to describe hardware versions of GPU accelerators that belong to the entire Tesla product family."
+
+同一 **major revision** 表示同一核心架构：Kepler = 3、Fermi = 2、Tesla = 1（首个 GPU 家族与产品名同为 Tesla）。
+
+| GPU（TABLE 1-2） | Compute Capability |
+|---|---|
+| Tesla K40 | 3.5 |
+| Tesla K20 | 3.5 |
+| Tesla K10 | 3.0 |
+| Tesla C2070 | 2.0 |
+| Tesla C1060 | 1.3 |
+
+> "All examples in this book require compute capability above 2."
+
+编译时需用 `-arch sm_XX` 指定目标架构（如 `-arch sm_20` 为 Fermi 生成设备代码）。
+
+## 五、Hello World from GPU（第一个 CUDA 程序，补）
+
+> "The best way to learn a new programming language is by writing programs using the new language."
+
+编写 CUDA C 程序三步：① 源文件用 `.cu` 扩展名；② 用 `nvcc` 编译；③ 命令行运行（含 GPU 上执行的 kernel）。
+
+```c
+#include <stdio.h>
+__global__ void helloFromGPU (void)
+{
+    printf("Hello World from GPU!\n");
+}
+int main(void)
+{
+   // hello from cpu
+   printf("Hello World from CPU!\n");
+   helloFromGPU <<<1, 10>>>();   // 启动 10 个 GPU 线程
+   cudaDeviceReset();            // 销毁并清理当前设备资源
+   return 0;
+}
+```
+
+- `__global__`：声明该函数由 **CPU 调用、GPU 执行**（kernel）。
+- `<<<1, 10>>>`：** triple angle brackets ** 是 host→device 的调用标记，内部为**执行配置**（execution configuration），指定启动多少线程；此处 10 个线程各打印一次。
+- 编译：`nvcc -arch sm_20 hello.cu -o hello`。
+- `cudaDeviceReset()`：显式销毁并清理当前进程在当前设备上的所有资源（练习 2/3 探讨去掉或换成 `cudaDeviceSynchronize` 的行为差异）。
+
+## 六、CUDA 程序结构（五步，补）
+
+> "A typical CUDA program structure consists of five main steps:"
+
+1. **Allocate GPU memories** — 在 GPU 上分配显存。
+2. **Copy data from CPU memory to GPU memory** — 数据 H2D。
+3. **Invoke the CUDA kernel** — 启动 kernel 做计算（hello.cu 仅展示了这步）。
+4. **Copy data back from GPU memory to CPU memory** — 结果 D2H。
+5. **Destroy GPU memories** — 释放显存。
+
+后续章节示例会逐步演示每一步；当前 `0-CUDA` 的「CUDA 编程核心」提纲与之对应。
+
+## 七、CUDA C 编程难吗？／Locality 与共享内存（补）
+
+- 并行编程中 **locality（局部性）** 关键：① **temporal locality** 短时间内重用同一数据/资源；② **spatial locality** 使用存储位置相近的数据。现代 CPU 靠大缓存优化局部性，但**程序员对线程调度无可见性**。
+- CUDA 同时暴露 **memory hierarchy** 与 **thread hierarchy**，让你更直接地控制执行与调度；其中 **shared memory 可视为软件管理的缓存（software-managed cache）**，通过减少对主存的带宽消耗来加速，并能**直接控制代码局部性**。
+- 用 ANSI C 写并行需显式用 pthreads / OpenMP 组织线程；而 CUDA C 只需写「被单个线程调用的串行代码」，GPU 把它展开成数千线程并行执行——**概念上把原代码的循环「剥离」即得 kernel**。
+- 三个核心抽象（同上方可扩展模型）：**线程组层次结构、内存组层次结构、屏障同步**——以最小语言扩展集暴露给程序员。
+
+## 八、CUDA 开发环境工具（补）
+
+> "NVIDIA provides a comprehensive development environment for C and C++ developers to build GPU-accelerated applications …"
+
+- **NVIDIA Nsight™** 集成开发环境
+- **CUDA-GDB** 命令行调试器
+- 可视化 / 命令行 **profiler**（性能分析）
+- **CUDA-MEMCHECK** 内存分析器
+- **GPU device management** 设备管理工具
+
+（详见 `0-CUDA` 的「相关生态系统 / 调试与性能分析」一节，此处为书中 Ch.1 的官方清单。）
+
+## 九、本章小结（Summary，补）
+
+> "CPU + GPU systems have become mainstream … The data-parallel workload is executed on the GPU, while the serial and task-parallel workload is executed on the CPU."
+
+异构系统已成为 HPC 主流，范式转变：**数据并行负载放 GPU，串行/任务并行负载放 CPU**。

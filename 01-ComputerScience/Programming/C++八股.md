@@ -1,3 +1,90 @@
+# 句柄和指针
+
+在编程中，**句柄（Handle）** 是一个抽象概念，用于表示对某个资源（如文件、内存、设备、对象等）的引用。它本身不直接指向资源的物理地址，而是通过系统或库的内部机制间接关联到资源。句柄的核心作用是**隐藏资源的底层实现细节**，同时提供一种安全的方式来访问和管理资源。
+
+
+### 一、句柄的本质与作用
+句柄可以理解为“资源的唯一标识”，但它不是资源本身，也不是资源的直接地址。其设计目的是：
+1. **封装与抽象**：屏蔽资源的具体存储位置和实现细节（例如，资源可能在内存、磁盘或硬件设备中）。
+2. **安全控制**：通过句柄机制，系统可以验证操作的合法性（如权限检查），防止直接访问资源导致的错误（如野指针）。
+3. **资源管理**：系统可通过句柄跟踪资源的生命周期（如引用计数、回收时机）。
+
+例如：
+- 文件句柄（`FILE*` 或文件描述符）：不直接指向磁盘上的文件数据，而是关联到操作系统维护的文件管理结构。
+- Windows 中的窗口句柄（`HWND`）：不直接指向窗口的内存数据，而是通过系统内核间接操作窗口。
+- CUDA 中的设备指针（如 `cudaMalloc` 返回的指针）：对 CPU 而言是句柄，需通过 CUDA API 访问 GPU 资源。
+
+
+### 二、句柄在 C/C++ 中的体现
+在 C/C++ 中，句柄通常以**整数、指针或结构体指针**的形式存在，但本质上是“不透明的”（用户无需知道其内部结构）。常见例子包括：
+
+#### 1. 文件句柄（文件描述符或 `FILE*`）
+```c
+// C 语言中，FILE* 是文件句柄（封装了文件的底层信息）
+FILE* f = fopen("test.txt", "r");  // f 是句柄，不直接指向磁盘数据
+fread(buffer, 1, size, f);         // 通过句柄操作文件
+fclose(f);                         // 通过句柄释放资源
+```
+- `FILE*` 指向的是标准库维护的文件结构体（包含文件描述符、缓冲区等），而非文件在磁盘上的物理地址，因此是句柄。
+
+#### 2. 操作系统级句柄（如 Windows 的 `HANDLE`）
+```cpp
+// Windows 系统中，HANDLE 是通用句柄类型（本质是 void*）
+HANDLE hFile = CreateFile("test.txt", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+ReadFile(hFile, buffer, size, &bytesRead, NULL);  // 通过句柄操作
+CloseHandle(hFile);
+```
+- `hFile` 是系统内核分配的资源标识，用户无法直接解引用（`*hFile` 无意义），必须通过系统 API 操作。
+
+#### 3. CUDA 设备指针（对 CPU 而言是句柄）
+```cpp
+float* d_data;
+cudaMalloc((void**)&d_data, size);  // d_data 是 GPU 内存的句柄（对 CPU 而言）
+cudaMemcpy(d_data, h_data, size, cudaMemcpyHostToDevice);  // 通过 API 操作
+```
+- 对 CPU 来说，`d_data` 无法直接解引用（`*d_data` 会导致段错误），必须通过 CUDA API 访问，因此是句柄；但对 GPU 内核而言，它是有效的内存指针。
+
+#### 4. 库中的抽象句柄（如数据库连接）
+```cpp
+// 伪代码：数据库连接句柄
+DBHandle* db = db_connect("localhost", "user", "pass");  // 句柄
+db_query(db, "SELECT * FROM table");                     // 通过句柄操作
+db_close(db);                                            // 释放句柄
+```
+- `DBHandle*` 封装了网络连接、协议状态等细节，用户无需知道底层实现。
+
+
+### 三、句柄与指针的核心区别
+| 特性                | 句柄（Handle）                              | 指针（Pointer）                          |
+|---------------------|--------------------------------------------|-----------------------------------------|
+| 本质                | 资源的间接标识（抽象引用）                  | 直接指向内存地址的变量（物理引用）        |
+| 透明度              | 不透明（用户无需知道内部结构，不可直接解引用） | 透明（用户可直接解引用，访问内存数据）    |
+| 指向对象            | 可能是内存、设备、文件等任意资源            | 仅指向内存中的数据（变量、对象、函数等）  |
+| 操作方式            | 必须通过特定 API 操作（如 `fread`、`CloseHandle`） | 可直接通过 `*` 或 `->` 操作目标数据      |
+| 安全性              | 较高（系统可验证合法性，防止越界访问）      | 较低（直接操作内存，易产生野指针、越界）  |
+| 稳定性              | 资源地址变化时，句柄可保持不变（系统维护映射） | 资源地址变化时，指针会失效（如内存重分配）|
+
+#### 典型对比示例：
+```cpp
+// 指针：直接指向内存，可解引用
+int x = 10;
+int* ptr = &x;
+*ptr = 20;  // 直接修改内存数据，有效
+
+// 句柄：不可直接解引用，需通过 API
+FILE* handle = fopen("test.txt", "w");
+// *handle = ...;  // 错误：句柄不可直接解引用
+fwrite("data", 1, 4, handle);  // 正确：通过 API 操作
+```
+
+
+### 四、总结
+- **句柄**是“间接引用资源的标识”，强调抽象和安全，需通过特定接口操作，常见于系统调用、库函数中。
+- **指针**是“直接指向内存的地址”，强调直接访问，可直接解引用，是 C/C++ 中操作内存的基础。
+- 在 C/C++ 中，句柄常以指针形式存在（如 `FILE*`、`HANDLE`），但本质区别在于是否允许直接访问底层资源——允许直接解引用的是指针，否则是句柄。
+
+理解句柄与指针的区别，有助于正确使用系统 API 和库函数，避免因误用（如解引用句柄）导致的错误。
+
 # size_t
 
 `size_t` 是 C/C++ 标准库中定义的一种**无符号整数类型**，专门用于表示 " 大小 " 或 " 索引 "，通常用于描述内存大小、数组长度、容器容量等场景。
@@ -2208,33 +2295,6 @@ stack unwinding:Unwinding is the removal of the functions from the stack in the 
 
 3. 需要通过域运算符来访问枚举成员
 
-## **内存泄漏？出现内存泄漏如何调试？**
-
-内存泄露一般指的是堆内存的泄露，即用户自己开辟的内存空间。应用程序使用 malloc、realloc、new 等函数从堆中分配到一块内存后，必须调用 free 或 delete 进行回收，否则这块内存不能继续被使用。内存泄漏会因为减少可用内存的数量从而降低计算机的性能。最终，在最糟糕的情况下，过多的可用内存被分配掉导致全部或部分设备停止正常工作，或者应用程序崩溃。内存泄漏可能不严重，甚至能够被常规的手段检测出来。在现代操作系统中，一个应用程序使用的常规内存在程序终止时被释放。这表示一个短暂运行的应用程序中的内存泄漏不会导致严重后果。在 C++ 中出现内存泄露的主要原因就是程序猿在申请了内存后 (`malloc(), new`)，没有及时释放没用的内存空间，甚至消灭了指针导致该区域内存空间根本无法释放。
-
-**内存泄漏的原因**
-
-1. malloc/new 和 delete/free 没有匹配
-
-2. new[] 和 delete[] 也没有匹配
-
-3. 没有将父类的析构函数定义为虚函数，当**父类的指针指向子类对象**时，delete 该对象不会调用子类的析构函数
-
-**检测手段**
-
-1. 良好的程序设计能力，把 new 和 delete 全部都封装到构造函数和析构函数中，保证任何资源的释放都在析构函数中进行
-
-2. 智能指针（万一被问道，这也是一个问题）
-
-3. valgrind ，这个可以打印出发生内存泄露的部分代码
-
-4. linux 使用 swap 命令观察还有多少可以用的交换空间，两分钟内执行三四次，肉眼看看交换区是不是变小了
-
-5. 使用/usr/bin/stat 工具如 netstat、vmstat 等。如果发现波段有内存被分配且没有释放，有可能进程出现了内存泄漏。
-
-**valgrind**
-
-[参考]([http://senlinzhan.github.io/2017/12/31/valgrind/](http://senlinzhan.github.io/2017/12/31/valgrind/))
 
 ## :watermelon:C++11 新特性
 
@@ -2289,464 +2349,6 @@ auto c=a+b; //运行时需要实际执行a+b，哪怕编译时就能推导出类
 decltype(a+b) d; //编译期类型推导
 
 //不可以用auto c; 直接声明变量，必须同时初始化。
-
-```
-
-### c++ 智能指针
-
-[https://aijishu.com/a/1060000000286819](https://aijishu.com/a/1060000000286819)
-
-> 智能指针是一个 `RAII`（`Resource Acquisition is initialization`）类模型，用来动态的分配内存。
-
->
-
-> 把指针用类封装然后实例化成对象，在对象过期的时候，让析构函数删除指向的内存
-
->
-
-> 它提供所有普通指针提供的接口，却很少发生异常。在构造中，它分配内存，当离开作用域时，它会自动释放已分配的内存。这样的话，程序员就从手动管理动态内存的繁杂任务中解放出来了。
-
-| 指针类别 | 支持 | 备注 |
-
-| :----------: | :----------: | :-----------------------------------: |
-
-| `unique_ptr` | C++ 11 | 拥有独有对象所有权语义的智能指针 |
-
-| `shared_ptr` | C++ 11 | 拥有共享对象所有权语义的智能指针 |
-
-| `weak_ptr` | C++ 11 | 到 std::shared_ptr 所管理对象的弱引用 |
-
-| `auto_ptr` | C++ 17 中移除 | 拥有严格对象所有权语义的智能指针 |
-
-#### 为什么要用智能指针？
-
-原因 1：内存泄露，即 new 和 delete 不匹配
-
-原因 2：多线程下对象析构问题，造成这个问题本质的原因是类对象自己销毁 (析构) 的时候无法对自己加锁,所以要独立出来,采用这个中间层 (shared_ptr).
-
-#### auto_ptr
-
-最早的智能指针，c++11 之后就删除了，有以下问题：
-
-1. auto_ptr 不能指向一组对象，不能和 new[] 一起使用
-
-2. auto_ptr 不能和标准容器一起用
-
-3. 容易野指针。有两个 auto_ptr 比如说 `p1和p2`，当在函数参数见传递指针的时候，所有权也会发生转移。具体来说比如 p1 指向一块内存，然后 p2 是 p1 的拷贝，因此 p2 也指向了这块内存。当函数调用完后，p2 指向的这块内存释放掉了，p1 不就成为了一个野指针。
-
-所以这个东西很烂，没什么人用。
-
-#### shared_ptr
-
-**概述**
-
-共享所有权，也就是说多个指针可以指向一个相同的对象，当最后一个 shared_ptr 离开作用域的时候才会释放掉内存。
-
-实现原理：在 shared_ptr 内部有一个共享引用计数器来自动管理，计数器实际上就是指向该资源指针的个数，每当复制一个 shared_ptr，引用计数会 + 1。当一个 shared_ptr 离开作用域时，引用计数会 - 1，当引用计数为 0 的时候，则 delete 内存。这样相比 auto 来说就好很多，当计数器为 0 的时候指针才会彻底释放掉这个资源。
-
-**线程安全问题？**
-
-[参考，有时间总结一下]([https://www.zhihu.com/question/56836057](https://www.zhihu.com/question/56836057))
-
-> Boost 文档对于 shared_ptr 的线程安全有一段专门的记述，内容如下：
-
->
-
-> shared_ptr objects offer the same level of thread safety as built-in types.
-
->
-
-> A shared_ptr instance can be "read" (accessed using only const operations) simultaneously by multiple threads. 一个 shared_ptr 实例可以同时被多个线程“读”（仅使用不变操作进行访问）
-
->
-
-> Different shared_ptr instances can be "written to" (accessed using mutable operations such as operator= or reset) simultaneosly by multiple threads (even when these instances are copies, and share the same reference count underneath.)Any other simultaneous accesses result in undefined behavior.不同的 shared_ptr 实例可以同时被多个线程“写入”（使用类似 operator= 或 reset 这样的可变操作进行访问）（即使这些实
-
-> 例是拷贝，而且共享下层的引用计数）。
-
-> 任何其它的同时访问的结果会导致未定义行为。”
-
->
-
-> 总结：1、同一个 shared_ptr 被多个线程“读”是安全的。2、同一个 shared_ptr 被多个线程“写”是不安全的。3、共享引用计数的不同的 shared_ptr 被多个线程”写“ 是安全的。
-
-所以说我们可以借助 shared_ptr 实现线程安全的对象释放，但是 shared_ptr 本身不是 100% 线程安全的，不考虑其管理对象的安全级别
-
-看线程安全问题之前最好还是要看一下源码解析。
-
-shared_ptr 可能的线程安全隐患大概有如下几种，一是引用计数的加减操作是否线程安全，二是 shared_ptr 修改指向时，是否线程安全。
-
-1. shared_ptr 的引用计数是原子操作的，所以引用计数的加减是线程安全的。
-
-2. shared_ptr 修改指针指向的时候会不安全。 同一个 shared_ptr 被多个线程“读”是安全的。同一个 shared_ptr 被多个线程“写”是不安全的 (多个线程操作同一个 shared_ptr 对象)。如下面的代码：
-
-```c++
-
-void fn(shared_ptr<A>& sp) {
-
-...
-
-if (..) {
-
-sp = other_sp;
-
-} else if (...) {
-
-sp = other_sp2;
-
-}
-
-}
-
-```
-
-当你在多线程回调中修改 shared_ptr 指向的时候。shared_ptr 内数据指针要修改指向，sp 原先指向的引用计数的值要减去 1，other_sp 指向的引用计数值要加 1。然而这几步操作加起来并不是一个原子操作，如果多少线程都在修改 sp 的指向的时候，那么有可能会出问题。比如在导致计数在操作减一的时候，其内部的指向，已经被其他线程修改过了。引用计数的异常会导致某个管理的对象被提前析构，后续在使用到该数据的时候触发 core dump。当然如果你没有修改指向的时候，是没有问题的。
-
-测试：在多个线程中同时对一个 shared_ptr 循环执行两遍 swap。
-
-shared_ptr 的 swap 函数的作用就是和另外一个 shared_ptr 交换引用对象和引用计数，是写操作。执行两遍 swap 之后,
-
-shared_ptr 引用的对象的值应该不变。
-
-```c++
-
-#include <stdio.h>
-
-#include <tr1/memory>
-
-#include <pthread.h>
-
-using std::tr1::shared_ptr;
-
-shared_ptr<int> gp(new int(2000));
-
-//多线程操作不同的shared_ptr对象，安全
-
-//该函数拷贝了一个p1，用p1进行操作
-
-shared_ptr<int> CostaSwapSharedPtr1(shared_ptr<int> & p)
-
-{
-
-shared_ptr<int> p1(p);
-
-shared_ptr<int> p2(new int(1000));
-
-p1.swap(p2);
-
-p2.swap(p1);
-
-return p1;
-
-}
-
-//多线程操作指向同一个shared_ptr对象，不安全
-
-//直接对全局变量gp进行操作
-
-shared_ptr<int> CostaSwapSharedPtr2(shared_ptr<int> & p)
-
-{
-
-shared_ptr<int> p2(new int(1000));
-
-p.swap(p2);
-
-p2.swap(p);
-
-return p;
-
-}
-
-//线程执行函数
-
-void* thread_start(void * arg)
-
-{
-
-int i =0;
-
-for(;i<100000;i++)
-
-{
-
-shared_ptr<int> p= CostaSwapSharedPtr2(gp);
-
-if(*p!=2000)
-
-{
-
-printf("Thread error. *gp=%d \n", *gp);
-
-break;
-
-}
-
-}
-
-printf("Thread quit \n");
-
-return 0;
-
-}
-
-int main()
-
-{
-
-pthread_t thread;
-
-int thread_num = 10, i=0;
-
-pthread_t* threads = new pthread_t[thread_num];
-
-for(;i<thread_num;i++)
-
-pthread_create(&threads[i], 0 , thread_start , &i);
-
-for(i=0;i<thread_num;i++)
-
-pthread_join(threads[i],0);
-
-delete[] threads;
-
-return 0;
-
-}
-
-```
-
-解决方案之一就是加锁。所以甭管安全不安全，加锁就完事儿了。
-
-**所管理数据的线程安全性**
-
-我们上面说的是针对 shared_ptr 本身的线程安全问题。但是用 shared_ptr 管理对象的线程安全问题又是另一会儿事。
-
-如果 shared_ptr 管理的数据是 STL 容器，那么多线程如果存在同时修改的情况，是极有可能触发 core dump 的。比如多个线程中对同一个 vector 进行 push_back，或者对同一个 map 进行了 insert。甚至是对 STL 容器中并发的做 clear 操作，都有可能出发 core dump，当然这里的线程不安全性，其实是其所指向数据的类型的线程不安全导致的，并非是 shared_ptr 本身的线程安全性导致的。尽管如此，由于 shared_ptr 使用上的特殊性，所以我们有时也要将其纳入到 shared_ptr 相关的线程安全问题的讨论范围内。
-
-**拥有的一些方法**
-
-1. reset 方法
-
-reset() 释放并销毁原生指针。如果参数为一个新指针，将管理这个新指针
-
-”当智能指针调用了 reset 函数的时候,就不会再指向这个对象了,所以如果还有其它智能指针指向这个对象,那么其他的智能指针的引用计数会减 1
-
-[cppreference参考]([https://en.cppreference.com/w/cpp/memory/shared_ptr/reset](https://en.cppreference.com/w/cpp/memory/shared_ptr/reset))
-
-2. make_shared 方法
-
-返回一个指定类型的 std::shared_ptr，和 shared_ptr 的构造函数一样都是用来初始化一个智能指针对象的。但是效率上有所不同：
-
-> make_shared 执行一次堆分配，而 shared_ptr 构造函数执行两次
-
-读过源码的应该都知道，stared_ptr 里面维护了两个部分，或者叫两个控制块：
-
-- 引用计数相关控制块，添加删除等等
-
-- 被管理的对象，原生指针
-
-如果使用 new 即自身构造函数来分配内存的话，就会对于上面两部分执行 heap-allocation，即两次堆分配，如下图：
-
-<img src="C:\Users\ACER\AppData\Roaming\Typora\typora-user-images\image-20220514103558156.png" alt="image" style="float: left;" />
-
-但是如果使用 make_shared 的话，只用执行一次 heap_allocation，如下图：
-
-<img src="C:\Users\ACER\AppData\Roaming\Typora\typora-user-images\image-20220514104204749.png" alt="image" style="float: left;" />
-
-**其次使用 make_shared 还是异常安全的**
-
-在 c++17 之后就不是问题了，因为函数的求职顺序发生了变化，函数的每个参数都需要在计算其他参数之前完全执行
-
-比如下面代码：
-
-```c++
-
-//潜在的资源泄露
-
-processWidget(std::shared_ptr<Widget>(new Widget),computePriority());
-
-```
-
-在运行期，函数的参数必须在函数被调用前被估值，所以在调用 processWidget 时，下面的事情肯定发生在 processWidget 能开始执行之前：
-
-1、表达式 `new Widget` 必须被估值即一个 Widget 必须被创建在堆上。2、std::shared_ptr（负责管理由 new 创建的指针）的构造函数必须被执行。
-
-3、computePriority 必须跑完。
-
-编译器不需要必须产生这样顺序的代码。**但 `new Widget` 必须在 std::shared_ptr 的构造函数被调用前执行**，因为 new 的结构被用为构造函数的参数，但是 computePriority 可能在这两个调用前（后，或很奇怪地，中间）被执行。也就是，编译器可能产生出这样顺序的代码：
-
-```cpp
-
-执行“new Widget”。
-
-执行computePriority。
-
-执行std::shared_ptr的构造函数。
-
-```
-
-如果 computePriority 产生了一个异常，则在第一步动态分配的 Widget 就会泄露了，因为它永远不会被存放到在第三步才开始管理它的 std::shared_ptr 中。
-
-使用 std::make_shared 可以避免这样的问题。
-
-3. swap 方法
-
-swap 交换两个 shared_ptr 对象 (即交换所拥有的对象)
-
-4. shared_from_this
-
-我们往往会需要在类内部使用自身的 shared_ptr，如下代码：
-
-```c++
-
-class Widget
-
-{
-
-public:
-
-void do_something(A& a)
-
-{
-
-a.widget = 该对象的 shared_ptr;
-
-}
-
-}
-
-```
-
-上述代码是说我们将当前对象的 sp 交由对象 a 管理，那就意味着当前对象的生命周期的结束不能早于对象 a。因为对象 a 在析构之前还是有可能会使用到 `a.widget`。如果我们直接 `a.widget = this;` 那肯定不行， 因为这样并没有增加当前 shared_ptr 的引用计数。shared_ptr 还是有可能早于对象 a 释放。如果我们使用 `a.widget = std::make_shared<Widget>(this);`，肯定也不行，因为这个新创建的 shared_ptr，跟当前对象的 shared_ptr 毫无关系。当前对象的 shared_ptr 生命周期结束后，依然会释放掉当前内存，那么之后 `a.widget` 依然是不合法的。对于这种，需要在对象内部获取该对象自身的 shared_ptr, 那么该类必须继承 `std::enable_shared_from_this<T>`。
-
-**总结：**智能指针的优势在于一旦某个对象不再被引用，系统会立刻回收内存，通常发生在关键任务完成后的清理时期。同时，内存中所有的对象都是有用的，绝对没有垃圾占内存的现象出现。
-
-#### weak_ptr
-
-`weak_ptr` 比较特殊，它主要是为了配合 `shared_ptr` 而存在的。就像它的名字一样，它本身是一个弱指针，因为它本身是不能直接调用原生指针的方法的。如果想要使用原生指针的方法，需要将其先转换为一个 `shared_ptr`。那 `weak_ptr` 存在的意义到底是什么呢？
-
-weak 指针的出现是为了解决 shared 指针循环引用造成的内存泄漏的问题。由于 `shared_ptr` 是通过引用计数来管理原生指针的，那么最大的问题就是循环引用（比如 a 对象持有 b 对象，b 对象持有 a 对象），这样必然会导致内存泄露 (无法删除)。而 `weak_ptr` 不会增加引用计数，因此将循环引用的一方修改为弱引用，可以避免内存泄露。
-
-如下述代码：
-
-```c++
-
-struct A{
-
-shared_ptr<B> b;
-
-};
-
-struct B{
-
-shared_ptr<A> a;
-
-};
-
-shared_ptr<A> pa = make_shared<A>();
-
-shared_ptr<B> pb = make_shared<B>();
-
-pa->b = pb;
-
-pb->a = pa;
-
-```
-
-pa 和 pb 存在着循环引用，根据 shared_ptr 引用计数的原理，pa 和 pb 都无法被正常的释放，因为我们需要对方先释放。对于这种情况, 我们可以使 weak_ptr：
-
-```c++
-
-struct A{
-
-shared_ptr<B> b;
-
-};
-
-struct B{
-
-weak_ptr<A> a;
-
-};
-
-shared_ptr<A> pa = make_shared<A>();
-
-shared_ptr<B> pb = make_shared<B>();
-
-pa->b = pb;
-
-pb->a = pa;
-
-```
-
-weak_ptr 不会增加引用计数，因此可以打破 shared_ptr 的循环引用。
-
-当创建一个 shared 指针对象时候，该指针所指向的资源数为 1，当用 shared 对象指针创建一个 weak 对象时候，资源计数器没有变化。weak_ptr 的构造和析构并不会改变引用计数的大小，同时由于 weak_ptr 没有重载运算符 *，->，因此他不操作资源，只是观测
-
-**方法**
-
-1. expired() 判断所指向的原生指针是否被释放，如果被释放了返回 true，否则返回 false
-
-2. use_count() 返回原生指针的引用计数
-
-3. lock() 返回 shared_ptr，如果原生指针没有被释放，则返回一个非空的 shared_ptr，否则返回一个空的 shared_ptr
-
-4. reset() 将本身置空
-
-**有以下问题：**
-
-1. 要是用 weak 指针对象如何判断该指针指向的对象是否销毁？
-
-答：weak_ptr 类中有一个成员函数 lock()，这个函数可以返回一个指向共享对象的 shared_ptr，如果 weak 指针所指向的资源不存在，那么 lock 函数返回一个空 shared 指针，通过这个可以判断
-
-2. weak_ptr 类中没有重载 operator * 和 operator->，因此不能使用 weak_ptr 类对象直接访问指针所指向的资源，因此如果想要访问 weak_ptr 指向的资源的时候，必须首先使用 lock 成员函数获取到该 weak_ptr 所指向资源的 shared_ptr 的对象，然后再去访问。这样做也为了避免我们在写程序时，忘记考虑 weak_ptr 所指向的资源被释放的情况。
-
-> 弱指针的使用有两个：第一当 parent 类持有 child 的 shared_ptr, child 持有指向 parent 的 weak_ptr。第二是定义对象时，用强智能指针 shared_ptr，在其它地方引用对象时，使用弱智能指针 weak_ptr。
-
-#### unique_ptr
-
-`unique_ptr` 的核心特点就如它的名字一样，它拥有对持有对象的唯一所有权。即两个 `unique_ptr` 不能同时指向同一个对象。
-
-那具体这个唯一所有权如何体现呢？
-
-1. `unique_ptr` 不能被复制到另外一个 `unique_ptr`
-
-2. `unique_ptr` 所持有的对象只能通过转移语义将所有权转移到另外一个 `unique_ptr`
-
-```c++
-
-std::unique_ptr<A> a1(new A());
-
-std::unique_ptr<A> a2 = a1;//编译报错，不允许复制
-
-std::unique_ptr<A> a3 = std::move(a1);//可以转移所有权，所有权转义后a1不再拥有任何指针
-
-```
-
-**`unique_ptr` 本身拥有的方法主要包括：**
-
-1. get() 获取其保存的原生指针，尽量不要使用
-
-2. bool() 判断是否拥有指针
-
-3. release() 释放所管理指针的所有权，返回原生指针。但并不销毁原生指针。
-
-4. reset() 释放并销毁原生指针。如果参数为一个新指针，将管理这个新指针
-
-```c++
-
-std::unique_ptr<A> a1(new A());
-
-A *origin_a = a1.get();//尽量不要暴露原生指针
-
-std::unique_ptr<A> a2(a1.release());//常见用法，转义拥有权
-
-a2.reset(new A());//释放并销毁原有对象，持有一个新对象
-
-a2.reset();//释放并销毁原有对象，等同于下面的写法
-
-a2 = nullptr;//释放并销毁原有对象
 
 ```
 
@@ -5266,15 +4868,6 @@ v.resize(1000);
 
 - 共享指针 shared_ptr，由于其记录了对变量的引用次数，因而可以避免指针切换时的“访问丢失”问题。要解决的问题是就是如何判断一个对象上存在线程读操作。std::shared_ptr 内部有个成员函数 use_count() 来判断当前智能指针所指向变量的访问个数
 
-代码部分一直没看明白
-
-[1]([https://github.com/MachinePlay/DoubleBuffer](https://github.com/MachinePlay/DoubleBuffer))
-
-[2]([http://www.4k8k.xyz/article/INGNIGHT/107296427](http://www.4k8k.xyz/article/INGNIGHT/107296427))
-
-[3]([https://juejin.cn/post/6976431184892936228](https://juejin.cn/post/6976431184892936228))
-
-[4]([https://blog.51cto.com/u_15403441/5010426](https://blog.51cto.com/u_15403441/5010426))
 
 **扩展**
 
@@ -5287,49 +4880,3 @@ v.resize(1000);
 双 buffer 方案在多线程环境下能较好的解决 “一写多读” 时的数据更新问题，特别是适用于数据需要定期更新，且一次更新数据量较大的情形。
 
 ## 内存池
-
-### 内存池概述
-
-我们在进行数据库操作的时候为了提高数据库（关系型数据库）的访问瓶颈，除了在服务器端增加缓存服务器（例如 redis）缓存常用的数据之外，还可以增加连接池，来提高数据库服务器的访问效率。一般来说，对于数据库操作都是在访问数据库的时候创建连接，访问完毕断开连接。但是如果在高并发情况下，有些需要频繁处理的操作就会消耗很多的资源和时间，比如：
-
-1. 建立通信连接的 TCP 三次握手
-
-2. 数据库服务器的连接认证
-
-数
-
-3. 据库服务器关闭连接时的资源回收
-
-4. 断开通信连接的 TCP 四次挥手
-
-### 连接数据库的步骤
-
-MySQL 数据库是一个典型的 C/S 结构，即：客户端和服务器端。如果我们部署好了 MySQL 服务器，想要在客户端访问服务器端的数据，在编写程序的时候就可以通过官方提供的 C 语言的 API 来实现。
-
-在程序中连接 MySql 服务器，主要分为已经几个步骤：
-
-- 初始化连接环境
-
-- 连接 mysql 的服务器，需要提供如下连接数据:
-
-1. 服务器的 IP 地址
-
-2. 服务器监听的端口（默认端口是 3306）
-
-3. 连接服务器使用的用户名（默认是 root），和这个用户对应的密码
-
-4. 要操作的数据库的名字
-
-- 连接已经建立，后续操作就是对数据库数据的添删查改 (调用 API 完成)
-
-- 如果要进行数据 添加 / 删除 / 更新，需要进行事务的处理需要对执行的结果进行判断
-
-成功：提交事务
-
-失败：数据回滚
-
-- 数据库的读操作 -> 查询 -> 得到结果集
-
-- 遍历结果集 -> 得到了要查询的数据
-
-- 释放资源

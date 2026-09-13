@@ -1,6 +1,6 @@
 ---
-dateCreated: 2021-10-26
-dateModified: 2025-08-17
+tags:
+  - CS
 ---
 
 # 现代 Python 3 整理
@@ -582,7 +582,7 @@ reduce(lambda a, b: a + b, [1, 2, 3, 4])  # 10（等价于((1+2)+3)+4）
 
 ## 常用功能
 
-   - **异常处理**：使用 `try-except-finally` 捕获和处理异常。
+   - **异常处理**：使用 `try-except-finally` 捕获和处理异常，避免 “裸 `except`”（`except:`），明确捕获特定异常（如 `except ValueError`），防止掩盖未知错误。
 
 ```python
 try:
@@ -619,14 +619,14 @@ def add(a: int, b: int) -> int:
    return a + b
 ```
 
-   - **海象运算符（:=）**：在表达式中赋值。
+   - **海象运算符（:=，3.8+）**：在表达式中赋值，简化条件判断中的赋值：
 
 ```python
 if (n := len(data)) > 10:
    print(f"Data is too long ({n} elements)")
 ```
 
-   - **f-string 格式化**
+   - **f-string 格式化（3.6+）**
 
 ```python
 name = "Alice"
@@ -640,318 +640,250 @@ nums = [1, 2, 3]
 print(*nums)  # 输出: 1 2 3
 ```
 
+- ****`pytest` 替代 `unittest`**：`pytest` 支持函数式测试（无需继承 `TestCase`）、参数化测试（`@pytest.mark.parametrize`）、 fixture（测试资源复用），比 `unittest` 更灵活。
+
 ---
 
 ## 常用包
 
-### 1. 系统与文件操作
+文件与 IO 操作：
 
-#### `os`
+-  `pathlib`（Python 3.4+），用 `pathlib`（3.4+）替代 `os.path` 处理路径，更面向对象：
+- `os` 与 `sys`：系统交互
+- `json`：JSON 数据处理：内置的 JSON 序列化 / 反序列化工具，支持 Python 基本类型（`dict`/`list`/`str` 等）与 JSON 格式的转换。
+-  `csv`：CSV 文件处理：用于读写逗号分隔值（CSV）文件，支持自定义分隔符、引号规则等，适合处理表格数据。
 
-用于与操作系统交互，处理文件 / 目录、环境变量等。
+函数式编程：
 
-```python
-import os
+-  `functools`：函数增强工具
+	- **`lru_cache`**：缓存函数结果，优化重复计算（如递归、高频调用）。
+	- **`partial`**：固定函数部分参数，生成新函数（偏函数）。
+-  `itertools`：高效迭代工具。提供生成迭代器的函数，用于高效循环（内存友好，适合大数据流）。
+	- `chain`：拼接多个迭代器。
+	- `islice`：切片迭代器（无需生成完整列表）。
+	- `product`：计算笛卡尔积（如嵌套循环的替代）。
 
-# 获取当前目录
-print(os.getcwd())  
-# 列出目录下所有文件
-print(os.listdir("."))  
-# 创建目录
-os.makedirs("new_dir", exist_ok=True)  
-# 删除文件
-os.remove("file.txt")  # 需确保文件存在
-```
+数据结构：
 
-#### `sys`
+-  `collections`：提供扩展数据结构，弥补内置类型的不足。
+	- **`defaultdict`**：避免 `KeyError`，为不存在的键自动生成默认值（如空列表、0 等）。
+	- **`deque`**：双端队列，支持 O (1) 时间复杂度的头部 / 尾部插入 / 删除（比 `list` 的 `appendleft` 高效），适合 “滑动窗口”“队列 / 栈” 场景。
+	- **`namedtuple`**：带字段名的元组，兼具 `tuple` 的不可变性和类的可读性，适合存储简单数据（如坐标、点）。
+	- `Counter`：计数工具
+-  `dataclasses`：数据类（3.7+）。自动为 “数据存储类” 生成 `__init__`/`__repr__`/`__eq__` 等魔术方法，替代手动编写冗余代码（详见前文 “OOP 强化” 部分）。
 
-用于访问 Python 解释器的底层信息和交互，如命令行参数、退出程序等。
+网络：
 
-```python
-import sys
+-  `urllib`：HTTP 客户端与 URL 处理。
+-  `socket`：底层网络编程。提供 TCP/UDP 套接字接口，用于实现自定义网络协议（如简易服务器 / 客户端）。
 
-# 获取命令行参数（第一个元素是脚本名）
-print(sys.argv)  # 如运行 python script.py a b → 输出 ['script.py', 'a', 'b']
-# 退出程序
-sys.exit(0)  # 0表示正常退出，非0表示异常
-```
+其他常用包：
 
-#### `pathlib`（Python 3.4+）
-
-更直观的路径处理工具，比 `os.path` 更面向对象。
-
-```python
-from pathlib import Path
-
-file = Path("data/report.txt")
-# 检查文件是否存在
-print(file.exists())  
-# 创建父目录（如果不存在）
-file.parent.mkdir(parents=True, exist_ok=True)  
-# 读取文件内容
-if file.is_file():
-    print(file.read_text())
-```
-
-### 2. 数据结构与工具
-
-#### `collections`
-
-提供扩展数据结构，弥补内置类型的不足。
-
-- `defaultdict`：自动初始化缺失键的字典
-- `deque`：高效的双端队列（适合栈 / 队列）
-- `Counter`：计数工具
-
-```python
-from collections import defaultdict, deque, Counter
-
-# defaultdict：避免键不存在的KeyError
-dd = defaultdict(list)
-dd["a"].append(1)  # 直接使用，无需先初始化list
-
-# deque：高效append/pop（两端O(1)）
-dq = deque([1,2,3])
-dq.appendleft(0)  # 左侧添加 → deque([0,1,2,3])
-
-# Counter：统计元素出现次数
-cnt = Counter("abracadabra")
-print(cnt.most_common(2))  # 输出出现次数前2的元素 → [('a', 5), ('b', 2)]
-```
-
-#### `itertools`
-
-提供高效的迭代器工具，用于循环和组合数据。
-
-```python
-import itertools
-
-# 生成1-3的无限迭代器（需手动停止）
-for i in itertools.islice(itertools.count(1), 3):
-    print(i)  # 输出 1,2,3
-
-# 组合两个列表的元素（笛卡尔积）
-for a, b in itertools.product([1,2], ["x","y"]):
-    print(a, b)  # 输出 (1,x), (1,y), (2,x), (2,y)
-```
-
-#### `functools`
-
-提供高阶函数工具，增强函数式编程能力。
-
-- `lru_cache`：缓存函数结果（优化重复计算）
-- `partial`：固定函数部分参数
-
-```python
-from functools import lru_cache, partial
-
-# lru_cache：缓存计算结果（适合递归/重复调用）
-@lru_cache(maxsize=None)
-def fib(n):
-    return n if n < 2 else fib(n-1) + fib(n-2)
-
-print(fib(100))  # 快速计算，无需重复递归
-
-# partial：固定部分参数（如固定加法的第一个参数为2）
-add2 = partial(lambda x, y: x + y, 2)
-print(add2(3))  # 输出 5
-```
-
-### 3. 文本与正则
-
-#### `re`
-
-正则表达式工具，用于文本匹配、提取、替换。
-
-```python
-import re
-
-# 提取所有邮箱
-text = "联系我们：a@example.com 或 b@test.org"
-emails = re.findall(r"\w+@\w+\.\w+", text)
-print(emails)  # 输出 ['a@example.com', 'b@test.org']
-
-# 替换敏感信息（用*掩盖手机号中间4位）
-phone = "13812345678"
-masked = re.sub(r"(\d{3})\d{4}(\d{4})", r"\1****\2", phone)
-print(masked)  # 输出 138****5678
-```
-
-#### `string`
-
-提供字符串常量和工具（如大小写转换、模板）。
-
-```python
-import string
-
-# 字符串常量
-print(string.ascii_letters)  # 所有大小写字母 → 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-print(string.digits)  # 数字 → '0123456789'
-
-# 模板字符串（比f-string更适合动态文本）
-tpl = string.Template("Hello, $name! Your code is $code.")
-print(tpl.substitute(name="Alice", code=123))  # 输出 "Hello, Alice! Your code is 123."
-```
-
-### 4. 日期与时间
-
-#### `datetime`
-
-处理日期和时间的核心模块，比 `time` 更易用。
-
-```python
-from datetime import datetime, timedelta
-
-# 获取当前时间
-now = datetime.now()
-print(now.strftime("%Y-%m-%d %H:%M:%S"))  # 格式化输出 → 2023-10-01 15:30:45
-
-# 计算3天后的日期
-future = now + timedelta(days=3)
-print(future.date())  # 输出 2023-10-04
-```
-
-### 5. 数据格式处理
-
-#### `json`
-
-处理 JSON 数据（序列化 / 反序列化）。
-
-```python
-import json
-
-# 字典转JSON字符串
-data = {"name": "Bob", "age": 30}
-json_str = json.dumps(data, indent=2)  # indent美化格式
-print(json_str)
-
-# JSON字符串转字典
-data2 = json.loads(json_str)
-print(data2["name"])  # 输出 "Bob"
-```
-
-#### `csv`
-
-读写 CSV 文件（表格数据）。
-
-```python
-import csv
-
-# 写入CSV
-with open("data.csv", "w", newline="") as f:
-    writer = csv.writer(f)
-    writer.writerow(["name", "age"])  # 表头
-    writer.writerow(["Alice", 25])
-
-# 读取CSV
-with open("data.csv", "r") as f:
-    reader = csv.reader(f)
-    for row in reader:
-        print(row)  # 输出 ['name', 'age'] 和 ['Alice', '25']
-```
-
-### 6. 网络与通信
-
-#### `socket`
-
-底层网络编程接口，用于实现 TCP/UDP 通信。
-
-```python
-import socket
-
-# 创建TCP服务器（简单示例）
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.bind(("localhost", 8080))  # 绑定地址和端口
-    s.listen()
-    conn, addr = s.accept()  # 等待客户端连接
-    with conn:
-        print(f"连接来自 {addr}")
-        data = conn.recv(1024)  # 接收数据
-        conn.sendall(b"收到数据：" + data)  # 回复
-```
-
-#### `http.client`
-
-发送 HTTP 请求（基础工具，复杂场景可用第三方库 `requests`）。
-
-```python
-import http.client
-
-conn = http.client.HTTPSConnection("www.baidu.com")
-conn.request("GET", "/")  # 发送GET请求
-response = conn.getresponse()
-print(response.status)  # 输出状态码（如200）
-print(response.read().decode("utf-8"))  # 读取响应内容
-```
-
-### 7. 调试与测试
-
-#### `pdb`
-
-Python 内置调试器，支持断点、单步执行等。
-
-```python
-import pdb
-
-def add(a, b):
-    pdb.set_trace()  # 在此处设置断点
-    return a + b
-
-add(1, 2)  # 运行后进入调试模式，可输入命令（如n下一步，p a查看变量）
-```
-
-#### `unittest`
-
-单元测试框架，用于自动化测试。
-
-```python
-import unittest
-
-class TestMath(unittest.TestCase):
-    def test_add(self):
-        self.assertEqual(1 + 2, 3)  # 断言1+2=3
-
-if __name__ == "__main__":
-    unittest.main()  # 运行测试
-```
-
-### 8. 其他常用包
-
-- `math`：数学运算（如 `math.pi`、`math.sqrt()`）
+- `typing`：类型提示工具。Python 3.5 + 引入，用于为变量、函数参数和返回值添加**类型标注**，配合静态检查工具（如 `mypy`）提升代码可读性和健壮性。
 - `random`：生成随机数（`random.randint(1,10)` 生成 1-10 随机整数）
 - `logging`：日志记录（比 `print` 更灵活，支持分级、输出到文件）
 - `argparse`：解析命令行参数（快速构建命令行工具）
+- **`re`**：正则表达式，用于字符串匹配、提取、替换（如验证邮箱、手机号）。
+- **`math`/`statistics`**：数学与统计工具，`math` 提供三角函数、对数等，`statistics` 提供均值、中位数等统计量。
+- **`random`**：随机数生成，如 `random.randint(1,10)` 生成 1-10 的随机整数，`random.shuffle` 打乱列表。
+- **`hashlib`**：加密哈希算法，如 `md5`、`sha256`（用于密码加密、文件校验）。
+- **`enum`**：枚举类型（3.4+），定义命名常量集合（如订单状态、颜色）。
 
-### 其他包
+其他包：
 
-   - **NumPy**
-     - 多维数组操作，高效数学计算。
-   - **Pandas**
-     - 数据分析与处理（DataFrame、Series）。
-   - **Matplotlib**
-   - **Seaborn**
-     - 基于 Matplotlib 的高级统计图表。
-   - **Scikit-learn**
-     - 传统机器学习算法（分类、回归、聚类）。
-   - **TensorFlow / PyTorch**
-     - 深度学习框架，构建神经网络模型。
-   - **concurrent. futures**
-     - 多线程/多进程任务管理。
-   - **Cython**
-     - 将 Python 代码编译为 C 扩展，提升性能。
-
----
+- 数据处理：
+	- **`pandas`**：提供 `DataFrame` 数据结构，支持清洗、转换、聚合等操作。现代版本（2.0+）引入了 Apache Arrow 作为后端，大幅提升了 IO 性能和内存效率。
+	- **`polars`**：用 Rust 实现的高性能数据处理库，API 设计类似 `pandas`，但并行计算能力更强（比 `pandas` 快 10-100 倍），适合处理 GB 级甚至 TB 级数据。无全局锁、自动利用多核 CPU，内存占用更低。替代 `pandas` 处理大型数据集，尤其是需要高性能的 ETL 流程。
+	- **`numpy`**：数值计算基础库，提供多维数组（`ndarray`）和线性代数、傅里叶变换等底层工具。是 `pandas`、`scikit-learn` 等库的依赖基础。
+- 可视化：
+	- **`matplotlib`**：最基础的可视化库，支持线图、柱状图、散点图等，可高度定制样式。缺点是 API 较繁琐，适合静态图。
+	- **`seaborn`**：基于 `matplotlib` 的高级封装，内置美观的主题和统计图表（如热力图、小提琴图），一行代码即可生成复杂可视化。
+- 机器学习
+	- **`scikit-learn`**：机器学习入门必备库，包含分类、回归、聚类、降维等算法，以及数据预处理（标准化、编码）、模型评估工具。API 统一（`fit`/`predict`），适合快速验证想法。
+	- **`xgboost`/`lightgbm`**：高性能梯度提升树库，在 Kaggle 竞赛和工业界广泛使用，支持并行训练和缺失值处理，精度和速度优于传统决策树。
+	-  **`PyTorch`**：Facebook 开发的动态图深度学习框架，灵活性高，调试方便，适合研究和快速迭代。支持自动微分、GPU 加速，生态丰富（如 `torchvision`、`torchaudio` 处理多模态数据）。
+	- **`Hugging Face Transformers`**：NLP 领域的 “基础设施”，提供预训练模型（如 BERT、GPT、LLaMA）的统一接口，支持文本分类、翻译、生成等任务，一行代码即可调用大模型。
 
 ## 代码与项目管理
 
-- **PEP 8 风格指南**
-     - 缩进：4 个空格。
-     - 命名：`snake_case`（变量/函数），`PascalCase`（类名）。
-     - 行长度：不超过 79 个字符。
-     - **导入模块**：分组导入（标准库、第三方库、本地模块），每组之间空一行。
- - **代码组织**
-	- **模块化设计**：将功能拆分为独立模块/包。
-	- **虚拟环境**：使用 `venv` 或 `pipenv` 管理依赖。
+代码质量自动化：工具链前置拦截
+
+通过**预提交钩子（pre-commit）** 在代码提交前自动运行检查，提前发现问题：
+
+```yaml
+# .pre-commit-config.yaml 核心工具示例
+repos:
+  - repo: https://github.com/psf/black          # 代码格式化（强制统一风格）
+    rev: 24.4.2
+    hooks: [ { id: black } ]
+  - repo: https://github.com/astral-sh/ruff     # Lint（检查未使用变量、语法错误等）
+    rev: v0.4.10
+    hooks: [ { id: ruff, args: ["--fix"] } ]    # 自动修复可修复问题
+  - repo: https://github.com/pre-commit/mirrors-mypy  # 静态类型检查
+    rev: v1.10.0
+    hooks: [ { id: mypy } ]
+```  
+
+- 核心工具作用：
+  - `black`：消除格式争论（如缩进、换行），强制统一风格；
+  - `ruff`：替代 `flake8`/`isort`，快速检查并自动修复导入排序、变量未使用等问题；
+  - `mypy`/`pyright`：基于类型提示检查类型错误（如传字符串给需整数的函数）。
+
+### 编程范式：多范式融合与现代特性
+
+现代 Python 不再局限于单一范式，而是根据场景灵活组合，同时充分利用新版本语法特性提升效率。
+
+#### 1. 多范式融合：按需选择
+
+- **面向对象（OOP）**：用于复杂状态管理（如业务模型），优先“组合优于继承”，用 `Protocol` 定义接口（显式约束），用 `dataclasses`/`pydantic` 简化数据类（减少样板代码）。
+- **函数式编程**：用于无状态逻辑（如数据转换、工具函数），用 `functools.lru_cache` 缓存结果，`itertools` 处理迭代器，避免副作用（如修改入参）。
+- **异步编程**：IO 密集型场景（如 API 调用、数据库操作）必用 `asyncio`+`async/await`，配合异步库（`httpx`、`asyncpg`）提升吞吐量，避免阻塞。
+- **数据导向**：核心业务数据用 `pydantic` 模型定义（自动验证 + 类型提示），替代松散的 `dict`，减少运行时错误。
+
+#### 2. 类型驱动开发：显式标注提升可维护性
+
+- **类型提示全覆盖**：函数参数、返回值、类属性、变量必须添加类型标注（3.9+ 原生泛型 `list[int]`，3.10+ 联合类型 `int | str`），例如：
+
+  ```python
+  from typing import List, Optional
+
+  def filter_even(numbers: List[int]) -> List[int]:
+      """过滤列表中的偶数"""
+      return [n for n in numbers if n % 2 == 0]
+  ```  
+
+- **工具配合**：IDE（VS Code+Pyright、PyCharm）利用类型提示提供自动补全和实时错误提示；`mypy` 在 CI 中强制检查，避免类型不匹配（如“传 `None` 给非可选参数”）。
+
+#### 3. 避免反模式：现代 Python 的“禁忌”
+
+- 禁用旧式语法：如 `print "hello"`（Python 2）、`xrange`（改用 `range`）、`typing.List`（改用 `list`）。
+- 减少动态特性滥用：避免 `eval`/`exec`（安全风险 + 可读性差）、`__getattr__`（调试困难），除非必要。
+- 慎用继承：优先通过“依赖注入”组合组件，而非多层继承（避免“继承地狱”）。
+
+### 书写规范：可读性优先，工具保障
+
+基于 PEP 8 但更强调“自动化落地”，核心是“让代码读起来像自然语言”。
+
+#### 1. 格式规范：工具强制统一
+
+- **缩进与换行**：4 个空格缩进（不用 Tab），单行长度不超过 88 字符（`black` 默认），长表达式用括号换行：
+
+  ```python
+  # 推荐
+  result = (
+      very_long_function_name(
+          arg1, arg2,
+          arg3, arg4
+      )
+      + another_long_value
+  )
+  ```  
+
+- **导入排序**：按“标准库→第三方库→本地库”分组，组内按字母排序（`isort`/`ruff` 自动处理）：
+
+  ```python
+  # 推荐
+  import os  # 标准库
+  import sys
+
+  import requests  # 第三方库
+  from pydantic import BaseModel
+
+  from myproject import utils  # 本地库
+  ```  
+
+#### 2. 命名与注释：清晰无歧义
+
+- **命名风格**：
+  - 变量/函数/方法：蛇形小写（`user_name`、`calculate_total`）；
+  - 类/协议：帕斯卡式（`UserModel`、`Serializable`）；
+  - 常量：全大写蛇形（`MAX_RETRY`、`API_URL`）；
+  - 避免单字母命名（除 `i`/`j` 循环变量、`x`/`y` 坐标等约定场景）。
+- **注释原则**：“解释为什么，而非是什么”（代码本身应清晰表达“是什么”）：
+
+  ```python
+  # 不推荐（冗余：代码已说明是计算和）
+  def add(a: int, b: int) -> int:
+      # 计算a和b的和
+      return a + b
+
+  # 推荐（解释特殊逻辑）
+  def calculate_discount(price: float, user_level: int) -> float:
+      # VIP用户额外9折（业务规则说明）
+      discount = 0.9 if user_level >= 3 else 1.0
+      return price * discount
+  ```  
+
+- **文档字符串**：公共函数/类必须有文档字符串，推荐 Google 风格（清晰易读）：
+
+  ```python
+  def fetch_data(url: str, timeout: int = 10) -> dict:
+      """从URL获取JSON数据并解析。
+
+      Args:
+          url: 数据请求地址
+          timeout: 超时时间（秒），默认10秒
+
+      Returns:
+          解析后的JSON字典
+
+      Raises:
+          requests.Timeout: 超时异常
+          ValueError: 响应不是JSON格式
+      """
+      ...
+  ```  
+
+#### 3. 代码简洁性：利用现代语法糖
+
+- **f-string 替代传统格式化**：`f"Hello, {name}!"` 替代 `"%s" % name` 或 `str.format`。
+- **海象运算符（:=）简化条件判断**：
+
+  ```python
+  # 推荐
+  if (n := len(items)) > 10:
+      print(f"Too many items: {n}")
+
+  # 替代（重复计算len(items)）
+  n = len(items)
+  if n > 10:
+      print(f"Too many items: {n}")
+  ```  
+
+- **路径处理用 `pathlib`**：`Path("data") / "file.txt"` 替代 `os.path.join`。
+- **上下文管理器管理资源**：`with open(...)` 自动关闭文件，`async with` 管理异步资源（如 HTTP 会话）。
+
+### 项目管理：结构化与可扩展性
+
+大型项目的核心是“让新人能快速上手”，通过标准化结构、自动化流程和完善文档实现。
+
+采用 `src` 布局（避免导入混乱），典型结构：
+
+```
+myproject/
+├── pyproject.toml          # 依赖管理（poetry/uv配置）
+├── README.md               # 项目说明（安装、启动、核心功能）
+├── src/                    # 源代码根目录
+│   └── myproject/          # 项目包
+│       ├── __init__.py     # 包标识（可空）
+│       ├── api/            # API层（如FastAPI路由）
+│       ├── core/           # 核心逻辑（业务模型、配置）
+│       │   ├── models.py   # Pydantic/Dataclass模型
+│       │   └── config.py   # 配置管理
+│       ├── db/             # 数据库层（ORM、迁移）
+│       └── utils/          # 工具函数
+├── tests/                  # 测试目录（与src结构对应）
+│   ├── unit/               # 单元测试
+│   └── integration/        # 集成测试
+├── docs/                   # 文档（API文档、设计说明）
+└── .github/workflows/      # CI/CD配置（如GitHub Actions）
+```  
+
+ 测试策略：自动化覆盖
+
+- **测试框架**：用 `pytest` 替代 `unittest`，通过 `fixture` 复用测试资源（如数据库连接），`parametrize` 实现参数化测试。
+- **覆盖率要求**：核心业务逻辑测试覆盖率≥80%（用 `pytest-cov` 监控），CI 中设置最低覆盖率门槛（未达标则阻断合并）。
+- **测试分层**：单元测试（测独立函数/类）→ 集成测试（测模块间交互）→ E2E 测试（模拟用户流程，如用 `playwright`）。
 
 ## 实现数据结构
 

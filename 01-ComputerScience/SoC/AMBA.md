@@ -23,7 +23,7 @@ https://blog.csdn.net/weixin_43698385/article/details/125895057
 
 AMBA 的全称为 Advanced Microcontroller Bus Architecture。
 
-![[AMBADev.jpeg]]
+![[AMBA-dev.jpeg]]
 
 AMBA 是一系列的协议。发展历程：
 
