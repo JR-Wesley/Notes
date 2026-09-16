@@ -1,4 +1,4 @@
----
+﻿---
 tags:
   - Algorithm
 ---
@@ -15,4 +15,3 @@ tags:
 | [[03-Algorithm/Compression/Compression|Compression]] | 数据压缩：LZMA/7-zip 原理与解压实现分析 | 起步 |
 | [[03-Algorithm/computer-graphics/computer-graphics|computer-graphics]] | 计算机图形学：GPU 逻辑管线、光线追踪、图形学硬件 | 进行中 |
 | [[03-Algorithm/Encryption/Encryption|Encryption]] | 加密算法：Paillier、有限域运算、密码学实现 | 进行中 |
-| [[03-Algorithm/HDC/HDC|HDC]] | 超维计算（HDC）：论文综述、硬件部署与项目收集 | 进行中 |

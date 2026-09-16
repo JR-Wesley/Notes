@@ -1,4 +1,4 @@
-This page covers the core C++ implementation layer of DeepEP, including the main `Buffer` class, configuration system, event management, and Python bindings via pybind11. This layer serves as the runtime foundation that manages memory, coordinates communication operations, and provides the interface between Python and CUDA kernel implementations.
+﻿This page covers the core C++ implementation layer of DeepEP, including the main `Buffer` class, configuration system, event management, and Python bindings via pybind11. This layer serves as the runtime foundation that manages memory, coordinates communication operations, and provides the interface between Python and CUDA kernel implementations.
 
   
 
@@ -12,7 +12,7 @@ For details about the specific CUDA kernel implementations, see [6.2]([CUDA Kern
 
 The core implementation consists of three primary classes that work together to provide the DeepEP runtime system:
 
-![[Core Architecture Overview.png]]
+> 图缺失：Core Architecture Overview.png（原图未随笔记下载）
 
 **Sources:** [csrc/deep_ep.hpp23-166]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.hpp#L23-L166](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.hpp#L23-L166)) [csrc/deep_ep.cpp1341-1381]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L1341-L1381](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L1341-L1381))
 
@@ -28,7 +28,7 @@ The `Buffer` class is the central component that manages all communication opera
 
 ### Memory Management Architecture
 
-![[Memory Management Architecture.png]]
+> 图缺失：Memory Management Architecture.png（原图未随笔记下载）
 
 **Sources:** [csrc/deep_ep.hpp25-78]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.hpp#L25-L78](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.hpp#L25-L78)) [csrc/deep_ep.cpp15-82]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L15-L82](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L15-L82))
 
@@ -66,7 +66,7 @@ The `Buffer` class provides methods organized into several categories:
 
 ### Runtime State Management
 
-![[Runtime State Management.png]]
+> 图缺失：Runtime State Management.png（原图未随笔记下载）
 
 **Sources:** [csrc/deep_ep.cpp84-183]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L84-L183](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L84-L183)) [csrc/deep_ep.cpp185-240]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L185-L240](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L185-L240))
 
@@ -74,7 +74,7 @@ The `Buffer` class provides methods organized into several categories:
 
 ## Configuration System
 
-![[Configuration System.png]]
+> 图缺失：Configuration System.png（原图未随笔记下载）
 
 The `Config` class encapsulates performance tuning parameters for communication operations:
 
@@ -90,7 +90,7 @@ The `Config` class encapsulates performance tuning parameters for communication 
 
 ## Event Management
 
-![[Event Management.png]]
+> 图缺失：Event Management.png（原图未随笔记下载）
 
 The `EventHandle` class provides CUDA event synchronization capabilities:
 
@@ -114,7 +114,7 @@ The pybind11 integration exposes the C++ classes to Python with full method bind
 
 ### Binding Structure
 
-![[Binding Structure.png]]
+> 图缺失：Binding Structure.png（原图未随笔记下载）
 
 **Sources:** [csrc/deep_ep.cpp1341-1381]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L1341-L1381](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L1341-L1381))
 
@@ -126,7 +126,7 @@ The pybind11 integration exposes the C++ classes to Python with full method bind
 
 The complete runtime lifecycle involves careful coordination of memory resources and synchronization:
 
-![[Runtime Lifecycle Management.png]]
+> 图缺失：Runtime Lifecycle Management.png（原图未随笔记下载）
 
 ### Initialization and Synchronization Flow
 

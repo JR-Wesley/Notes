@@ -5,11 +5,13 @@ tags:
 
 # 集群与硬件
 
-> AI 集群硬件体系：从半导体工艺、AI 芯片硬件到集群架构、单机拓扑与接口硬件模块。
+> AI 集群硬件体系：以 Host、Device、Management 三个世界为坐标，连接 PCIe、GPU scale-up、网络 scale-out、Linux/KMD 与用户态通信软件。
 
 ## GPU 服务器学习主线
 
-- [[02-AISystem/cluster-and-hardware/00-Overview-GPU服务器：从物理硬件到Linux设备系统|GPU 服务器：从物理硬件到 Linux 设备系统]]：硬件、PCIe、firmware、Linux 设备模型到多 GPU 通信的学习地图与排障入口
+先从 Overview 建立三世界、多 Fabric、三路径的总坐标，再按 Level 0—10 的能力路线学习；01—11 是各级使用的知识载体，不与 Level 一一对应，也不代表硬件启动的严格时间顺序。
+
+- [[02-AISystem/cluster-and-hardware/00-Overview-GPU服务器：从物理硬件到Linux设备系统|GPU 服务器：从物理硬件到 Linux 设备系统]]：以三个世界、多套 Fabric 和三条路径为总坐标，提供从整机 Inventory 到 PCIe/Linux、GPU Fabric、RDMA/NCCL 和综合诊断的 Level 0—10 分级路线
 - [[02-AISystem/cluster-and-hardware/01-物理服务器、NUMA与PCIe根层次|物理服务器、NUMA 与 PCIe 根层次]]：区分线程、页面与设备位置，建立主机内存、PCIe IO 和管理连接的物理模型
 - [[02-AISystem/cluster-and-hardware/02-PCIe拓扑与BDF：从设备地址追踪上游|02 · PCIe 拓扑与 BDF]]：设备身份、Bridge 与父路径
 - [[02-AISystem/cluster-and-hardware/03-从上电到设备枚举：Firmware与Linux的职责边界|从上电到设备枚举：Firmware 与 Linux 的职责边界]]：启动依赖、平台描述、PCI 发现、驱动接管与日志时间线
@@ -32,4 +34,4 @@ tags:
 - [[02-AISystem/cluster-and-hardware/单机拓扑分析|单机拓扑分析]]：单机内互连拓扑
 - [[02-AISystem/cluster-and-hardware/AI芯片硬件发展|AI芯片硬件发展]]：AI 芯片演进
 - [[02-AISystem/cluster-and-hardware/半导体工艺|半导体工艺]]：制程基础
-- [[02-AISystem/cluster-and-hardware/接口硬件模块|接口硬件模块]]：硬件接口模块
+- [[12-现代GPU服务器互联|接口硬件模块]]：硬件接口模块

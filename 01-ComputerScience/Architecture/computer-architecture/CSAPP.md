@@ -1,4 +1,4 @@
----
+﻿---
 dateCreated: 2024-09-23
 dateModified: 2025-05-26
 ---
@@ -665,7 +665,7 @@ RISC-V provides a both a 32-bit and a 64-bit instruction set, as well as a varie
 
 The RISC-V IS is organized as 3 base IS(32/63-bit and optional extensions): e.g. RV64IMAFD(RVG)
 
-![[assets/Fig A.22.png]]
+![[assets/fig-a.22.png]]
 
 ### Registers for RISC-V
 

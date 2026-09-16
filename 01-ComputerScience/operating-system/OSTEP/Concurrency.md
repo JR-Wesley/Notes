@@ -491,3 +491,174 @@ Dekker’s algorithm and Peterson’s algorithm implement two-thread mutual excl
 5. Spin + Yield: mitigate single-CPU idle spin, heavy context switch cost with many threads;
 6. Queue-based blocking lock: zero idle spin, fair, tiny short spin to guard queue metadata;
 7. Futex two-phase lock: industrial standard, ultra-fast no-contention path, balances spin and sleep for overall performance.
+
+
+# OSTEP Chapter29 Lock-based Concurrent Data Structures 锁基础并发数据结构知识笔记
+
+## 一、章节主题与核心挑战
+
+在锁的基础上，本章讨论如何把锁应用到常见数据结构中。给数据结构加锁使其可被多线程安全使用，即**线程安全（thread safe）**；加锁的具体方式同时决定数据结构的**正确性与性能**。核心挑战是：给定一种数据结构，如何加锁才能既保证正确，又让多条线程同时访问同一结构并保持高性能。并发数据结构已有多年研究积累（相关论文数以千计），本章只提供所需思维方式的基础引导，深入材料推荐 Moir 与 Shavit 的综述 [MS04]。
+
+Building on locks, this chapter shows how to apply locks to common data structures. Adding locks to a structure so threads can use it safely makes it **thread safe**; exactly how the locks are added determines both the **correctness and the performance** of the structure. The core challenge: given a data structure, how to add locks so it works correctly while enabling many threads to access it concurrently with high performance. Concurrent data structures have been studied for years, with literally thousands of research papers; this chapter offers a sufficient introduction to the required thinking, pointing to Moir and Shavit's survey [MS04] for deeper study.
+
+## 二、并发计数器 Concurrent Counters
+
+### 1. 简单加锁计数器与性能瓶颈
+
+计数器是最简单的数据结构，接口仅含 init/increment/decrement/get（图 29.1 为无锁版本，代码极少）。图 29.2 给出最基本加锁方案：**单一锁**，在操作数据结构的例程进入时获取、返回时释放，与 monitor 风格一致——调用对象方法时锁自动加解锁。该方案简单且正确，如果性能足够，任务就此完成，无需更花哨的设计；只有结构确实太慢时才需要进一步优化。
+
+The counter is one of the simplest data structures, with a minimal interface of init/increment/decrement/get (Fig 29.1 shows the unsynchronized version with tiny code). Fig 29.2 presents the most basic locking approach: a **single lock**, acquired when calling a routine that manipulates the structure and released when returning, matching the monitor style where locks are acquired and released automatically on method calls. It is simple and correct; if performance is adequate, you are done—only when the structure is too slow do further optimizations become necessary.
+
+基准测试揭示性能问题：在配备四颗 2.7 GHz Intel i5 的 iMac 上，各线程把共享计数器自增一百万次，并改变线程数（图 29.5 上线 'Precise'）。单线程约 0.03 秒完成；两个线程并发各更新一百万次反而耗时超过 5 秒，线程越多情况越糟。理想情况是多处理器上多线程应与单线程一样快地完成，称为**完美缩放（perfect scaling）**：总工作量虽然增加，但并行执行使完成任务的时间不增加。
+
+Benchmarks reveal the performance problem: on an iMac with four 2.7 GHz Intel i5 CPUs, each thread updates a shared counter one million times while the thread count varies (top line 'Precise' in Fig 29.5). One thread finishes in roughly 0.03 seconds; two threads updating concurrently take over 5 seconds—worse with more threads. Ideally, many threads on multiple processors complete as fast as a single thread on one—**perfect scaling**: more work is done, but in parallel, so the time to finish does not increase.
+
+### 2. 可扩展计数：近似计数器 Approximate Counter
+
+研究者早已深入研究更可扩展的计数器 [MS04]，并且可扩展计数确实重要：Linux 多核性能分析 [B+10] 显示，缺少可扩展计数会使部分工作负载在多核机器上出现严重的扩展问题。本章介绍**近似计数器（approximate counter）**[C06]：把单个逻辑计数器表示为**每 CPU 一个本地物理计数器**加**一个全局计数器**；每个本地计数器配一把本地锁，全局计数器配一把全局锁。
+
+Scalable counters have been studied for years [MS04], and they genuinely matter: Linux scalability analysis [B+10] shows workloads suffer serious scalability problems on multicore machines without scalable counting. The **approximate counter** [C06] represents one logical counter via numerous **local physical counters, one per CPU core**, plus a **single global counter**, with one lock per local counter and one for the global counter.
+
+更新流程：某核心上的线程要自增时只增自己的本地计数器，用本地锁同步。因为每 CPU 有独立计数器，跨 CPU 的线程更新互不争用，更新因此可扩展。为让全局计数保持更新（供读取使用），本地值周期性转移到全局：获取全局锁、把本地值加进全局计数、再将本地清零。转移频率由**阈值 S** 决定：S 越小行为越接近不可扩展计数器；S 越大越可扩展，但全局值与真实计数偏差越大。若要精确值，可按规定顺序获取全部本地锁与全局锁（避免死锁），但那不可扩展。
+
+Update flow: a thread on a given core only increments its local counter, synchronized by the local lock. Because each CPU has its own counter, threads across CPUs update without contention—updates are scalable. To keep the global counter fresh, local values are periodically transferred: acquire the global lock, add the local value to the global count, then reset the local counter to zero. The transfer frequency is set by **threshold S**: the smaller S, the more the counter resembles the non-scalable one; the larger S, the more scalable, but the further the global value drifts from the actual count. An exact value could be obtained by acquiring all local locks and the global lock in a specified order to avoid deadlock, but that is not scalable.
+
+图 29.3 用 S=5 给出追踪示例：四个 CPU 各有本地计数器 L1..L4，时间向下推进，每步可能自增一个本地计数器；本地值达到阈值 S 即转移到全局并清零。图 29.5 下线 'Approximate' 显示 S=1024 时性能优异：四处理器更新四百万次的时间几乎不高于单处理器更新一百万次。图 29.6 展示阈值 S 的作用：S 低则性能差但全局计数始终相当准确；S 高则性能优秀，但全局计数滞后（最多滞后 CPU 数×S）。这个精度/性能权衡正是近似计数器所提供的。
+
+Fig 29.3 traces the S=5 example: four CPUs with local counters L1..L4, time increasing downward, each step may increment a local counter; when a local value reaches threshold S, it transfers to the global counter and resets. Fig 29.5 bottom line 'Approximate' shows excellent performance at S=1024: four million updates on four processors take hardly more time than one million on one processor. Fig 29.6 shows the role of threshold S: low S gives poor performance but an always-quite-accurate global count; high S gives excellent performance but a lagging global count (lagging by at most CPUs × S). This accuracy/performance tradeoff is what approximate counters enable.
+
+实现要点（图 29.4）：结构含全局计数 global 与全局锁 glock、每 CPU 计数 local[NUMCPUS] 与本地锁 llock[NUMCPUS]、阈值 threshold；update() 用 threadID 映射到 CPU，平时只锁本地并累加，本地达到阈值才在全局锁保护下转移并清零；get() 只返回全局值（近似）。本地锁存在的假设是每个核心上可能运行多条线程，若每核只有一条线程则无需本地锁。
+
+Implementation (Fig 29.4): the structure holds global with glock, per-CPU local[NUMCPUS] with llock[NUMCPUS], and threshold; update() maps threadID to a CPU, normally locking only the local counter, transferring under the global lock once the local reaches the threshold; get() just returns the global value—only approximate. Local locks exist because more than one thread may run on each core; if exactly one thread ran per core, no local lock would be needed.
+
+```c
+typedef struct __counter_t {
+    int global;                     // global count
+    pthread_mutex_t glock;          // global lock
+    int local[NUMCPUS];             // per-CPU count
+    pthread_mutex_t llock[NUMCPUS]; // ... and locks
+    int threshold;                  // update frequency
+} counter_t;
+
+// update: usually grab local lock and update local amount;
+// once local count has risen 'threshold', grab global lock
+// and transfer local values to it
+void update(counter_t *c, int threadID, int amt) {
+    int cpu = threadID % NUMCPUS;
+    pthread_mutex_lock(&c->llock[cpu]);
+    c->local[cpu] += amt;
+    if (c->local[cpu] >= c->threshold) {
+        pthread_mutex_lock(&c->glock);
+        c->global += c->local[cpu];
+        pthread_mutex_unlock(&c->glock);
+        c->local[cpu] = 0;
+    }
+    pthread_mutex_unlock(&c->llock[cpu]);
+}
+
+// get: just return global amount (approximate)
+int get(counter_t *c) {
+    pthread_mutex_lock(&c->glock);
+    int val = c->global;
+    pthread_mutex_unlock(&c->glock);
+    return val;
+}
+```
+
+## 三、并发链表 Concurrent Linked Lists
+
+### 1. 基础加锁方案与异常控制流问题
+
+基础并发链表（图 29.7）采用单锁：insert 例程进入时获取锁、退出时释放锁。一个棘手细节是 malloc() 可能失败（罕见情况），此时代码必须在失败返回前释放锁。此类**异常控制流**被证明极易出错：对 Linux 内核补丁的近期研究发现，近 40% 的 bug 位于这类罕见路径上（该观察也催生了作者自己的一项研究：从 Linux 文件系统中移除内存失败路径，得到更健壮的系统 [S+11]）。
+
+The basic concurrent linked list (Fig 29.7) uses a single lock: insert acquires the lock on entry and releases it on exit. One tricky issue arises if malloc() fails (a rare case): the code must release the lock before failing. Such **exceptional control flow** is quite error prone; a recent study of Linux kernel patches found nearly 40% of bugs on such rarely-taken paths (this observation sparked the authors' own research that removed memory-failing paths from a Linux file system, yielding a more robust system [S+11]).
+
+由此产生一个挑战：能否重写 insert 与 lookup，在并发插入下保持正确，同时避免失败路径也需要调用 unlock？答案是肯定的：把加锁范围缩小到只包裹 insert 中真正的临界区，并让 lookup 使用单一公共返回路径。insert 中 malloc 部分无需加锁——假设 malloc 本身线程安全，每条线程都可以调用它而无竞态之忧；只有更新共享链表时才需要持锁。lookup 则通过简单变换跳出主搜索循环、汇入单一 return 路径，从而减少代码中锁的获取/释放点，降低意外引入 bug（如返回前忘记解锁）的概率。
+
+This raises a challenge: can we rewrite insert and lookup to remain correct under concurrent insert while avoiding failure paths that also require an unlock call? The answer is yes: shrink the lock to surround only the actual critical section in insert, and give lookup a single common exit path. Part of insert needs no lock—assuming malloc is thread-safe, each thread can call it without race concerns; only updating the shared list requires holding the lock. Lookup uses a simple transformation to jump from the main search loop to a single return path, reducing the number of lock acquire/release points and thus the chance of accidentally introducing bugs such as forgetting to unlock before returning.
+
+### 2. 扩展性：交接锁 Hand-over-Hand Locking
+
+基础链表同样扩展性不佳。研究者探索过**交接锁（hand-over-hand locking，又名 lock coupling）**[MS04]：链表每个节点一把锁，遍历时先获取下一节点的锁，再释放当前节点的锁（因此得名 "hand-over-hand"）。概念上它允许链表操作获得很高的并发度；但实践中很难快过简单单锁方案——遍历每个节点都获取释放锁的开销过高。即使链表很大、线程很多，允许多个并发遍历带来的收益也不大可能超过"拿一把锁、执行一次操作、释放"的简单方案。或许"每隔若干节点获取一次新锁"的混合方案值得研究。
+
+The basic list again scales poorly. Researchers explored **hand-over-hand locking (a.k.a. lock coupling)** [MS04]: one lock per node; traversal grabs the next node's lock, then releases the current node's lock (hence the name). Conceptually it enables a high degree of concurrency, but in practice it is hard to make such a structure faster than the simple single-lock approach, because the overhead of acquiring and releasing a lock for every node in a traversal is prohibitive. Even with very large lists and many threads, the concurrency from multiple ongoing traversals is unlikely to beat simply grabbing a single lock, performing the operation, and releasing it. A hybrid—grabbing a new lock every so many nodes—might be worth investigating.
+
+## 四、并发队列 Concurrent Queues
+
+除"加一把大锁"的标准做法（作者假定读者自己能实现）外，本章介绍 Michael 与 Scott 设计的并发队列 [MS98]（图 29.9）。队列有两把锁：**head 锁与 tail 锁**，目的是让入队与出队操作并发执行。常见情况下，入队例程只访问 tail 锁，出队只访问 head 锁。关键技巧是在初始化时分配一个**哑节点（dummy node）**，使 head 与 tail 操作得以分离。队列在多线程应用中很常见；但纯锁队列常不能完全满足需求，支持空/满等待的完整有界队列是下一章条件变量的主题。
+
+Beyond the standard "add a big lock" approach (assumed to be obvious to the reader), this chapter presents the Michael and Scott queue [MS98] (Fig 29.9). It has two locks—a **head lock and a tail lock**—to enable concurrency between enqueue and dequeue. In the common case, enqueue touches only the tail lock and dequeue only the head lock. The key trick is a **dummy node** allocated at initialization, which separates head and tail operations. Queues are common in multithreaded applications; however, a pure lock-based queue often does not fully meet their needs—a complete bounded queue that lets threads wait when empty or full is the subject of the next chapter on condition variables.
+
+```c
+typedef struct __queue_t {
+    node_t *head;
+    node_t *tail;
+    pthread_mutex_t head_lock, tail_lock;
+} queue_t;
+
+// enqueue: only the tail lock; append new node at tail
+void Queue_Enqueue(queue_t *q, int value) {
+    node_t *tmp = malloc(sizeof(node_t));
+    assert(tmp != NULL);
+    tmp->value = value;
+    tmp->next = NULL;
+    pthread_mutex_lock(&q->tail_lock);
+    q->tail->next = tmp;
+    q->tail = tmp;
+    pthread_mutex_unlock(&q->tail_lock);
+}
+
+// dequeue: only the head lock; empty queue -> new_head == NULL
+int Queue_Dequeue(queue_t *q, int *value) {
+    pthread_mutex_lock(&q->head_lock);
+    node_t *tmp = q->head;
+    node_t *new_head = tmp->next;
+    if (new_head == NULL) {
+        pthread_mutex_unlock(&q->head_lock);
+        return -1; // queue was empty
+    }
+    *value = new_head->value;
+    q->head = new_head;
+    pthread_mutex_unlock(&q->head_lock);
+    free(tmp);
+    return 0;
+}
+```
+
+## 五、并发哈希表 Concurrent Hash Table
+
+本章以哈希表收尾（图 29.10）：一个**不 resize** 的简单哈希表（resize 处理需要更多工作，留给读者练习），直接构建在前文开发的并发链表之上——`BUCKETS=101` 个链表，Hash_Insert/Hash_Lookup 通过 `key % BUCKETS` 定位桶并调用对应链表的插入/查找。性能出色的原因不是整个结构一把锁，而是**每桶一把锁**（每桶由一个链表表示），使大量并发操作可以同时进行。图 29.11 显示四线程各执行 1 万至 5 万次并发更新时的性能：这个简单并发哈希表缩放极好，而单锁链表几乎不扩展。
+
+The chapter ends with a hash table (Fig 29.10): a simple **non-resizing** table (resizing requires more work and is left as an exercise), built directly on the concurrent lists developed earlier—`BUCKETS=101` lists; Hash_Insert/Hash_Lookup use `key % BUCKETS` to pick a bucket and call the corresponding list routine. Its excellent performance comes not from one lock for the whole structure but from **one lock per bucket** (each bucket being a list), enabling many concurrent operations. Fig 29.11 shows performance under concurrent updates (10,000–50,000 per thread, four threads): this simple concurrent hash table scales magnificently, while the single-lock linked list does not.
+
+## 六、总结与关键教训
+
+本章抽样介绍了从计数器、链表、队列到哈希表的并发数据结构，得到几条重要教训：注意锁围绕**控制流变化**（函数返回、退出、错误等）的获取与释放；**更多并发不必然更快**；**性能问题应在确实存在时才修复**。最后一点——避免过早优化——对任何注重性能的开发者都至关重要：如果加速不会改善应用整体性能，就没有价值。
+
+This chapter samples concurrent data structures from counters, to lists and queues, and finally to the ubiquitous hash table. Key lessons: be careful with lock acquisition and release around **control flow changes** (returns, exits, errors); **more concurrency does not necessarily increase performance**; **performance problems should be remedied only once they exist**. The last point—avoiding premature optimization—is central to any performance-minded developer: there is no value in making something faster if doing so will not improve the application's overall performance.
+
+历史佐证：许多操作系统转向多处理器时最初使用单一锁，包括 Sun OS 与 Linux（后者该锁名为 **big kernel lock, BKL**）。多年间这种简单方案是好的选择，但当多 CPU 系统成为常态，内核同一时刻只允许一个活跃线程变成性能瓶颈。Linux 采取更直接的路径：一锁换多锁；Sun 做出更激进的决定：从头构建新操作系统 Solaris，从第一天起就更根本地融入并发。
+
+Historical evidence: many operating systems used a single lock when first transitioning to multiprocessors, including Sun OS and Linux (in the latter the lock was named the **big kernel lock, BKL**). For many years this simple approach was a good one, but when multi-CPU systems became the norm, allowing only one active thread in the kernel became a performance bottleneck. Linux took the more straightforward path—replace one lock with many; Sun made a more radical decision—build a brand-new operating system, Solaris, incorporating concurrency more fundamentally from day one.
+
+本章只是高性能数据结构研究的开端：深入可参考 Moir 与 Shavit 的综述 [MS04]；B-tree 等其他结构需要数据库课程的知识；不依赖传统锁的**无锁（non-blocking）数据结构**会在常见并发 bug 章节初尝，但那是需要更多研究的整个知识领域。
+
+This chapter only scratches the surface of high-performance structures. See Moir and Shavit's excellent survey [MS04] for more; other structures such as B-trees are best learned in a database class; **non-blocking data structures** that avoid traditional locks are tasted in the common concurrency bugs chapter but constitute an entire area requiring more study.
+
+## 七、三条 TIP 与配套作业
+
+- **更多并发不必然更快**：若方案因频繁加解锁引入大量开销（而不是一次性获取），更高并发可能并不重要；简单方案往往表现良好，尤其当它很少调用昂贵例程时。增加锁与复杂度可能成为败笔。唯一确定方法是把简单与复杂两个方案都实现并实测——性能上无法作弊。
+- **警惕锁与控制流**：许多函数以获取锁、分配内存等有状态操作开始；出错时必须在返回前撤销全部状态，极易出错。应尽量重构代码以减少这种模式。
+- **避免过早优化（Knuth 定律）**：构建并发数据结构先采用最基础方案——加一把大锁提供同步访问，先得到正确实现；若之后发现性能问题再精化，只在必要时才把它变快。Knuth 名言："Premature optimization is the root of all evil"（过早优化是万恶之源）。
+
+- **More concurrency isn't necessarily faster**: if your design adds heavy overhead (e.g., acquiring and releasing locks frequently instead of once), higher concurrency may not matter; simple schemes tend to work well, especially if they rarely use costly routines. Adding more locks and complexity can be your downfall. The only real way to know is to build both alternatives and measure—you cannot cheat on performance.
+- **Be wary of locks and control flow**: many functions begin with stateful operations like acquiring a lock or allocating memory; when errors arise the code must undo all state before returning, which is error prone. Structure code to minimize this pattern.
+- **Avoid premature optimization (Knuth's law)**: start with the most basic approach—add a single big lock for synchronized access—and get a correct implementation first; refine only if performance problems appear. As Knuth famously stated, "Premature optimization is the root of all evil."
+
+配套作业要点：用 gettimeofday() 测量时间，考察其精度与最小可测间隔（也可研究 x86 的 rdtsc 周期计数器）；构建简单并发计数器，随线程数增加测量耗时并考察可用 CPU 数的影响；构建 sloppy counter（近似计数器），随线程数与阈值测量并与章节数据对照；实现 hand-over-hand 链表并测量，找出它何时优于标准链表；选一个偏好数据结构（如 B-tree）先以单锁实现测量，再设计更有趣的加锁策略对比。
+
+Homework highlights: measure time with gettimeofday() and study its accuracy and smallest measurable interval (also consider the rdtsc cycle counter on x86); build a simple concurrent counter and measure as thread count increases and against the available CPU count; build a version of the sloppy counter, measuring versus thread count and threshold, and compare with chapter data; implement a hand-over-hand linked list and measure when it beats the standard list; pick a favorite structure (e.g., B-tree), implement it with a single lock, measure, then design a more interesting locking strategy and compare.
+
+来源：OSTEP（Operating Systems: Three Easy Pieces）Chapter 29 "Lock-based Concurrent Data Structures"，VERSION 1.01。原文：https://pages.cs.wisc.edu/~remzi/OSTEP/threads-locks-usage.pdf
+
+主要参考文献：[MS04] Moir & Shavit, "Concurrent Data Structures", Handbook of Data Structures and Applications, 2004；[MS98] Michael & Scott, "Nonblocking Algorithms and Preemption-safe Locking on Multiprogrammed Shared-memory Multiprocessors", JPDC Vol.51, 1998；[B+10] Boyd-Wickizer et al., "An Analysis of Linux Scalability to Many Cores", OSDI '10；[C06] Corbet, "The Search For Fast, Scalable Counters", LWN, 2006；[S+11] Sundararaman et al., "Making the Common Case the Only Case with Anticipatory Memory Allocation", FAST '11。

@@ -1,6 +1,6 @@
 # 物理服务器、NUMA 与 PCIe 根层次
 
-本篇对应 [[02-AISystem/cluster-and-hardware/00-Overview-GPU服务器：从物理硬件到Linux设备系统|GPU 服务器知识地图]] 的第 1 阶段。目标是看到一张服务器框图或 Linux 拓扑时，能回答三个问题：计算线程在哪里执行，数据存在哪块内存，设备通过哪条主机 IO 路径接入。先建立这些关系，下一篇再深入 BDF、Bridge 和枚举。
+本篇对应 [[02-AISystem/cluster-and-hardware/00-Overview-GPU服务器：从物理硬件到Linux设备系统|GPU 服务器知识地图]] 的 Level 1“物理结构与 Inventory”和 Level 2“CPU、Memory、NUMA 与 IO Root”。目标不是记住一组命令，而是通过 Host、Device、Management 三个观察世界建立一份可信 Inventory，并回答三个位置问题：计算线程在哪里执行，Host 页面位于哪个 NUMA node，设备通过哪条主机 IO 根层次接入。完成本篇后，应能把物理部件、BMC 记录、PCI BDF、sysfs 父路径、NUMA 关联和用户态设备身份放进同一张证据图中。
 
 参考平台沿用 DGX H100，讨论范围以双路 x86、离散 GPU、主机 DRAM 和 PCIe IO 为主。本篇不把 Grace Hopper 等 CPU–GPU 一致性互联系统的内存语义直接套入该模型。以下精简拓扑与输出均为教学示意；未访问用户服务器、运行命令或测量性能。
 
@@ -42,6 +42,18 @@
 ```
 
 这张图同时描述内存局部性、主机 IO 和 GPU 高速互联，管理关系单独列出。画实际系统时应保留这种区分：一根 NVLink 边不能替代一根 PCIe 边，BMC 能读取某传感器也不能证明主机能通过 PCIe 访问目标设备。
+
+### 三个观察世界分别能回答什么
+
+Host、Device、Management 不是三层协议栈，而是三个拥有不同处理器、状态和观察接口的世界。Host 说明 Linux 当前建立了哪些 CPU、Memory、PCI device、driver 和用户态接口；Device 说明 GPU、NIC、NVMe 或 Switch 自身的 firmware、queue 与 link 状态；Management 说明 Host OS 之外的 physical presence、power、reset、thermal 和 board-level event。很多工具会跨越世界，例如 `nvidia-smi` 由 Host 软件发起却查询 Device 状态，因此分类依据应是“证据描述谁的状态”，而不是命令在哪个 shell 中执行。
+
+| 观察世界 | 主要组成 | 典型观察入口 | 首先回答的问题 | 证据边界 |
+| --- | --- | --- | --- | --- |
+| Host | CPU、DRAM、Linux、PCI core、Kernel Driver、CUDA/RDMA/NCCL 用户态软件 | SSH/KVM console、`/proc`、`/sys`、`lscpu`、`lspci`、kernel journal | OS 当前枚举了什么，device/driver/interface 是否建立，进程允许使用哪些 CPU/Memory | Host 崩溃、容器隔离、权限或日志丢失会限制视图；看见 BDF 不等于 Device 功能正常 |
+| Device | GPU、NIC/HCA、DPU、NVMe、PCIe Switch、Device firmware 与 link/queue | PCI configuration space、sysfs attribute、`nvidia-smi`、`nvme`、`rdma`/vendor firmware tool | Device 是否响应、firmware 是否初始化、link/port/queue 是否健康 | 厂商工具通常依赖 Host driver；工具成功不等于完整 data path 或性能已验证 |
+| Management | BMC、CPLD、MCU、PSU、VRM、fan、sensor、FRU/EEPROM | BMC Web/KVM、Redfish/IPMI、Inventory、Sensor、SEL、厂商 service tool | 板卡是否 present，power/reset/thermal/voltage 和板级事件是否正常 | Inventory 可能来自 FRU 或历史记录；BMC 看见板卡不等于 Host 已训练 PCIe link 或完成枚举 |
+
+三个世界之间需要按同一实体和同一时间对齐。Host Linux 崩溃不意味着 BMC 不工作；BMC 能列出一块 GPU，不意味着 Host CPU 已通过 PCIe 枚举它；`lspci` 能读取 GPU function，也不意味着 KMD probe、Device firmware、CUDA、P2P 或性能已经成立。因此本篇始终区分 `Physical Present → Link Established → Enumerated → Resource Assigned → Driver Bound → Device Initialized → Functional → Healthy → Performance Validated`，并把“未知”保留为一种合法结论。
 
 ## 2. NUMA：共享地址空间不意味着访问代价相同
 
@@ -118,9 +130,36 @@ MCU、CPLD、Retimer 或背板管理逻辑的职责需要查具体服务器服�
 
 例如，BMC 清单中仍有某块 GPU 板，而主机看不到其 BDF，只能证明两个观察视角不一致。库存信息可能并非本次 PCIe 探测结果，应核对更新时间、告警和硬件状态。相反，主机能枚举也不能证明板上每项管理功能或所有 GPU 链路正常。这是证据边界，不是预先认定某一侧错误。
 
-## 6. 在 Linux 中做一次只读拓扑核对
+## 6. 从观察工具得到可复核的 Inventory 与拓扑证据
 
-以下三组命令面向宿主机 Linux，要求相应工具存在；工具版本可能影响可用字段。容器或 VM 所见拓扑、权限与 cpuset 可能受限制，先记录环境，不能将视图缺失直接解释成硬件缺失。下面无模拟实测结果，所有命令均未在用户服务器运行。
+工具的价值不在于输出更多文本，而在于回答一个边界明确的问题。采集前先记录宿主机、容器或 VM 边界、时间、kernel/driver/firmware 版本和目标设备的稳定身份；采集后保留原始输出，再将它整理成 Inventory、拓扑和身份映射。单个工具只提供一个观察面，不能代替跨世界对照。
+
+### 工具、观察对象和最终用途
+
+| 工具或接口 | 主要观察对象 | 需要提取的证据 | 最终用来回答 | 主要局限 |
+| --- | --- | --- | --- | --- |
+| `uname -r`、`cat /etc/os-release`、`systemd-detect-virt` | Host 环境、kernel、虚拟化边界 | kernel/OS 版本，当前是否处于 VM/container | 后续字段、driver 和 sysfs 结果适用于哪个环境 | 容器内可能看到 Host kernel，却看不到完整 Host device |
+| `lscpu -e=CPU,NODE,SOCKET,CORE,ONLINE` | logical CPU、core、socket、NUMA | CPU 到 socket/core/node 的映射 | 线程可以放在哪些 CPU，socket 与 node 是否一一对应 | 是拓扑描述，不是调度历史或性能测试 |
+| `numactl --hardware`、`/sys/devices/system/node/` | NUMA CPU、Memory、distance | node CPU 集合、容量、distance | Host memory 和 CPU 的局部性如何组织 | distance 是相对值，不是实测 ns；工具可能未安装 |
+| `lstopo-no-graphics` / `lstopo` | CPU、cache、NUMA、PCI device 的组合视图 | hwloc 观察到的层次和 locality | 快速形成候选 NUMA/IO 图并与其他证据核对 | 图是软件抽象；名称和 I/O 展示取决于权限与 hwloc 版本 |
+| `lspci -D -nn`、`lspci -D -t` | PCI function、Bridge、Endpoint 和 tree | 完整 BDF、class/vendor/device、父子分支 | Host 当前枚举了什么，哪些设备共享上游 | 不显示全部 mechanical/Retimer/cable 关系，也不证明 driver 或功能正常 |
+| `lspci -D -nnk -s <BDF>` | 指定 PCI function 与 driver | identity、当前 driver、candidate module | 目标 BDF 是什么、由谁接管 | `Kernel modules` 不等于当前 binding；成功读取不等于 probe/firmware 健康 |
+| `lspci -D -vv -s <BDF>` | PCI capability、BAR、link、AER/ACS 等 | `LnkCap`/`LnkSta`、Region/BAR、capability/status | 链路是否降速/降宽，资源和高级能力是否可见 | 某些字段需要更高权限；状态需与对端和平台设计对照 |
+| `/sys/bus/pci/devices/<BDF>`、`readlink -f` | Linux PCI device object | realpath、`numa_node`、`local_cpulist`、`driver`、`iommu_group` | 设备挂在哪个 root/Bridge 路径，内核记录什么 locality | sysfs 是当前内核视图，不是物理布线图；`-1` 表示未知 |
+| `dmidecode` | SMBIOS 中的 system/baseboard/memory/slot 描述 | 型号、序列号、DIMM/slot 声明 | 将软件对象与平台 Inventory/BOM 对齐 | 来自 firmware table，可能不完整或滞后；通常需要 root，不是 live probe |
+| `lsusb -t` / `lsusb` | USB peripheral 与 controller tree | USB 管理设备、dongle 或外围控制器 | 补充非 PCIe 的 Host-visible inventory | 与 GPU/NIC PCIe 拓扑是不同总线，不能混画 |
+| `nvidia-smi --query-gpu=index,uuid,pci.bus_id,name`、`nvidia-smi topo -m` | NVIDIA GPU identity、状态和软件拓扑 | UUID、BDF、index、name、topology/affinity | 把 GPU 用户态身份映射到 BDF，获得 accelerator topology 候选 | 依赖 NVIDIA driver；topology query 不是 bandwidth test |
+| `ip -br link`、`ethtool -i <if>`、`rdma link`、`ibstat` | netdev、NIC driver、RDMA device/port | interface、driver/bus-info、port/link state | 把 NIC BDF、netdev、RDMA port 和 Network 接口关联 | Port active 不证明 GPU peer-memory、GDR 或端到端 Network 正常 |
+| `lsblk`、`nvme list`、`/sys/class/block/*/device` | block device、NVMe controller/namespace | controller、namespace、block device 与 sysfs path | 区分 NVMe PCI function、namespace 和 block device | 工具/权限因发行版而异；文件系统状态是另一层 |
+| `lsmod`、`modinfo`、`systemctl status <service>` | Kernel module 与系统服务 | module loaded、service active/log | driver/service 是否存在并运行，例如平台需要的 Fabric service | module loaded 不等于 device bound；service 名称和要求随平台/版本变化 |
+| `journalctl -k -b`、`dmesg` | Host kernel event timeline | 本次启动的 PCI、NUMA、AER、driver/probe 事件 | 当前对象何时出现、失败或改变状态 | 日志可能轮转、限权或缺失；没有记录不证明事件未发生 |
+| BMC Web/KVM、Redfish/IPMI、Inventory/Sensor/SEL | Management world | FRU/presence、power、temperature、voltage、fan、event time | Host 之外的硬件前提是否成立，是否存在板级告警 | 字段与资源依赖平台实现；写操作和 reset 不属于本篇观察范围 |
+
+`lscpu` 官方手册说明其信息主要来自 sysfs、`/proc/cpuinfo` 和架构相关库，虚拟化环境中通常反映 guest 视图；脚本还应显式指定输出列，避免依赖会变化的默认格式。[util-linux `lscpu` manual](https://github.com/util-linux/util-linux/blob/master/sys-utils/lscpu.1.adoc) `lspci` 的 tree、numeric ID、kernel driver 和 verbose capability 选项则以 pciutils 版本为准。[pciutils `lspci` manual](https://github.com/pciutils/pciutils/blob/master/lspci.man)
+
+### 最小只读采集：先确认环境，再追踪对象
+
+以下命令面向宿主机 Linux，要求相应工具存在；工具版本可能影响可用字段。容器或 VM 所见拓扑、权限与 cpuset 可能受限制，先记录环境，不能将视图缺失直接解释成硬件缺失。下面没有模拟实测结果，所有命令均未在用户服务器运行。
 
 先核对 CPU 与 node，而不是先按经验给线程绑核：
 
@@ -174,7 +213,34 @@ head -n 12 "/proc/$$/numa_maps"
 
 这里展示的是 shell，不是 GPU workload；`numa_maps` 也不是 GPU HBM 分布图。允许 CPU/node 集合不说明进程已经使用了所有这些资源，少量页面样本不能代表整个测试 buffer。后续实验再控制 buffer 初始化与内存策略，本轮不靠调整绑定来追求未经测量的优化。
 
-练习结束应能形成一条证据链：选择一个实际设备 → 保留 BDF 与稳定身份 → 解析根路径 → 读取 node 关联 → 找到该 node 的 CPU 集合 → 对照进程允许资源。遇到未知就记录未知，不把示意服务器编号填进实机记录。
+### Management 侧只读对照
+
+若平台提供 IPMI/Redfish，可在获得相应只读权限后记录 BMC 自身信息、FRU、sensor 和 SEL。下面是常见 `ipmitool` 读取入口，不代表所有平台都支持相同字段，也不应在本练习中执行 power、reset、SEL clear 或 firmware update：
+
+```bash
+ipmitool mc info
+ipmitool fru print
+ipmitool sensor list
+ipmitool sel elist
+```
+
+BMC 和 Host 的时钟、对象命名及 inventory 更新周期可能不同。对照时应保存采集时间、序列号/slot/FRU 标识和原始事件时间，不能仅凭同样出现“GPU0”就认定两侧描述同一实体。Redfish URI 和厂商扩展随平台实现变化，优先使用目标系统文档，不把其他 DGX 或 OEM 的资源路径直接套用。
+
+### 本篇最终产物与完成标准
+
+练习结束不是得到一堆命令输出，而是形成下列五项可复核产物。它们共同回答“机器有什么、对象在哪里、三个世界分别看见什么、证据在哪一层停止”。
+
+| 产物 | 必须包含 | 最终解决的问题 |
+| --- | --- | --- |
+| 整机 Inventory | 平台预期数量、physical/slot/serial、Host PCI object、Management inventory、未知项与采集时间 | 机器应该有什么，当前到底缺少哪一层对象 |
+| 三世界证据矩阵 | 同一实体在 Host、Device、Management 的观察入口、结果和时间 | 各观察者是否一致，差异是事实还是身份/时间未对齐 |
+| Physical/NUMA/PCIe 根层次图 | board/riser/cable/power domain；CPU/Memory node；Root/Bridge/Endpoint 与 BDF | 物理故障域、内存局部性和 Host IO 父路径如何对应 |
+| 设备身份链 | stable identity → slot/FRU → BDF → sysfs realpath → driver → GPU/netdev/RDMA/block interface | 同一实体在不同工具中的名字如何映射 |
+| 未知项与下一步 | 缺失证据、当前不能支持的结论、下一篇需要追踪的 Bridge/BDF 问题 | 防止用假设填补未知，明确后续学习或 Debug 边界 |
+
+具体到一个实际 GPU 或 NIC，至少应完成这条证据链：固定稳定身份和当次 BDF → 解析 sysfs 根路径 → 读取 NUMA 关联 → 找到该 node 的 CPU/Memory → 对照进程允许资源 → 映射到 GPU/NIC 用户态接口 → 与 BMC/FRU/slot 记录核对。遇到 `numa_node=-1`、Management 无映射或设备已消失时，应记录未知和时间线，不把教学编号或旧快照填入当前记录。
+
+达到本篇目标后，面对一台陌生服务器，应能独立回答：预期有哪些 CPU、Memory、GPU、NIC、NVMe 和管理组件；Host 与 BMC 分别看见什么；目标设备接在哪个 IO root、关联哪个 NUMA node；哪些设备共享上游或板级资源；当前证据最多支持 Present、Enumerated、Bound 还是更高状态。此时仍不要求完成 PCIe bus range、BAR、DMA、NVLink、GDR 或 NCCL 的全部分析，它们由后续 Level 继续展开。
 
 ## 7. 用本篇知识缩小 Debug 范围
 
@@ -191,10 +257,10 @@ head -n 12 "/proc/$$/numa_maps"
 
 另外，[[02-AISystem/cluster-and-hardware/集群架构|集群架构]] 中涉及 UMA 与 NUMA 的内容可作为历史关联入口；本篇使用“非均匀内存访问”的准确含义。UMA 的访问均匀性与 NVSHMEM 等语境中的 symmetric memory 不是同一个概念，不能从术语相似推出相同内存模型。后续若需要修订旧文，另行限定范围。
 
-## 8. 来源与下一篇
+## 8. 来源与下一步
 
-本轮于 2026-09-13 查阅并使用文内链接的一手来源：NVIDIA DGX H100 系统/BMC 文档、Linux CPU topology 与 node ABI、NUMA Memory Policy、PCI Host Controller、Linux 6.14 ACPI Host Bridge 文档、Linux v6.12 PCI sysfs ABI、numactl 手册和 NVIDIA GPUDirect RDMA 文档。固定版本 ABI 用于说明属性语义，不代表用户运行这些 kernel 版本；滚动文档的代码细节未作为源码分析。
+本文于 2026-09-13 使用文内链接的一手来源建立机制说明，包括 NVIDIA DGX H100 系统/BMC 文档、Linux CPU topology 与 node ABI、NUMA Memory Policy、PCI Host Controller、Linux 6.14 ACPI Host Bridge 文档、Linux v6.12 PCI sysfs ABI、numactl 手册和 NVIDIA GPUDirect RDMA 文档。2026-09-16 增加三个观察世界、工具—证据—局限矩阵和最终产物，并核对 util-linux `lscpu` 与 pciutils `lspci` 官方手册。固定版本 ABI 用于说明属性语义，不代表用户运行这些 kernel 版本；工具字段、BMC resource 和 service 名称必须以目标环境版本为准。
 
 本篇提供事实性机制说明与教学推理；平台局部示意图不是实际 DGX 布线图，Debug 分支不是已确认故障。没有运行观察命令、修改服务器设置或执行性能测试。实际服务器型号、BIOS NUMA 配置、版本以及现有 XML 来源仍待确认。
 
-下一篇见 [[02-AISystem/cluster-and-hardware/02-PCIe拓扑与BDF：从设备地址追踪上游|PCIe 拓扑与 BDF：从设备地址追踪上游]]，对应知识地图第 2 阶段，解释 Root Port/Bridge/Endpoint、BDF 与 sysfs 树的对应，重点解决“从一个地址沿上游追踪”和“总线号、实体卡、端口数量为什么不等价”。
+沿 Overview 的 Level 路线，下一步先读 [[02-AISystem/cluster-and-hardware/03-从上电到设备枚举：Firmware与Linux的职责边界|从上电到设备枚举]]，把 Inventory 放回 Management、firmware、link 与 Linux 接管的时间线；随后进入 [[02-AISystem/cluster-and-hardware/02-PCIe拓扑与BDF：从设备地址追踪上游|PCIe 拓扑与 BDF]]，完整解释 Root Port/Bridge/Endpoint、BDF、bus range 与 sysfs 树的对应。若当前目标只是继续追踪一个已存在的 BDF，也可以先读 PCIe 篇，再回补启动生命周期。

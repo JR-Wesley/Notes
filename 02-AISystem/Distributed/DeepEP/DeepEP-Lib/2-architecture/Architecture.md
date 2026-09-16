@@ -1,4 +1,4 @@
-DeepEP is a high-performance communication library designed for expert-parallel workloads in Mixture-of-Experts (MoE) models. The system provides a unified interface for efficient token dispatch and combine operations across different hardware topologies, from single-node NVLink configurations to multi-node RDMA clusters.
+﻿DeepEP is a high-performance communication library designed for expert-parallel workloads in Mixture-of-Experts (MoE) models. The system provides a unified interface for efficient token dispatch and combine operations across different hardware topologies, from single-node NVLink configurations to multi-node RDMA clusters.
 
   
 
@@ -16,7 +16,7 @@ DeepEP is organized into four distinct architectural layers that provide efficie
 
 **DeepEP System Architecture**
 
-![[DeepEP System Architecture.png]]
+> 图缺失：DeepEP System Architecture.png（原图未随笔记下载）
 
 The system supports three communication modes:
 
@@ -66,7 +66,7 @@ The `deep_ep.Buffer` class serves as the primary interface for all communication
 
 **Buffer System Integration**
 
-![[Buffer System Integration.png]]
+> 图缺失：Buffer System Integration.png（原图未随笔记下载）
 
 Sources: [deep_ep/buffer.py32-67]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/deep_ep/buffer.py#L32-L67](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/deep_ep/buffer.py#L32-L67)) [deep_ep/buffer.py177-194]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/deep_ep/buffer.py#L177-L194](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/deep_ep/buffer.py#L177-L194)) [deep_ep/buffer.py261-288]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/deep_ep/buffer.py#L261-L288](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/deep_ep/buffer.py#L261-L288))
 
@@ -82,7 +82,7 @@ DeepEP implements a **dispatch-combine** communication pattern that efficiently 
 
 **Dispatch-Combine Flow**
 
-![[Dispatch-Combine Flow.png]]
+> 图缺失：Dispatch-Combine Flow.png（原图未随笔记下载）
 
 The system automatically selects the appropriate communication mode based on hardware topology:
 
@@ -110,7 +110,7 @@ DeepEP provides a unified interface across different hardware communication mech
 
 **Hardware Communication Stack**
 
-![[Hardware Communication Stack.png]]
+> 图缺失：Hardware Communication Stack.png（原图未随笔记下载）
 
   
 
@@ -166,7 +166,7 @@ DeepEP implements sophisticated event management to handle asynchronous operatio
 
   
 
-![[Event System Architecture.png]]
+> 图缺失：Event System Architecture.png（原图未随笔记下载）
 
   
 

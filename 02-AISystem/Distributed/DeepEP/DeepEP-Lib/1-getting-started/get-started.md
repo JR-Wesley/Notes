@@ -1,4 +1,4 @@
----
+﻿---
 dateCreated: 2025-08-08
 dateModified: 2025-08-08
 ---
@@ -30,7 +30,7 @@ The system consists of four main layers:
 
 The following diagram illustrates how the main code entities relate to the system architecture:
 
-![[DeepWiki/DeepEP/1_Getting_Started/assets/System Architecture.png]]
+> 图缺失：DeepWiki/DeepEP/1_Getting_Started/assets/System Architecture.png（原图未随笔记下载）
 
 Sources: [setup.py36-47]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/setup.py#L36-L47](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/setup.py#L36-L47)) [setup.py112-121]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/setup.py#L112-L121](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/setup.py#L112-L121))
 
@@ -38,7 +38,7 @@ Sources: [setup.py36-47]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/se
 
 DeepEP implements a dispatch-combine pattern optimized for different hardware topologies:
 
-![[Communication Workflow.png]]
+> 图缺失：Communication Workflow.png（原图未随笔记下载）
 
 Sources: [setup.py36]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/setup.py#L36-L36](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/setup.py#L36-L36)) [setup.py47]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/setup.py#L47-L47](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/setup.py#L47-L47))
 
@@ -46,7 +46,7 @@ Sources: [setup.py36]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/setup
 
 The build system automatically detects your environment and configures the appropriate features:
 
-![[Build Process Overview.png]]
+> 图缺失：Build Process Overview.png（原图未随笔记下载）
 
 Sources: [setup.py15-29]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/setup.py#L15-L29](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/setup.py#L15-L29)) [setup.py42-52]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/setup.py#L42-L52](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/setup.py#L42-L52)) [setup.py53-66]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/setup.py#L53-L66](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/setup.py#L53-L66))
 

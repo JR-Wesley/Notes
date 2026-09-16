@@ -1,4 +1,4 @@
----
+﻿---
 dateCreated: 2025-08-08
 dateModified: 2025-08-08
 ---
@@ -8,7 +8,7 @@ This document covers the C++ runtime system that forms the core implementation o
 
 The C++ runtime is centered around three primary classes that manage the complete lifecycle of expert-parallel communication.
 
-![[Core Classes.png]]
+> 图缺失：Core Classes.png（原图未随笔记下载）
 
 **Sources:** [csrc/deep_ep.cpp15-82]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L15-L82](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L15-L82)) [csrc/deep_ep.cpp1344-1350]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L1344-L1350](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L1344-L1350)) [csrc/deep_ep.cpp1353-1355]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L1353-L1355](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L1353-L1355))
 
@@ -39,7 +39,7 @@ The `EventHandle` class wraps CUDA events for precise stream synchronization, en
 
 The `Buffer` runtime follows a strict three-phase lifecycle with explicit resource management and distributed synchronization.
 
-![[Runtime Lifecycle.png]]
+> 图缺失：Runtime Lifecycle.png（原图未随笔记下载）
 
 **Sources:** [csrc/deep_ep.cpp15-82]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L15-L82](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L15-L82)) [csrc/deep_ep.cpp185-240]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L185-L240](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L185-L240)) [csrc/deep_ep.cpp143-183]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L143-L183](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L143-L183))
 
@@ -79,7 +79,7 @@ The `destroy()` method performs careful cleanup with distributed barriers to ens
 
 The runtime provides three distinct communication modes, each optimized for different hardware topologies and performance requirements.
 
-![[Communication Operations.png]]
+> 图缺失：Communication Operations.png（原图未随笔记下载）
 
 **Sources:** [csrc/deep_ep.cpp242-303]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L242-L303](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L242-L303)) [csrc/deep_ep.cpp305-540]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L305-L540](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L305-L540)) [csrc/deep_ep.cpp653-931]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L653-L931](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L653-L931)) [csrc/deep_ep.cpp1090-1206]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L1090-L1206](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L1090-L1206))
 
@@ -98,7 +98,7 @@ Each phase involves complex memory management, stream coordination, and distribu
 
 The runtime implements sophisticated memory management with multiple buffer types and strict alignment requirements.
 
-![[Memory Management.png]]
+> 图缺失：Memory Management.png（原图未随笔记下载）
 
 **Sources:** [csrc/deep_ep.cpp47-82]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L47-L82](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L47-L82))
 
@@ -118,7 +118,7 @@ The runtime uses host-mapped memory for CPU-GPU coordination, allowing the CPU t
 
 The runtime maintains careful separation between compute and communication streams to enable overlapping computation with data movement.
 
-![[Stream Management.png]]
+> 图缺失：Stream Management.png（原图未随笔记下载）
 
 **Sources:** [csrc/deep_ep.cpp20]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L20-L20](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L20-L20)) [csrc/deep_ep.cpp254-262]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L254-L262](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L254-L262)) [csrc/deep_ep.cpp394-400]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L394-L400](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L394-L400))
 
@@ -132,7 +132,7 @@ Methods support both synchronous and asynchronous execution modes through the `a
 
 The runtime exposes its functionality to Python through pybind11 bindings that preserve the full C++ interface while providing Pythonic tensor integration.
 
-![[Python Bindings.png]]
+> 图缺失：Python Bindings.png（原图未随笔记下载）
 
 **Sources:** [csrc/deep_ep.cpp1341-1381]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L1341-L1381](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/deep_ep.cpp#L1341-L1381))
 

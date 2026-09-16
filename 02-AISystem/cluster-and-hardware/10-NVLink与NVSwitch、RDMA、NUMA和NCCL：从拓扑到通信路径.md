@@ -9,7 +9,7 @@ tags:
 
 # 10 · NVLink 与 NVSwitch、RDMA、NUMA 和 NCCL：从拓扑到通信路径
 
-本文承接 [[02-AISystem/cluster-and-hardware/09-KMD、用户态驱动与设备可见性：从内核绑定到GPU通信|KMD、用户态驱动与设备可见性]]。目标不是背诵某台机器的拓扑矩阵，而是建立一个判断方法：当 NCCL、CUDA P2P 或 GPUDirect RDMA 性能异常时，先确认实际硬件路径，再确认软件是否有能力发现并选择这条路径。
+本文位于 [[02-AISystem/cluster-and-hardware/00-Overview-GPU服务器：从物理硬件到Linux设备系统|GPU 服务器多层架构]] 的 Scale-up/Scale-out Fabric 层，承接 [[02-AISystem/cluster-and-hardware/09-KMD、用户态驱动与设备可见性：从内核绑定到GPU通信|KMD、用户态驱动与设备可见性]]。目标不是背诵某台机器的拓扑矩阵，而是建立一个判断方法：当 NCCL、CUDA P2P 或 GPUDirect RDMA 性能异常时，先确认实际硬件路径，再确认软件是否有能力发现并选择这条路径。
 
 ## 1. 一台典型多 GPU 节点的多层互连
 

@@ -1,4 +1,4 @@
-This document covers the core communication implementation for DeepEP's internode operations, focusing on the RDMA and NVLink-based data dispatch and combine mechanisms. This implementation handles the orchestration of token communication across multiple RDMA ranks and NVLink peers in distributed expert-parallel workloads.
+﻿This document covers the core communication implementation for DeepEP's internode operations, focusing on the RDMA and NVLink-based data dispatch and combine mechanisms. This implementation handles the orchestration of token communication across multiple RDMA ranks and NVLink peers in distributed expert-parallel workloads.
 
   
 
@@ -14,7 +14,7 @@ The internode communication system implements a two-phase dispatch-combine patte
 
   
 
-![[Communication Architecture Overview.png]]
+> 图缺失：Communication Architecture Overview.png（原图未随笔记下载）
 
   
 
@@ -38,7 +38,7 @@ The `SourceMeta` structure encodes critical routing information for each token, 
 
   
 
-![[Core Data Structures and Metadata.png]]
+> 图缺失：Core Data Structures and Metadata.png（原图未随笔记下载）
 
   
 
@@ -84,7 +84,7 @@ The dispatch phase coordinates the forwarding of tokens from source ranks to des
 
 The `notify_dispatch` kernel establishes communication channels and coordinates token count information across all participating ranks.
 
-![[Notification and Coordination.png]]
+> 图缺失：Notification and Coordination.png（原图未随笔记下载）
 
 Sources: [csrc/kernels/internode.cu84-303]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L84-L303](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L84-L303)) [csrc/kernels/internode.cu305-348]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L305-L348](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L305-L348))
 
@@ -100,7 +100,7 @@ The main `dispatch` kernel implements a complex multi-warp coordination system w
 
 #### Warp Role Assignments
 
-![[Warp Role Assignments.png]]
+> 图缺失：Warp Role Assignments.png（原图未随笔记下载）
 
 Sources: [csrc/kernels/internode.cu370-405]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L370-L405](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L370-L405)) [csrc/kernels/internode.cu462-614]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L462-L614](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L462-L614)) [csrc/kernels/internode.cu690-834]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L690-L834](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L690-L834))
 
@@ -108,7 +108,7 @@ Sources: [csrc/kernels/internode.cu370-405]([https://github.com/deepseek-ai/Deep
 
 #### TMA Integration and Memory Management
 
-![[TMA Integration and Memory Management.png]]
+> 图缺失：TMA Integration and Memory Management.png（原图未随笔记下载）
 
 The dispatch kernel uses Tensor Memory Accelerator (TMA) operations for efficient data copying, particularly in the NVL forwarding and receiving paths.
 
@@ -132,7 +132,7 @@ The combine phase aggregates results from expert processing back to the originat
 
 The `cached_notify` kernel prepares metadata for the combine phase, handling both buffer cleanup and head pointer management for cached execution scenarios.
 
-![[Cached Notification System.png]]
+> 图缺失：Cached Notification System.png（原图未随笔记下载）
 
 Sources: [csrc/kernels/internode.cu1043-1185]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L1043-L1185](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L1043-L1185)) [csrc/kernels/internode.cu1187-1222]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L1187-L1222](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L1187-L1222))
 
@@ -148,7 +148,7 @@ The `combine` kernel implements the final aggregation phase with specialized war
 
 #### Multi-Stage Token Combination
 
-![[Multi-Stage Token Combination.png]]
+> 图缺失：Multi-Stage Token Combination.png（原图未随笔记下载）
 
 Sources: [csrc/kernels/internode.cu1224-1357]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L1224-L1357](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L1224-L1357)) [csrc/kernels/internode.cu1668-1677]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L1668-L1677](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L1668-L1677)) [csrc/kernels/internode.cu1747-1760]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L1747-L1760](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L1747-L1760))
 
@@ -164,7 +164,7 @@ The communication implementation relies on sophisticated buffer management and s
 
 ### Queue Management and Flow Control
 
-![[Queue Management and Flow Control.png]]
+> 图缺失：Queue Management and Flow Control.png（原图未随笔记下载）
 
 Sources: [csrc/kernels/internode.cu588-613]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L588-L613](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L588-L613)) [csrc/kernels/internode.cu735-758]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L735-L758](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L735-L758)) [csrc/kernels/internode.cu1629-1642]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L1629-L1642](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L1629-L1642))
 
@@ -206,6 +206,6 @@ The implementation includes several performance optimizations designed to maximi
 
 ### Memory Access Patterns
 
-![[Memory Access Pattern.png]]
+> 图缺失：Memory Access Pattern.png（原图未随笔记下载）
 
 Sources: [csrc/kernels/internode.cu551-554]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L551-L554](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L551-L554)) [csrc/kernels/internode.cu1262-1294]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L1262-L1294](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L1262-L1294)) [csrc/kernels/internode.cu1588-1592]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L1588-L1592](https://github.com/deepseek-ai/DeepEP/blob/4b67064d/csrc/kernels/internode.cu#L1588-L1592))

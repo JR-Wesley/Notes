@@ -1,4 +1,4 @@
----
+﻿---
 dateCreated: 2025-08-08
 dateModified: 2025-08-08
 ---
@@ -24,7 +24,7 @@ The `layout.cu` file provides token distribution calculations that determine how
 
 **Layout Kernel Processing**
 
-![[Layout Kernel Processing.png]]
+> 图缺失：Layout Kernel Processing.png（原图未随笔记下载）
 
 The kernel processes `topk_idx` arrays to calculate token distribution statistics using shared memory for efficient per-thread counting, then reduces results across threads.
 
@@ -50,7 +50,7 @@ The `intranode.cu` file handles NVLink-based communication within a single node:
 
 **Intranode Dispatch Architecture**
 
-![[Intranode Dispatch Architecture.png]]
+> 图缺失：Intranode Dispatch Architecture.png（原图未随笔记下载）
 
 The dispatch kernel uses even-numbered SMs for sending and odd-numbered SMs for receiving, with TMA acceleration for efficient memory transfers on SM90 hardware.
 
@@ -72,7 +72,7 @@ The `internode.cu` file manages RDMA/NVSHMEM communication across multiple nodes
 
 **Internode Buffer Architecture**
 
-![[Internode Buffer Architecture.png]]
+> 图缺失：Internode Buffer Architecture.png（原图未随笔记下载）
 
 **Key Features:**
 
@@ -99,7 +99,7 @@ The `internode_ll.cu` file provides specialized kernels optimized for low-latenc
 
 **Low-Latency Execution Phases**
 
-![[Low-Latency Execution Phases.png]]
+> 图缺失：Low-Latency Execution Phases.png（原图未随笔记下载）
 
 **Key Optimizations:**
 
@@ -133,7 +133,7 @@ The `runtime.cu` file provides synchronization and NVSHMEM management utilities:
 
 **NVSHMEM Team Management**
 
-![[NVSHMEM Team Management.png]]
+> 图缺失：NVSHMEM Team Management.png（原图未随笔记下载）
 
 The runtime manages NVSHMEM teams for low-latency mode, where GPU ranks are grouped by RDMA connectivity for optimized communication patterns.
 

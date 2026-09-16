@@ -1,225 +1,415 @@
 # GPU 服务器：从物理硬件到 Linux 设备系统
 
-本文是服务器架构与工程排障的学习入口，围绕“一台现代多 GPU 服务器如何从物理硬件成为 Linux 中可见、可驱动、可使用的设备系统”组织知识。读者已有 Linux、CUDA 与多 GPU 通信基础，重点补齐服务器硬件、PCIe 与 Linux device model，再连接到 NVLink/NVSwitch、RDMA 和 NCCL。本文只建立整体地图与参考模型；各主题的实现细节和实验将按顺序逐篇展开。
+本文是一台现代 GPU 服务器的分层学习地图。读者已有 Linux、CUDA 和多 GPU 通信基础，希望系统补齐服务器硬件、PCIe、NUMA、Linux device model、GPU Fabric、RDMA 与 NCCL 的底层关系。全文不再把“系统概念”和“学习路线”分开：Level 0—10 既是知识结构，也是能力依赖；每一级都说明学习路线、核心模型、必须掌握的边界、应形成的产物和进入下一级的标准。
 
-## 1. 主线：先确定在哪一层看到了设备
+文件编号 01—11 是深入阅读材料，不与 Level 一一对应。Level 7 与 Level 8 在完成 GPU 单卡基础后可以分支学习，并在 Level 9 的 NCCL 端到端通信中汇合。所有 BDF、拓扑和路径图都是教学抽象，不是用户服务器实测，也不替代目标平台的 service manual、block diagram 和版本文档。
 
-“设备可见”不是单一状态。BMC 清单记录设备、PCI 子系统发现 function、驱动初始化成功、CUDA 可以使用、NCCL 可以通信，是不同层次的证据。排障首先应说清楚：哪个观察者，在什么环境、什么时间，看到了什么对象。
+```mermaid
+flowchart TD
+    L0[Level 0<br/>统一整机坐标系] --> L1[Level 1<br/>物理结构与 Inventory]
+    L1 --> L2[Level 2<br/>CPU、Memory 与 NUMA]
+    L2 --> L3[Level 3<br/>Management 与启动生命周期]
+    L3 --> L4[Level 4<br/>PCIe 组成、资源与链路健康]
+    L4 --> L5[Level 5<br/>Linux Device Model 与可见性]
+    L5 --> L6[Level 6<br/>GPU 软件栈与单卡功能]
+    L6 --> L7[Level 7<br/>节点内 GPU Fabric]
+    L6 --> L8[Level 8<br/>Network、RDMA 与 GPUDirect]
+    L7 --> L9[Level 9<br/>NCCL 与端到端通信]
+    L8 --> L9
+    L9 --> L10[Level 10<br/>整机诊断与性能验证]
 
-```text
-物理硬件：供电、时钟、复位、布线、芯片与板卡
-                         ↓
-平台与设备 firmware 初始化、PCIe 链路建立
-                         ↓
-Linux PCI 子系统发现 function、处理总线与地址资源
-                         ↓
-内核设备对象与 sysfs 中的设备层次
-                         ↓
-驱动匹配 → probe → 设备初始化与接口建立
-                         ↓
-用户态驱动、管理工具、CUDA / RDMA 接口
-                         ↓
-NCCL 等通信软件选择并使用实际传输路径
+    M[Management 支线<br/>BMC→CPLD/MCU→Power/Reset→Sensor/SEL] -.贯穿.-> L1
+    M -.贯穿.-> L3
+    M -.汇入.-> L10
+    H[Link Health 支线<br/>Training→Retimer→Speed/Width→AER] -.贯穿.-> L4
+    H -.贯穿.-> L7
+    H -.贯穿.-> L8
+    H -.汇入.-> L10
 ```
 
-这是依赖关系图，不是精确启动时序。平台 firmware 与 OS 都可能参与 PCI 资源处理，设备 firmware 可能已在设备启动时运行，也可能需要驱动加载。运行期间还会发生复位、热插拔、软件移除和重新发现。后续必须把“启动时未发现”和“运行中丢失”分开分析。
+每一级都按“建立模型 → 读取只读证据 → 解释一条具体路径 → 形成可复核产物 → 达到通过标准”推进。没有实机时，可以使用厂商框图和明确标注的教学输出练习，但不能把示意地址、链路和性能写成实测。
 
-Linux 将设备与驱动分开建模。设备对象存在不要求功能驱动已经成功绑定；匹配只是候选关系，probe 才尝试初始化设备。绑定成功也不能证明之后每次数据传输都正常。[Linux Driver Binding](https://docs.kernel.org/driver-api/driver-model/binding.html)
+## Level 0：建立三个世界、三条路径和多套 Fabric 的统一坐标
 
-## 2. 在知识库中的位置与关联
+本级路线是“系统域 → 观察世界 → Fabric → 行为路径 → 设备状态”。目标不是记住名词，而是建立一个能容纳后续全部对象的坐标系：看到 GPU、BMC、KMD、NVSwitch、RDMA 或 NCCL 时，先判断它是什么类型的实体，属于哪个观察边界，与哪些对象通过什么关系连接。
 
-本系列统一保存在 `02-AISystem/cluster-and-hardware/`，从 [[02-AISystem/cluster-and-hardware/cluster-and-hardware|集群与硬件目录入口]] 进入本 Overview。按用户明确调整，原 SoC/PCIE 的全部笔记及 DMA/IOMMU 正文已迁入同一目录；服务器主线中的 PCIe、Linux 机制和后续通信衔接篇也在这里连续维护。体系结构、OS、GPU、RDMA/NCCL 的既有专题仍通过链接提供基础和深入资料，不复制或移动这些邻近内容。
+### 五个系统域与三个观察世界
 
-文件前缀表示阅读顺序，不等于下文八个学习阶段的编号：第 4 阶段拆为 04—07 多篇。00 为总览，01—10 已成文；11 是后续拟定顺序，尚未创建文件。
+从功能职责看，一台 DGX 类服务器可以分为五个相互依赖的系统域：计算域执行 Host 程序并提供主机内存；I/O 域建立 Host 与 PCIe Device 的连接；加速器域提供 GPU 计算和节点内 scale-up；网络域建立节点间 scale-out；管理域维持供电、复位、散热和带外观察。
 
-| 文件顺序 | 主题与依赖 | 对应学习阶段 / 状态 |
+| 系统域 | 主要对象 | 核心职责 |
 | --- | --- | --- |
-| 00 | 本 Overview：范围、参考模型与知识关联 | 导航，已成文 |
-| 01 | [[02-AISystem/cluster-and-hardware/01-物理服务器、NUMA与PCIe根层次|物理服务器、NUMA 与 PCIe 根层次]] | 阶段 1，已成文 |
-| 02 | [[02-AISystem/cluster-and-hardware/02-PCIe拓扑与BDF：从设备地址追踪上游|PCIe 拓扑与 BDF]]；依赖物理连接模型 | 阶段 2，已成文 |
-| 03 | [[02-AISystem/cluster-and-hardware/03-从上电到设备枚举：Firmware与Linux的职责边界|从上电到设备枚举]]；依赖拓扑与身份 | 阶段 3，已成文 |
-| 04 | [[02-AISystem/cluster-and-hardware/04-配置空间、BAR与MMIO：从设备身份到地址资源|配置空间、BAR 与 MMIO]]；从发现走向资源 | 阶段 4，已成文 |
-| 05 | [[02-AISystem/cluster-and-hardware/05-DMA与IOMMU：设备如何访问内存|DMA 与 IOMMU]]；从资源访问走向数据搬运 | 阶段 4，已成文 |
-| 06 | [[02-AISystem/cluster-and-hardware/06-MSI与MSI-X：从数据完成到中断通知|MSI 与 MSI-X：从数据完成到中断通知]]；设备完成、IRQ、队列与 CPU affinity | 阶段 4，已成文 |
-| 07 | [[02-AISystem/cluster-and-hardware/07-PCIe链路、AER与错误恢复：从可见设备到运行中稳定性|PCIe 链路、AER 与错误恢复]]；从静态可见性走向运行中稳定性 | 阶段 4，已成文 |
-| 08 | [[02-AISystem/cluster-and-hardware/08-Linux设备模型、驱动与sysfs：把BDF映射到内核对象|Linux device/driver/class 与 sysfs]]；把 BDF 映射到内核对象和功能视图 | 阶段 5，已成文 |
-| 09 | [[02-AISystem/cluster-and-hardware/09-KMD、用户态驱动与设备可见性：从内核绑定到GPU通信|KMD、用户态驱动与设备可见性]]；从内核绑定、设备节点到 CUDA/RDMA/NCCL | 阶段 6，已成文 |
-| 10 | [[02-AISystem/cluster-and-hardware/10-NVLink与NVSwitch、RDMA、NUMA和NCCL：从拓扑到通信路径|NVLink/NVSwitch、RDMA、NUMA 与 NCCL]]；从物理拓扑到通信库选路 | 阶段 7，已成文 |
-| 11 | [[02-AISystem/cluster-and-hardware/11-GPU服务器综合排障：从现象到证据链与最小验证|GPU 服务器综合排障]]；把各层现象串成证据链和最小验证 | 阶段 8，已成文 |
+| 计算域 | CPU、socket、core、cache、memory controller、DRAM | 运行 Host 软件，提供内存、NUMA 和 IO 根侧能力 |
+| I/O 域 | Host Bridge、Root Complex、Root Port、PCIe Switch、Retimer、Endpoint | 发现、配置并连接 GPU、NIC、NVMe 等设备 |
+| 加速器域 | GPU、HBM、NVLink、NVSwitch | 执行 GPU workload，提供节点内高速 peer 通信 |
+| 网络域 | NIC/HCA、DPU、InfiniBand、RoCE、Ethernet | 承载节点间数据通信和 RDMA |
+| 管理域 | BMC、CPLD、MCU、PSU、VRM、fan、sensor、FRU | 提供带外管理、上电时序、遥测、复位和资产信息 |
 
-`PCIE.md` 保留为迁入的 PCIe 专题导航，`深入浅出pcie.md` 保留为来源入口，二者不占主线编号。`cluster-and-hardware.md` 同时导航本系列与目录里的其他既有主题；本文负责解释学习顺序与机制依赖，不把整个目录合并成一个大文件。后续如确需分篇，再同步调整计划编号和导航。
+系统域描述功能分工，Host、Device、Management 三个世界描述谁拥有状态、由谁执行代码、经由什么接口观察。Host 是 CPU、DRAM、主机 firmware、Linux、driver 和用户态程序所在的主计算系统；Device 是 GPU、NIC、DPU、NVMe、PCIe Switch 等设备及其处理器、寄存器、队列和 firmware；Management 以 BMC 为核心，通过 CPLD、MCU 和板级管理接口维持机器。一个 GPU 同时属于加速器域和 Device world，还是 PCIe 与 NVLink 两套 Fabric 的节点，因此这些分类维度不能当作同一棵树的同级标签。
 
-| 已有位置 | 在本学习体系中的作用 | 内容边界与衔接方式 |
-| --- | --- | --- |
-| [[01-ComputerScience/Architecture/Architecture|体系结构]] | CPU、内存层次、处理器互联的基础 | 为 NUMA 与 IO 访问路径提供前提；本入口不复制教材结构 |
-| [[02-AISystem/cluster-and-hardware/PCIE|PCIe]] | 拓扑、配置空间、枚举、BAR、链路和事务 | 已整体迁入本目录；《深入浅出pcie》仍主要是来源入口，不视为已完成协议知识 |
-| [[01-ComputerScience/operating-system/operating-system|操作系统]] | 页表、内存、进程与通用 IO 基础 | 保留跨领域关联；本服务器系列的 DMA、device model 等正文集中在当前目录 |
-| [[02-AISystem/cluster-and-hardware/单机拓扑分析|单机拓扑分析]] | 后续真实材料解读候选 | 已有含 BDF、NUMA、GPU/NIC 的 XML；来源与硬件环境待确认，不能直接当成完整 PCIe 树或 DGX H100 实测 |
-| [[02-AISystem/cluster-and-hardware/接口硬件模块|接口硬件模块]] | 接口与互联硬件资料入口 | 目前含外部来源链接；后续按问题核查，不当作已验证结论 |
-| [[02-AISystem/cluster-and-hardware/集群架构|集群架构]] | 从单机扩展到跨节点 | 在掌握单机设备、NIC 与网络路径后继续 |
-| [[02-AISystem/GPU/GPU|GPU]] | CUDA、GPU 架构和数据传输 | GPU 内部执行机制与主机设备生命周期分别维护，再通过传输路径关联 |
-| [[02-AISystem/Distributed/RDMA/RDMA|RDMA]] | NIC、verbs、内存注册与跨机数据通路 | 先建立 PCI function、驱动与 RDMA device 的对应，再进入通信机制 |
-| [[02-AISystem/Distributed/NCCL/NCCL|NCCL]] | 集合通信、拓扑发现和传输选择 | 结合已验证底层拓扑理解日志，不直接把通信失败归因于算法 |
-| [[02-AISystem/Distributed/分布式基础/分布式互联技术总览|分布式互联技术总览]] | 互联技术的横向视野 | 作为对照入口；PCIe、NVLink 与网络不强行排成唯一线性协议栈 |
-| [[00-ToolKit/System/Linux系统分析|Linux 系统分析工具]] | 通用工具使用方法 | 工具用法与解释设备机制的知识正文分开维护 |
+### 三条路径与多套 Fabric
 
-附件延续主题已有的 `assets` 布局。现有拓扑附件位于 `assets/单机拓扑分析.assets/`，本轮未更改或重新解释该图片；本文使用 ASCII 图，不新增附件。未来笔记的拟定标题不是已完成产物，只有文件实际存在后才建立对应 WikiLink。
+控制路径负责发现能力、建立资源、配置寄存器、创建队列和提交工作；数据路径搬运模型参数、梯度、存储块和网络报文；管理路径负责 power、reset、telemetry、inventory 和 KVM。完成通知属于控制与数据协议的闭环：Device 可能更新 queue/CQ、写回状态或触发 MSI/MSI-X，让 driver 和应用观察到进度。
 
-## 3. 推荐学习顺序与交付边界
-
-每个主题依次解释系统位置、前提与核心机制、Linux 观察方法、Debug 分支，并给出少量可执行的观察方法。下表是学习顺序，不是主题完成清单。
-
-| 顺序 | 主题与需要回答的问题 | 主要观察入口 | 推荐落点与完成证据 |
+| Fabric | 主要节点 | 典型承载 | 不能由它单独推出 |
 | --- | --- | --- | --- |
-| 1 | 物理服务器与 NUMA：CPU socket、内存控制器、DIMM、GPU/HBM、NIC、NVMe、PCIe Switch 如何连接；BMC/MCU/CPLD 位于哪里 | 平台框图、`lscpu`、`numactl -H` | `cluster-and-hardware`；能画出主机内存、IO、GPU fabric 与管理关系，解释 socket 不一定等于 NUMA node |
-| 2 | PCIe 拓扑与身份：Root Complex、Root Port、Bridge、Endpoint、domain、BDF；Switch 端口如何表示 | `lspci -D -t`、sysfs 父路径 | 本目录 02；能从 endpoint 追踪上游并区分 BDF、槽位与设备身份 |
-| 3 | 从上电到枚举：BIOS/UEFI、ACPI、BMC 与设备 firmware 的职责；链路、扫描和资源处理的依赖 | 启动日志、平台配置、BMC 事件 | `cluster-and-hardware`；能区分未枚举与驱动未初始化，提出可验证的下一步 |
-| 4 | PCIe 资源与传输：配置空间、BAR、MMIO、DMA、IOMMU、MSI/MSI-X、速率/宽度、AER | `lspci -vv`、`resource`、`/proc/iomem`、内核日志 | 本目录 04—07；能解释枚举成功为何不代表资源和数据通路可用 |
-| 5 | Linux device model：bus/device/driver/class，匹配、probe、绑定、模块与驱动的区别 | `/sys/devices`、`/sys/bus/pci`、`driver`、`lspci -k` | 本目录 08，关联 OS；能区分不存在、未绑定、probe 失败与运行期故障 |
-| 6 | 用户态可见性：KMD、用户态驱动、CUDA/NVML、设备节点、权限、容器与编号 | `/dev`、`/proc`、`nvidia-smi`、class 路径 | 本目录 09，关联 GPU/OS；能追踪宿主机可见而应用不可见的原因 |
-| 7 | 多 GPU 和跨机通信：NVLink/NVSwitch、FM、RDMA、GPUDirect RDMA、NCCL 与 NUMA/PCIe 路径 | GPU 拓扑、RDMA 信息、FM/NCCL 日志 | 本目录 10，链接既有 RDMA/NCCL 专题；能区分物理路径与软件选路 |
-| 8 | 综合排障：未枚举、BDF 消失、链路退化、probe 失败、GPU/NIC 不可见、拓扑不符 | 正常/异常快照、日志时间线、平台资料 | 本目录 11；形成证据 → 假设 → 验证 → 缩小范围的案例，而非只罗列命令 |
+| CPU/Memory fabric | CPU、cache、memory controller、DRAM、socket interconnect | CPU load/store、coherence、跨 NUMA 访问 | GPU/NIC 的 PCIe 父路径 |
+| PCIe IO fabric | Root Complex、Root Port、Switch port、Endpoint | configuration、MMIO、DMA、P2P、MSI/MSI-X | NVLink 邻接或网络端到端路径 |
+| Accelerator fabric | GPU、NVLink、NVSwitch | GPU peer access、copy 和 collective payload | Host 枚举、KMD 和 CUDA 已正常 |
+| Network fabric | NIC/HCA、link、switch/router、远端 NIC | Ethernet、InfiniBand 和 RoCE 数据 | 本机 GPU memory 已能被 NIC peer DMA |
+| Management fabric | BMC、CPLD/MCU、I2C/SMBus/MCTP/PLDM、管理网 | power、reset、telemetry、inventory、KVM | Host 已枚举或应用可使用设备 |
 
-第一遍不展开 PCIe 包格式、完整内核调用链或 NCCL 全部算法。源码研究进入具体主题后再固定 kernel/driver 版本和符号；实验完成状态必须由真实结果支持。
+全程至少维护四张互相映射的图：Physical Topology 记录 board、riser、cable、Retimer、Switch 与共享 power/reset domain；PCIe Logical Topology 记录 Root Port、Bridge、Endpoint、BDF 和 link；NUMA Topology 记录 CPU、Host memory、GPU 与 NIC locality；Accelerator/Network Topology 记录 NVLink、NVSwitch、NIC port 和远端网络。Management 关系叠加到物理图和生命周期中。任何一张图都不能替代另外三张。
 
-## 4. 参考模型：DGX H100 与教学用 PCIe 地址
+### 设备状态不是“正常/异常”二分法
 
-选用 NVIDIA DGX H100 作为贯穿案例。官方配置包含双 Intel Xeon CPU、8 张 H100 GPU、4 颗 NVSwitch，以及 ConnectX 网络设备和 NVMe 存储，并提供整机拓扑图。固定使用 H100 代际，不能把 H200、B200 或不同 OEM 的 HGX 布线和软件要求直接混入。[NVIDIA DGX H100/H200 系统介绍与拓扑](https://docs.nvidia.com/dgx/dgxh100-user-guide/introduction-to-dgxh100.html)
+贯穿后续所有 Level 的状态链是 `Present → Enumerated → Driver Bound → Firmware Initialized → Configured → Functional → Healthy → Performance Validated`。这些状态逐级增加证据，但不是简单布尔值：设备 Functional 仍可能因为 PCIe 降宽、ECC、AER、NVLink degrade、thermal throttling 或 power limit 而不 Healthy；单次测试成功也不等于性能已经验证。
 
-下面是教学抽象，省略实际端口数量、设备归属和支路，不代替官方整机布线图：
+本级产物是一张单页总图，至少放入 CPU/DRAM、PCIe Root/Switch、GPU/HBM、NIC、NVLink/NVSwitch、Network、BMC/CPLD/MCU，并为每个对象标注系统域、观察世界、Fabric 和主要路径。通过标准是能解释“BMC 看见 GPU”“`lspci` 看见 GPU”“CUDA 能使用 GPU”和“NCCL 性能正常”为何是四种不同证据。
+
+## Level 1：建立物理结构与 Inventory
+
+本级路线是“机箱与基础设施 → 板级连接 → Host 组件 → Device 板卡 → Management 组件 → 多视角 Inventory”。目标是先回答“机器里应该有什么、当前各观察者分别看见什么”，不急于推断软件根因或通信路径。
+
+### 从物理装配识别故障域
+
+物理服务器由 chassis、motherboard/baseboard、riser、backplane、connector、cable、Retimer、PCIe Switch、CPU/DIMM、GPU、NIC、NVMe、PSU、VRM、fan 和传感器等组成。板卡、芯片、port、PCI function 和用户态 device 不是一一对应关系；物理相邻也不等于 PCIe 或 NUMA 相邻。Inventory 必须保留共享 power、reset、cooling、riser、cable 和 Switch 上行，因为多个 Endpoint 同时消失时，这些共同实体可能形成故障域。
+
+### Host 与 Management 的 Inventory 不能互相替代
+
+Host OS 可以发现 CPU、NUMA node、PCI function、Bridge、GPU、NIC、NVMe、IOMMU group、driver 和 system service；Management 可以通过 BMC、FRU、presence、sensor 和 SEL 观察板卡、PSU、fan 与环境状态。BMC inventory 中存在一张 GPU 板卡，不能证明 PCIe link 已训练或 Linux 已建立 `pci_dev`；Host 枚举到 GPU，也不能证明板级传感器、供电冗余或管理链路健康。
+
+| Inventory 层 | 典型入口 | 能证明什么 | 不能证明什么 |
+| --- | --- | --- | --- |
+| 物理/BOM | service manual、block diagram、slot/serial、现场检查 | 平台设计和实体部件预期 | 当前链路或软件状态 |
+| Management | Redfish/IPMI、BMC Web、FRU、sensor、SEL | 带外可见性、presence、power/thermal 线索 | Host 已完成 PCIe 枚举 |
+| Host hardware | `lscpu`、`lspci`、sysfs | 当前内核发现的 CPU/PCI 对象 | driver、runtime 或性能正常 |
+| Host function | `/dev`、netdev、RDMA device、`nvidia-smi` | driver 和部分功能接口已经建立 | P2P、GDR、collective 或性能正常 |
+
+本级产物是一份带来源的 Inventory，记录平台预期数量、物理槽位/板卡标识、Host 侧对象、Management 侧对象、采集时间和未知项。通过标准是面对“少一张 GPU”时，能先判断缺失发生在 BOM/physical presence、BMC inventory、PCIe inventory、driver/function inventory 还是用户态 inventory。主笔记是 [[02-AISystem/cluster-and-hardware/01-物理服务器、NUMA与PCIe根层次|01 物理服务器、NUMA 与 PCIe 根层次]] 和 [[02-AISystem/cluster-and-hardware/03-从上电到设备枚举：Firmware与Linux的职责边界|03 从上电到设备枚举]] 的物理与管理部分。
+
+## Level 2：建立 CPU、Memory、NUMA 与 IO Root 的位置模型
+
+本级路线是“socket/core/cache → memory controller/DIMM/DRAM → socket interconnect → Host Bridge/Root Complex → Device locality”。目标是把 Host world 从一个抽象盒子展开为线程、页面和 Device 三种不同的位置。
+
+### 三种位置必须分别观察
+
+线程运行在哪组 CPU，Host page 实际分配在哪个 NUMA node，GPU/NIC 从哪个 IO root 接入，是三种相关但不等价的位置。CPU affinity 不能替代 memory placement；`numa_node` 相同不能证明两个 Device 共享 PCIe Switch；PCI domain、root bus、socket 和 NUMA node 也不是同一编号系统。
 
 ```text
-主机内存与 PCIe IO
- DRAM ─ CPU0 ═══ CPU互联 ═══ CPU1 ─ DRAM
-         │                     │
-      PCIe 根层次           PCIe 根层次
-         │                     │
-       Switch / GPU / NIC / NVMe 等分支
-
-GPU 高速互联
- GPU0 ... GPU7 ── NVLink ── NVSwitch fabric
-
-平台管理关系（不是 GPU 数据传输链）
- BMC ── 板级管理接口 ── 传感器、供电控制、MCU/CPLD 等
+CPU socket 0 / NUMA A                         CPU socket 1 / NUMA B
+  ├─ cores/cache                                ├─ cores/cache
+  ├─ memory controller ─ DRAM A                 ├─ memory controller ─ DRAM B
+  └─ Host Bridge / Root Complex                 └─ Host Bridge / Root Complex
+       ├─ GPU0 / GPU1                                ├─ GPU2 / GPU3
+       └─ NIC0                                      └─ NIC1
+                ╰──────── socket interconnect ───────╯
 ```
 
-CPU socket 与 NUMA node 不保证一一对应，取决于处理器与配置。PCIe 树也不能完整描述 NVLink 路径或管理连接。实际 Debug 至少要区分主机 IO/内存关系、GPU fabric 和管理关系，再将它们通过同一设备身份对齐。
+分析 Host buffer ↔ GPU 时，要同时问应用线程在哪里、buffer 页面在哪里、GPU 从哪个 IO root 接入；分析 GPU ↔ NIC 时，NUMA locality 只是初筛，还需要 Level 4 的 PCIe 父路径和 Level 8 的 peer-memory/GDR 条件。
 
-BIOS/UEFI 是主机平台 firmware，负责启动与平台初始化并向 OS 提供相关描述；BMC 是运行自身 firmware 的管理控制器。MCU 是微控制器，CPLD 是可编程逻辑器件，可能承担供电时序、复位或板级状态控制，但具体职责必须查目标平台资料。设备 firmware 运行于设备侧，其生命周期不等于主机 OS 生命周期。
+本级产物是一张同时标出 CPU 集合、Memory node、Root Complex、GPU 和 NIC 的 NUMA 图。通过标准是能解释“GPU 与 NIC 都显示 node 0”为何不足以证明路径最短或 GDR 可用，并能指出跨 socket data/control/completion 各自可能经过的资源。主笔记是 [[02-AISystem/cluster-and-hardware/01-物理服务器、NUMA与PCIe根层次|01 物理服务器、NUMA 与 PCIe 根层次]]。
 
-KMD 指 kernel-mode driver，是驱动的内核态部分；用户态 CUDA 驱动库、管理库与应用不因此变成内核组件。FM 在本学习模型中暂指 NVIDIA Fabric Manager，它是管理 NVSwitch fabric 的用户态服务，不是 firmware 的缩写，也不代表所有厂商所说的 FM。它与内核驱动及设备协作，具体要求随平台代际变化。[NVIDIA Fabric Manager](https://docs.nvidia.com/datacenter/tesla/fabric-manager-user-guide/)
+## Level 3：理解 Management、Firmware 与启动生命周期
 
-## 5. 从物理分支到 BDF、sysfs、driver 和用户态
+本级路线是“standby power/BMC → CPLD/MCU 的 power、clock、reset 与 presence → BIOS/UEFI 初始化 CPU/Memory/IO → ACPI 等平台描述 → PCIe link training/enumeration → Linux/driver → Device/Fabric/runtime”。目标是把静态部件放回时间轴，确定每个阶段由谁负责、输出什么证据以及下游依赖什么前提。
 
-以下全部 BDF、GPU index 与接口编号均为教学假设，不是 DGX 固定编号，也不是服务器实测。为理解 Switch 的软件表示，仅取一个示意分支：
+### Management world 与 Host world 的职责边界
+
+BMC 通常是拥有自身处理器、内存、存储、网络和 firmware 的独立管理计算机，可以在 Host OS 未启动时读取 sensor、记录 SEL、提供 KVM 和执行电源控制。CPLD、MCU、FRU/EEPROM、PSU、VRM 和 fan controller 更接近板级控制，具体职责取决于平台设计。Redfish/IPMI 是管理接口，不代表目标平台实现所有资源。[DMTF Redfish Specification](https://www.dmtf.org/sites/default/files/standards/documents/DSP0266_1.23.0.html)
+
+BIOS/UEFI 属于 Host firmware，负责 CPU、Memory 和平台早期初始化，并通过 ACPI 等机制向 OS 描述 Host Bridge、NUMA affinity、地址窗口和中断信息。Device firmware 属于 GPU/NIC/NVMe 等设备。Fabric Manager 则是在需要它的 NVIDIA NVSwitch 平台上运行于 Host 用户态的管理服务，通过 driver 与 Device 协作；它不是 BMC、KMD 或 Device firmware。[NVIDIA Fabric Manager](https://docs.nvidia.com/datacenter/tesla/fabric-manager-user-guide/)
+
+### 从上电到端到端通信的阶段表
+
+| 阶段 | 主要负责人 | 关键输出 | 下游缺失时的优先边界 |
+| --- | --- | --- | --- |
+| 物理前提 | BMC、CPLD/MCU、PSU/VRM、board logic | power、clock、reset、cooling、presence | Host 尚不足以判断 PCI function |
+| 平台初始化 | BIOS/UEFI、CPU/Memory firmware | CPU/DRAM 可用、ACPI/平台描述、IO 初始条件 | Linux 尚未建立 device object |
+| 链路与枚举 | Host firmware/Linux PCI core 与 Device | link、bus number、BDF、BAR/resource | 已进入 PCIe/资源边界，不等于 driver 可用 |
+| 驱动接管 | Linux PCI core、GPU/NIC KMD | match/probe、DMA/IRQ、功能接口 | 问题位于 probe 或运行期初始化 |
+| Device/Fabric 就绪 | Device firmware、driver、必要服务/FM | GPU/NIC/NVLink/NVSwitch 等工作状态 | 单 Device 正常不等于 peer 可用 |
+| 用户态发现 | CUDA/NVML/libibverbs 等 | runtime device、权限和 capability | Host 可见与应用视图可能不一致 |
+| 通信执行 | NCCL/MPI 与 GPU/NIC engine | transport、collective、结果与性能 | 才能讨论端到端选路和吞吐 |
+
+本级产物是一条“阶段—负责人—输入—输出—观察入口”的启动时间线。通过标准是能把“整机不上电”“BMC 正常但 Host 不启动”“GPU 不在 `lspci` 中”“BDF 存在但 probe 失败”“单卡正常但 Fabric 未就绪”放到不同阶段，并明确下一项所需证据。主笔记是 [[02-AISystem/cluster-and-hardware/03-从上电到设备枚举：Firmware与Linux的职责边界|03 从上电到设备枚举]]。
+
+## Level 4：掌握 PCIe 组成、资源、传输与链路健康
+
+本级路线是“Host Bridge/Root Complex → Root Port → Switch upstream/downstream port → Retimer/physical link → Endpoint → BDF/bus range → configuration space → BAR/MMIO → DMA/IOMMU → MSI/MSI-X → link state/AER/recovery”。这是主干中机制最密集的一层，目标是把物理部件转换成 Host 可发现、可寻址、可传输并可报告错误的 IO 系统。
+
+### 从机械装配到 PCIe 逻辑树
+
+Root Complex 是主机系统与 PCIe 层次连接的逻辑整体，Root Port 从根侧伸出链路；Switch upstream port 接向 Host，downstream port 扩展分支；GPU、NIC、NVMe 等 Endpoint 位于叶子或设备侧。Root Port 和 Switch port 在配置模型中表现为 Bridge function，而 Retimer、connector 和 cable 通常位于信号路径却不增加一个 PCI Bridge 层级。
 
 ```text
-PCI root bus 0000:00
+Host Bridge / root bus 0000:00
 └─ 0000:00:01.0  Root Port
    └─ 0000:01:00.0  Switch upstream port
-      ├─ 0000:02:00.0  downstream port
-      │  └─ 0000:03:00.0  GPU function
-      └─ 0000:02:01.0  downstream port
-         └─ 0000:04:00.0  NIC function
+      ├─ 0000:02:00.0  downstream port ─ 0000:03:00.0 GPU
+      └─ 0000:02:01.0  downstream port ─ 0000:04:00.0 NIC
 ```
 
-`0000:03:00.0` 表示 domain `0000`、bus `03`、device `00`、function `0`。BDF 通常指 bus/device/function，Linux 常展示带 domain 的完整地址。它定位 PCI function，不是物理卡序列号，也不能单凭该值确定机箱槽位。一个物理设备可能暴露多个 function；地址分配也可能因配置或枚举变化而改变。
+`0000:03:00.0` 只标识一个 function 在当前 PCI 地址空间的位置，不是第三张卡、第三个 slot 或 NUMA node 0。Bridge 的 Primary、Secondary、Subordinate bus number 描述下游总线范围；共同上游揭示共享链路和候选故障域。BDF 可能随枚举条件变化，必须与 slot/serial、sysfs realpath 和用户态稳定标识互相映射。
 
-该 GPU 的查找入口与真实 sysfs 父路径可以对应为：
+### PCIe 建立四种基础能力
+
+| 能力 | 核心对象 | 解决的问题 | 成立后仍不能证明 |
+| --- | --- | --- | --- |
+| 发现与身份 | config space、Vendor/Device ID、Class、BDF、capability | Host 如何找到并识别 function | driver 已工作 |
+| 寻址与控制 | BAR、MMIO、Bridge window、Above 4G 等资源 | CPU/driver 如何访问 Device 寄存器和窗口 | payload 必须由 CPU 搬运 |
+| 数据搬运 | Memory Read/Write、DMA、P2P、IOMMU/IOVA | Device 如何访问 Host memory 或 peer | DMA 必然 zero-copy |
+| 完成与错误 | completion、queue state、MSI/MSI-X、AER、link status | 请求何时完成、错误在哪层报告 | 数据语义和端到端功能正确 |
+
+配置空间可读，BAR 仍可能分配失败；BAR 可用，DMA mapping 或 Device firmware 仍可能失败；driver 已绑定，链路仍可能降速、报 AER 或发生 surprise down。`LnkCap` 表示能力，`LnkSta` 表示当前协商状态；ACS 描述访问控制能力，IOMMU group 描述隔离粒度，二者都不能单独证明 P2P/GDR 实际可用。
+
+本级产物是一张带 BDF、Bridge 类型、bus range、link speed/width 和 NUMA 的 PCIe Tree，以及一条 endpoint 的资源/传输说明。通过标准是拿到任意 BDF 后，能说明它是什么 function、经过哪些上游端口、如何被 CPU 控制、如何 DMA、如何报告完成，并能从共同分支或降速证据提出下一步。对应笔记按依赖阅读：[[02-AISystem/cluster-and-hardware/02-PCIe拓扑与BDF：从设备地址追踪上游|02 PCIe 拓扑与 BDF]] → [[02-AISystem/cluster-and-hardware/04-配置空间、BAR与MMIO：从设备身份到地址资源|04 BAR/MMIO]] → [[02-AISystem/cluster-and-hardware/05-DMA与IOMMU：设备如何访问内存|05 DMA/IOMMU]] → [[02-AISystem/cluster-and-hardware/06-MSI与MSI-X：从数据完成到中断通知|06 MSI/MSI-X]] → [[02-AISystem/cluster-and-hardware/07-PCIe链路、AER与错误恢复：从可见设备到运行中稳定性|07 链路/AER/恢复]]。
+
+## Level 5：建立 Linux Device Model 与设备可见性阶梯
+
+本级路线是“PCI core 创建 device → `/sys/devices` 表达父子关系 → bus/device/driver/class 建模 → match/probe/bind → devtmpfs/udev 建立接口 → systemd service 和用户态库继续初始化 → container/namespace/permission 决定应用视图”。目标是把 PCI function 映射成 Linux 对象，再解释为什么 Host 看见设备不等于应用可以使用。
+
+### 身份链与观察入口
 
 ```text
-/sys/bus/pci/devices/0000:03:00.0
-  → /sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:00.0/0000:03:00.0
-
-/sys/bus/pci/devices/0000:03:00.0/driver
-  → /sys/bus/pci/drivers/nvidia       # 假定成功绑定 NVIDIA 驱动
+physical board / slot / serial
+        ↓ current enumeration
+PCI BDF
+        ↓ Linux hierarchy
+/sys/devices/.../<BDF>
+        ↓ driver binding
+/sys/bus/pci/drivers/<driver>
+        ↓ functional interface
+/dev node / netdev / RDMA device / GPU UUID / CUDA ordinal
 ```
 
-`/sys/bus/pci/devices` 提供按 BDF 查找的入口；解析链接后的 `/sys/devices` 路径表达内核设备父子层次。它不是机箱机械装配图。设备目录中的 `vendor`、`device` 是设备标识，`config` 暴露配置空间，`resource` 描述资源，不能把这些信息都理解成 GPU 显存内容。[Linux PCI sysfs](https://docs.kernel.org/PCI/sysfs-pci.html)
+`/sys/bus/pci/devices/<BDF>` 是按地址查找的入口，解析后的 `/sys/devices` realpath 表达内核父子层次；`driver` link 表达当前管理关系。`lspci` 观察 PCI configuration，sysfs 表达内核 object/attribute，`/dev` 提供字符或块设备接口，`/proc` 提供进程和运行状态，`dmesg` 读取 kernel ring buffer，journal 可以收集 kernel 与 service log。module 候选、driver binding、设备节点和 runtime 枚举必须分别判断。[Linux PCI sysfs](https://docs.kernel.org/PCI/sysfs-pci.html) [Linux Driver Binding](https://docs.kernel.org/driver-api/driver-model/binding.html)
 
-| 物理/总线对象 | 内核关系 | 用户态映射与边界 |
+### 可见性阶梯
+
+```text
+Management inventory / physical presence
+        ↓
+PCI function and BDF
+        ↓
+Linux pci_dev and sysfs hierarchy
+        ↓
+driver match / probe / binding
+        ↓
+device node / netdev / RDMA device
+        ↓
+CUDA / NVML / verbs visibility
+        ↓
+P2P / NVLink / RDMA capability
+        ↓
+NCCL transport and successful data transfer
+```
+
+最后一个已有证据成立的台阶，就是当前排障边界。BDF 不存在时不能先研究 CUDA；BDF 存在但没有 `driver` link 时应检查 match/probe；driver 已绑定而 `nvidia-smi` 失败时，范围进入 Device initialization、设备接口、用户态库或权限；宿主机可见而容器不可见时，应检查 namespace、device mapping 和 library environment。
+
+本级产物是一条实体设备的完整身份链和当前可见性状态。通过标准是能够解释“`lspci` 有 GPU 但 `nvidia-smi` 失败”“有 module 但没有 binding”“Host 可见但 container 不可见”分别停在哪一层。主笔记是 [[02-AISystem/cluster-and-hardware/08-Linux设备模型、驱动与sysfs：把BDF映射到内核对象|08 Linux 设备模型、驱动与 sysfs]] → [[02-AISystem/cluster-and-hardware/09-KMD、用户态驱动与设备可见性：从内核绑定到GPU通信|09 KMD 与用户态可见性]]。
+
+## Level 6：理解 GPU 软件栈与单卡 control/data/completion 路径
+
+本级路线是“GPU PCI function → GPU KMD → Device firmware → UMD/CUDA library → context/memory allocation → command submission → copy/compute engine → event/interrupt/completion”。目标是把“CUDA 能否使用 GPU”拆成控制、数据和完成三条路径，并建立单卡功能的最小验证顺序。
+
+### GPU 不是被 CPU 逐字节驱动的被动外设
+
+GPU 有 command processor、copy engine、计算单元、HBM、地址转换和 Device firmware。Host 通过 configuration space 识别 PCI function，通过 BAR/MMIO 和 queue/doorbell 建立控制，通过 DMA mapping/IOMMU 允许 Device 访问 Host memory，再通过 queue state、event、status writeback 或 MSI/MSI-X 观察完成。CPU 参与 context、buffer、mapping 和 command 的建立，不表示 CPU core 搬运每个 payload byte。
+
+```text
+Application / CUDA Runtime
+        ↓ API
+CUDA user-space driver
+        ↓ ioctl / system call
+GPU KMD ─ memory / DMA / IOMMU / IRQ
+        ↓ MMIO / command buffer / doorbell
+GPU firmware / command processor
+        ↓
+copy engine / compute engine / HBM
+        ↓ event / status / interrupt / completion
+Application observes progress
+```
+
+Host↔GPU 数据路径从源 buffer 到目标 buffer，而不是从 API 名称到 API 名称。Host page 的 NUMA placement、DMA address/permission、PCIe path、GPU memory 和 copy engine 都可能影响传输。DMA 表示 Device 可以在 CPU 不逐字节复制的情况下搬运数据，并不自动等于 zero-copy；pin、DMA map、GPU memory export 和同步语义是不同契约。[Linux DMA API](https://docs.kernel.org/core-api/dma-api.html)
+
+### 单卡验证必须区分 Functional、Healthy 与 Performance Validated
+
+单卡验证按“identity/driver → firmware/management state → context 与 allocation → Host↔Device copy → 最小 kernel → error/health → controlled performance”推进。`nvidia-smi` 正常通常只能支持 driver 与部分管理接口成立，不能替代 CUDA allocation、copy、kernel execution 或持续性能验证。反过来，应用失败也不能在没有日志和最小测试时直接归因为硬件。
+
+本级产物是一条 GPU control/data/completion 路径和一组分层单卡验证记录。通过标准是单卡失败时，能判断问题更接近用户态库、KMD、Device firmware、memory/DMA、command queue、completion 还是 hardware health。主笔记是 [[02-AISystem/cluster-and-hardware/09-KMD、用户态驱动与设备可见性：从内核绑定到GPU通信|09 KMD 与用户态可见性]]，并关联 [[02-AISystem/GPU/GPU|GPU 专题]]。
+
+## Level 7：建立节点内 GPU Fabric 与多卡通信模型
+
+本级路线是“GPU PCIe locality → CUDA P2P capability → PCIe P2P → NVLink link → NVSwitch fabric → Fabric Manager/driver 协作 → software topology → NCCL P2P/SHM/NVL transport”。目标是区分 Host IO fabric 与 accelerator fabric，并说明同一对 GPU 为什么存在多条候选数据路径。
+
+### PCIe 与 NVLink/NVSwitch 是叠加关系
+
+PCIe 仍负责 GPU 的 Host 枚举、配置、KMD 接管以及部分 control/data path；NVLink/NVSwitch 提供 GPU 之间的 scale-up fabric。PCIe 可见不等于 NVLink fabric 正常，NVLink 物理存在也不等于 Fabric 已配置、CUDA peer access 可用或 NCCL 实际选择该路径。`nvidia-smi topo -m` 等工具给出软件观察到的关系，不替代平台布线、PCIe 父路径或带宽测试。
+
+```text
+候选 A：GPU0 HBM ─ NVLink/NVSwitch ─ GPU1 HBM
+候选 B：GPU0 HBM ─ PCIe P2P ─ GPU1 HBM
+候选 C：GPU0 HBM ─ Host DRAM staging ─ GPU1 HBM
+```
+
+分析 GPU pair 时，需要同时记录两张卡的 PCIe 共同上游、NUMA locality、NVLink/NVSwitch 邻接、P2P capability、IOMMU/ACS 条件和软件 transport。共享同一 PCIe Switch 只说明候选物理路径较近，不证明 P2P 被允许或被选用；跨 socket 也不是必然失败，但会引入不同的资源和成本。
+
+本级产物是一张 GPU pair 路径矩阵，为每类 GPU 对记录 PCIe/NUMA、NVLink/NVSwitch、P2P capability、候选 transport 和未知项。通过标准是能解释单 GPU 正常但多 GPU 失败、NVLink 异常、相同型号 GPU pair 性能不同等现象应从哪套 Fabric 和哪个初始化阶段开始查。主笔记是 [[02-AISystem/cluster-and-hardware/10-NVLink与NVSwitch、RDMA、NUMA和NCCL：从拓扑到通信路径|10 NVLink/NVSwitch、RDMA、NUMA 与 NCCL]]。
+
+## Level 8：建立 Network、RDMA 与 GPUDirect RDMA 路径
+
+本级在 Level 6 后可与 Level 7 并行。本级路线是“NIC PCI function → netdev/RDMA device 与 driver → port/link → PD/MR/QP/CQ 等 verbs 对象 → InfiniBand/RoCE path → GPU peer-memory/register → GPUDirect RDMA → NIC/GPU affinity 与 rail mapping”。目标是把 NIC 的 Host 侧身份、RDMA control plane、DMA data plane 和外部 Network fabric 串成一条路径。
+
+### NIC 同时属于 PCIe 与 Network 两套 Fabric
+
+NIC/HCA 通过 PCIe 接入 Host，可能暴露 PCI function、netdev、RDMA device 和多个 port；它再通过 InfiniBand、RoCE 或 Ethernet 连接 Network。PCIe BDF、interface name、RDMA device、port 和 physical connector 需要显式映射。`rdma link` 或 port active 只说明相应层的接口/链路状态，不能证明 GPU memory 已注册或 GDR 已工作。
+
+普通 RDMA 可以让 NIC DMA Host memory；GPUDirect RDMA 的目标是让 NIC 在受支持条件下直接访问 GPU memory，减少 Host staging。它仍依赖 GPU/NIC driver、memory export/register、peer reachability、IOMMU/PCIe 平台条件、权限和同步语义。[NVIDIA GPUDirect RDMA](https://docs.nvidia.com/cuda/gpudirect-rdma/)
+
+```text
+local GPU HBM
+   ↓ peer mapping / PCIe path
+local NIC DMA engine
+   ↓ InfiniBand / RoCE / Ethernet fabric
+remote NIC DMA engine
+   ↓ peer mapping / PCIe path
+remote GPU HBM
+```
+
+本级产物是一张 GPU↔NIC↔Network 映射表和一条跨节点数据路径，明确两端 GPU/NIC BDF、NUMA/PCIe 父路径、RDMA device/port、network link、memory registration 和 completion。通过标准是能把“NIC 可见”“RDMA port active”“Host-memory RDMA 成功”“GDR 成功”和“跨节点 GPU 带宽正常”区分为递进证据。主笔记是 [[02-AISystem/cluster-and-hardware/10-NVLink与NVSwitch、RDMA、NUMA和NCCL：从拓扑到通信路径|10 通信路径]]，并关联 [[02-AISystem/Distributed/RDMA/RDMA|RDMA 专题]]。
+
+## Level 9：把 NCCL Collective 自顶向下映射到硬件路径
+
+本级路线是“workload/collective semantics → rank 与参与范围 → topology discovery → algorithm/channel plan → P2P、SHM、NET/IB、NET/Socket 等 transport → GPU/NIC DMA 与 Fabric → completion → bandwidth/latency”。目标是把应用层 collective 还原为 Level 2—8 已建立的具体对象和资源。
+
+### 从 collective 语义向下约束路径
+
+以 AllReduce 为例，先确定参与 rank、message size、同步语义和单机/跨机范围；NCCL 再基于可见拓扑和 capability 选择 algorithm、channel 与 transport；transport 要求 CUDA P2P、shared memory、RDMA 或 socket 等具体能力；这些能力最终落到 buffer、DMA engine、queue、PCIe/NVLink/Network 和共享交换资源。
+
+```text
+workload / collective semantics
+        ↓ participants, message size, synchronization
+algorithm and channel plan
+        ↓ ring / tree / pipeline / channels
+transport capability
+        ↓ P2P / SHM / NET-IB / NET-Socket
+local execution path
+        ↓ buffer mapping / GPU engine / NIC DMA / CQ
+physical fabrics and shared resources
+        ↓ PCIe / NVLink-NVSwitch / NUMA / Network
+measured function, latency, bandwidth and stability
+```
+
+NCCL 是路径发现和编排者，不是 PCIe、NVLink 或 RDMA 的底层管理者。日志显示 `P2P`、`SHM`、`NET` 或 `NVL`，说明软件选择或尝试了某种 transport，不反向证明物理链路按额定速率工作；底层缺失时 NCCL 也可能 fallback，而功能成功会掩盖路径变化。[NCCL Troubleshooting](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/troubleshooting.html)
+
+### 五类通信在这一层汇合
+
+| 场景 | Control path | Data path 候选 | 完成/观察 | 核心前提 |
+| --- | --- | --- | --- | --- |
+| CPU 控制 Device | PCI core/config；KMD/BAR/MMIO/queue | 以配置和控制访问为主 | config completion、register、log | enumeration、resource、driver |
+| Host buffer ↔ GPU | CUDA/KMD 建立 mapping 和 queue | DRAM ↔ PCIe ↔ GPU HBM | event、queue、IRQ | page placement、DMA/IOMMU、link |
+| GPU0 ↔ GPU1 | CUDA/NCCL 建立 peer operation | NVLink/NVSwitch、PCIe P2P、Host staging | GPU event、runtime/NCCL state | accelerator/PCIe topology、capability |
+| GPU ↔ NIC | verbs/NCCL、GPU/NIC driver 建立 MR/QP/CQ | GDR 或 Host staging | NIC CQ、GPU sync、IRQ | peer mapping、PCIe path、NIC link |
+| local GPU ↔ remote GPU | NCCL/MPI 编排两端与 Network | GPU↔NIC↔Network↔NIC↔GPU | 两端 queue/CQ 与 collective | 两端本地路径、Network、selection |
+
+### 从“能通”推进到“高性能”
+
+功能成功只证明路径闭合。性能还受固定延迟、每段 link/memory/NIC 的串行上限、Switch uplink 和 socket interconnect 的共享、transaction efficiency、DMA engine/queue/channel 并发、NUMA locality、Host staging/bounce/fallback，以及 thermal、power、AER/retry 和长期稳定性影响。
+
+| 性能维度 | 需要观察 | 常见误判 |
 | --- | --- | --- |
-| GPU function | PCI device → `nvidia` 驱动 | 用 `nvidia-smi` 查询 UUID、BDF、index；`/dev/nvidiaN` 是访问接口，不能由 BDF 猜 N，也不能直接把 N 当 CUDA ordinal |
-| NIC function | PCI device → `mlx5_core`；RDMA 功能还涉及 `mlx5_ib` 等组件 | 从 `/sys/class/net/<接口>/device` 和 `/sys/class/infiniband/<设备>/device` 反查；实际名称、层次和数量以系统为准 |
-| NVMe function | PCI controller → `nvme` 驱动 → namespace/block device | `/dev/nvme0n1` 是 namespace 对应的块设备；一张卡、一个 function、一个块设备不保证一一对应 |
-| PCIe Bridge | PCI device，有自身 BDF | 不要求对应应用可打开的 `/dev` 节点；无设备节点不等于枚举失败 |
+| 固定延迟 | software submit、doorbell、hop、protocol、completion/sync | hop 少对所有 message size 都更快 |
+| 持续带宽 | negotiated speed/width、memory bandwidth、NIC line rate | Endpoint 额定带宽就是端到端带宽 |
+| 共享竞争 | Switch uplink、Root Port、socket link、NIC port、Network | 单 pair 快，所以并发 pair 仍各自满速 |
+| 事务效率 | payload、read/write、header/credit、alignment | physical line rate 全部成为应用 payload |
+| 并发调度 | DMA engine、queue、channel、CQ/IRQ、pipeline | 增加 channel 必然线性提升吞吐 |
+| 回退与稳定性 | staging、Socket fallback、降速、AER、thermal/power | 一次成功代表路径和长期性能健康 |
 
-GPU index 可能变化，跨启动对照应保留 UUID 与 BDF；CUDA 可见设备过滤还可能改变应用中的编号。具体对应通过工具输出验证。[NVIDIA-SMI](https://docs.nvidia.com/deploy/nvidia-smi/index.html)
+本级产物是一条指定 collective 的端到端路径说明，包含 rank、buffer、algorithm/transport、每一跳 Fabric、共享资源、fallback 和 completion；再用受控结果验证假设。通过标准是能解释“为什么选择 P2P/SHM/NET”“为什么退回 Socket”“为什么功能成功但带宽低”，并提出能区分 topology、capability、configuration 和 performance bottleneck 的验证。主笔记是 [[02-AISystem/cluster-and-hardware/10-NVLink与NVSwitch、RDMA、NUMA和NCCL：从拓扑到通信路径|10 通信路径]]，并关联 [[02-AISystem/Distributed/NCCL/NCCL|NCCL 专题]]。
 
-`/sys` 是设备对象与属性视图；`/proc` 提供进程与内核运行信息；`/dev` 中的节点是字符/块设备接口，不是硬件清单。dmesg 读取内核日志缓冲区，kernel journal 在有相应日志服务时提供另一种事件入口。两者的保留范围与权限不同，日志没有记录不能直接证明事件未发生。
+## Level 10：形成跨世界整机诊断与性能验证闭环
 
-## 6. 第一轮观察：完成一次身份追踪
+本级路线固定为“Inventory → Topology → Control ownership → Initialization state → Link/Device health → Component function → End-to-End function → Performance”。目标不是记住更多命令，而是从最后一个已经有证据成立的边界出发，连接 Host、Device、Management 的观察结果，并设计最小且可判别的下一步。
 
-下列命令供 Linux 服务器执行，本轮未运行，没有生成实测结果。需要相应工具；读取内核日志或完整 PCI 信息可能受权限限制。先记录主机/容器环境、启动时间和版本，再使用本机实际 BDF 替换示例。仅观察，不执行 reset、remove、rescan、unbind 或 firmware 更新。
+### Host 与 BMC 必须交叉验证
+
+| Host OS | Management/BMC | 优先解释方向 |
+| --- | --- | --- |
+| 看得到 | 看得到 | driver、firmware、configuration、function、health/performance |
+| 看得到 | 看不到 | Management inventory、FRU、sensor 或对象映射 |
+| 看不到 | 看得到 | power/reset、PCIe link、Retimer、BIOS/enumeration |
+| 看不到 | 看不到 | physical connection、board、CPLD/MCU、power domain |
+| 基础功能正常 | 状态正常 | actual path、NUMA/affinity、fallback、shared resource、thermal/power |
+
+`dmesg` 只是 Host kernel 的观察窗口，不是整机真相；BMC inventory 也不是 PCIe 枚举结果。两侧证据必须带时间和对象身份对齐，历史记录、容器视图或变化后的 BDF 不能直接混用。
+
+### 统一故障推理顺序
+
+1. Inventory：预期和当前分别有哪些物理、Management、PCI 和功能对象？
+2. Topology：对象在 physical、PCIe、NUMA、Accelerator 和 Network 图中如何连接？
+3. Control：当前阶段由 BMC/CPLD、firmware、PCI core、KMD、Device firmware、service 还是 runtime 负责？
+4. State：最后成立的是 Present、Enumerated、Bound、Initialized、Configured、Functional、Healthy 还是 Performance Validated？
+5. Health：link speed/width、AER、ECC、NVLink、RDMA port、temperature、power 和 clock 是否异常？
+6. Function：单 GPU、copy/kernel、P2P、NVLink、Host RDMA、GDR 等最小能力是否分别成立？
+7. End-to-End：CUDA/RDMA/NCCL 是否使用预期 transport 和 data path？
+8. Performance：带宽、延迟、并发与稳定性是否符合当前拓扑和 workload 条件？
+
+| 现象 | 最后成立的证据 | 首要边界 |
+| --- | --- | --- |
+| BMC 有 GPU，Host 无 BDF | Management presence/inventory | power/reset/link/enumeration |
+| 多个相邻 Endpoint 同时消失 | 其余 Host 层次仍可见 | common upstream、riser/cable/Switch/power domain |
+| BDF 存在，无 driver | PCI enumeration | match/probe/control path |
+| driver 已绑定，应用不可见 | kernel binding | Device init、interface、permission/container、UMD |
+| GPU/NIC 可用但 peer/collective 失败 | 单 Device function | P2P/GDR/Fabric/Network/transport |
+| collective 成功但性能低 | End-to-End function | actual path、shared resource、locality、fallback、health |
+
+### 第一轮只读证据与最终产物
+
+下列命令只是 Host 侧观察入口，本项目没有在用户服务器执行。实际采集时应记录 machine model、kernel、driver、firmware、container/host boundary 和时间，并使用真实 BDF；不要在观察阶段执行 reset、remove、rescan、unbind、configuration write 或 firmware update。
 
 ```bash
 uname -r
+lscpu
+numactl -H
 lspci -D -t
 lspci -D -nnk
 
-# 替换为本机 lspci 中实际存在的完整 BDF
 bdf=0000:03:00.0
 if [ -d "/sys/bus/pci/devices/$bdf" ]; then
     readlink -f "/sys/bus/pci/devices/$bdf"
+    cat "/sys/bus/pci/devices/$bdf/numa_node"
     if [ -L "/sys/bus/pci/devices/$bdf/driver" ]; then
         readlink -f "/sys/bus/pci/devices/$bdf/driver"
-    else
-        printf '%s\n' '该设备当前没有 driver 链接'
     fi
-    cat "/sys/bus/pci/devices/$bdf/numa_node"
-else
-    printf '%s\n' '当前环境中未找到该 BDF，请先核对地址与宿主机视图'
 fi
 
 nvidia-smi --query-gpu=index,uuid,pci.bus_id,name --format=csv
+nvidia-smi topo -m
+rdma link
 journalctl -k -b
 ```
 
-`numa_node` 为 `-1` 表示关联信息未知，不是 node 0。NVIDIA 工具可能用更宽的 domain 字段显示 PCI 地址，比较前应统一表示。练习产物是一条由实际证据支持的“设备身份 → BDF → 父路径 → driver → 用户态标识”记录；没有 NVIDIA GPU 或工具不可用时，不伪造对应输出。
+本级产物是一份可复核案例：明确现象、environment 与时间，列出最后成立的状态、缺失证据、candidate hypothesis、最小验证、观察结果和被排除的解释。通过标准是对设备未枚举、probe 失败、GPU/NIC 不可见、NVLink/RDMA/NCCL 失败或性能下降，都能沿同一闭环缩小边界。主笔记是 [[02-AISystem/cluster-and-hardware/11-GPU服务器综合排障：从现象到证据链与最小验证|11 GPU 服务器综合排障]]。
 
-## 7. 从症状定位边界
+## 附录：参考模型、来源与适用边界
 
-排障从最后一个已经有证据成立的边界向前推进，并保留时间线。下面是候选检查方向，不是仅凭一条症状即可确定的根因。
+本系列以 NVIDIA DGX H100 作为固定参考平台之一：官方系统包含双 CPU、8 张 H100 GPU、4 颗 NVSwitch，以及 ConnectX 网络设备与 NVMe 存储，并提供整机拓扑入口。它用于展示三个世界和多套 Fabric 如何在真实整机中共存，不表示所有 OEM/HGX、H200、B200 或扩展机箱拥有相同布线、BDF 和软件要求。[NVIDIA DGX H100/H200 系统介绍](https://docs.nvidia.com/dgx/dgxh100-user-guide/introduction-to-dgxh100.html)
 
-| 症状 | 可以支持的判断 | 下一步缩小范围 |
-| --- | --- | --- |
-| BDF 不在 `/sys/bus/pci/devices` | 当前内核视图没有该地址的 PCI 对象 | 核对宿主机/容器、地址变化与设备身份；沿上游 Bridge 看缺失范围，对比启动和运行期日志 |
-| 多个相邻 endpoint 同时消失 | 可能存在共同上游故障，仍需证据 | 查共同 Switch、Root Port、供电/复位域；不能只重装各 endpoint 驱动 |
-| BDF 存在，无 `driver` 链接 | 当前未绑定驱动；不能证明 probe 曾运行 | 查 `lspci -k`、驱动匹配、模块状态、override 与 probe 日志 |
-| probe 失败 | 已进入驱动初始化尝试 | 对照错误时间、资源分配、firmware、版本及设备状态，不把所有错误归为 PCIe 物理故障 |
-| 驱动已绑定，GPU/NIC 工具不可用 | 绑定不足以证明功能可用 | 查运行期初始化、用户态库、设备接口、权限与容器暴露 |
-| 链路宽度/速率异常 | 需要对照能力、当前状态及平台预期 | 同时检查 endpoint 与上游端口，结合负载/电源状态、AER 与平台布线判断 |
-| 设备可用但多 GPU 通信失败或慢 | 问题进入数据路径或软件选择阶段，也可能暴露底层不稳定 | 检查 NVLink/fabric、FM、RDMA 网络、P2P 条件与 NUMA 亲和性，再看 NCCL 选路 |
+本文于 2026-09-13 建立，2026-09-15 以“三个世界、三条路径和多套 Fabric”重组，2026-09-16 形成 Level 0—10 能力路线，并进一步将原概念章节全部拆分、合入相应 Level，使分层本身成为全文结构。用户提供的整机架构材料用于确定问题范围和教学组织；技术事实继续以文内 Linux、DMTF、NVIDIA 官方资料及各专题来源为依据。本文没有连接服务器、读取真实拓扑或执行通信 benchmark，所有示意地址和路径都是教学构造。
 
-NCCL 运行依赖底层设备、拓扑和系统配置，不能用“CUDA 单卡正常”推导全部通信路径正常。[NCCL Troubleshooting](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/troubleshooting.html)
-
-## 8. 来源、适用范围与后续
-
-本轮于 2026-09-13 整理，使用前一轮已查阅的 Linux 与 NVIDIA 官方文档。这里记录来源支持范围，不代表已核查所有软件版本的实现。Linux 在线文档和 NVIDIA 文档会更新；进入源码、安装兼容性或平台操作主题后，再固定相应版本。
-
-| 实际使用来源 | 本文使用范围 |
+| 来源 | 本文使用范围 |
 | --- | --- |
-| [DGX H100/H200 系统介绍](https://docs.nvidia.com/dgx/dgxh100-user-guide/introduction-to-dgxh100.html) | H100 参考平台组成与官方拓扑入口；不支持本文教学 BDF 为实机编号 |
-| [Linux PCI sysfs](https://docs.kernel.org/PCI/sysfs-pci.html) | PCI 设备层次、属性与资源接口 |
-| [Linux Driver Binding](https://docs.kernel.org/driver-api/driver-model/binding.html) | 设备与驱动分离、匹配和绑定概念；不作为固定版本源码调用链 |
-| [Fabric Manager](https://docs.nvidia.com/datacenter/tesla/fabric-manager-user-guide/) | NVIDIA NVSwitch fabric 管理及平台差异 |
-| [NVIDIA-SMI](https://docs.nvidia.com/deploy/nvidia-smi/index.html) | GPU 标识查询与编号边界 |
-| [NCCL Troubleshooting](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/troubleshooting.html) | 通信故障与底层系统配置的关系；未执行 NCCL 测试 |
+| [Linux PCI sysfs](https://docs.kernel.org/PCI/sysfs-pci.html) | PCI device 属性、资源入口和 sysfs 映射 |
+| [Linux Driver Binding](https://docs.kernel.org/driver-api/driver-model/binding.html) | device/driver 分离、match、probe 与 binding 边界 |
+| [Linux DMA API](https://docs.kernel.org/core-api/dma-api.html) | DMA mapping、方向和生命周期的通用模型 |
+| [DMTF Redfish Specification](https://www.dmtf.org/sites/default/files/standards/documents/DSP0266_1.23.0.html) | Management 的标准化外部接口；不代表目标平台实现全部资源 |
+| [DGX H100/H200 系统介绍](https://docs.nvidia.com/dgx/dgxh100-user-guide/introduction-to-dgxh100.html) | H100 参考平台组成和拓扑入口；不支持教学 BDF 为实机编号 |
+| [NVIDIA Fabric Manager](https://docs.nvidia.com/datacenter/tesla/fabric-manager-user-guide/) | NVSwitch Fabric 管理服务的定位和平台差异 |
+| [NVIDIA-SMI](https://docs.nvidia.com/deploy/nvidia-smi/index.html) | GPU identity、PCI 信息和拓扑观察入口 |
+| [NVIDIA GPUDirect RDMA](https://docs.nvidia.com/cuda/gpudirect-rdma/) | GPU/NIC peer data path、topology 和平台约束 |
+| [NCCL Troubleshooting](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/troubleshooting.html) | collective 对 topology、shared memory、P2P 和 Network 条件的依赖 |
 
-仓库已有笔记用于定位与衔接，不因被链接就视为内容全部经过核查。本文的目录分工、教学图和 Debug 顺序属于教学组织与工程推理；硬件配置来自官方资料；示意地址不是事实记录。
+尚未确认用户实际服务器型号、CPU/GPU/NIC/PCIe Switch 代际、OS/kernel、driver、firmware、Fabric Manager 语义，以及已有《单机拓扑分析》XML 的采集来源。这些未知不妨碍建立 mental model，但会决定任何实机路径和故障结论的适用范围。下一阶段应使用一台真实服务器的 physical diagram、`lspci`/sysfs、NUMA、GPU/NIC 和 NCCL/RDMA 输出，把同一对象与同一次通信完整映射到 Level 0—10 的产物中。
 
-尚未确认用户实际服务器型号、OS/kernel/driver/firmware 版本、FM 的实际指代，以及已有拓扑 XML 的采集来源。这些信息不阻塞基础学习，但会决定后续平台实例与排障结论的适用范围。
-
-已成文主题按学习顺序衔接：
-
-1. [[02-AISystem/cluster-and-hardware/01-物理服务器、NUMA与PCIe根层次|物理服务器、NUMA 与 PCIe 根层次]]：主机内存、IO、GPU fabric 与管理关系。
-2. [[02-AISystem/cluster-and-hardware/02-PCIe拓扑与BDF：从设备地址追踪上游|PCIe 拓扑与 BDF]]：地址、Bridge 总线范围和 sysfs 父路径。
-3. [[02-AISystem/cluster-and-hardware/03-从上电到设备枚举：Firmware与Linux的职责边界|从上电到设备枚举]]：firmware、平台描述、PCI 发现与功能驱动接管。
-
-4. 第 4 阶段首篇 [[02-AISystem/cluster-and-hardware/04-配置空间、BAR与MMIO：从设备身份到地址资源|配置空间、BAR 与 MMIO]]：从设备身份到地址资源、上游窗口与资源失败。
-
-第 4 阶段第二篇 [[02-AISystem/cluster-and-hardware/05-DMA与IOMMU：设备如何访问内存|DMA 与 IOMMU]] 补齐设备到内存的地址与生命周期机制，依赖上一篇 BAR/MMIO，并衔接 RDMA 注册与 GPU peer memory。
-
-第 4 阶段第三篇 [[02-AISystem/cluster-and-hardware/06-MSI与MSI-X：从数据完成到中断通知|MSI 与 MSI-X]] 补齐完成通知、Linux IRQ、队列与 CPU affinity，依赖 DMA/IOMMU 的 buffer 生命周期。
-
-主线基础正文至此完成。下一步应以真实服务器快照、版本信息和受控通信测试补充第 1—11 篇中的实机验证。跨轮状态保存在 [[AI-Workspace/03-Projects/2026-09-GPU-Server-System/README|GPU 服务器系统学习项目]]；正文成文不代表完成实机验证。
+跨轮进度见 [[AI-Workspace/03-Projects/2026-09-GPU-Server-System/README|GPU 服务器系统学习项目]]；目录入口见 [[02-AISystem/cluster-and-hardware/cluster-and-hardware|集群与硬件]]。

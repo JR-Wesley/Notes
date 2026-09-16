@@ -8,7 +8,7 @@
 
 ## 资料版本与论述边界
 
-本文于 2026-09-12 依据 NVIDIA 官方 NVSHMEM API Guide 的 `latest` 页面核对，并以 [NVSHMEM 3.7.2 Release Notes](https://docs.nvidia.com/nvshmem/release-notes-install-guide/release-notes/release-3720.html)标识所处发布周期。`latest` 是滚动文档，未来版本可能增加 API 或调整限制；本文没有绑定 NVSHMEM 源码 commit，因此只讨论公开编程契约，不把某个 transport、地址换算公式、QP 布局或 progress engine 写成所有版本都成立的实现事实。
+本文于 2026-09-12 依据 NVIDIA 官方 NVSHMEM API Guide 的 `latest` 页面核对，并以 [NVSHMEM 3.7.2 Release Notes](https://docs.nvidia.com/nvshmem/release-notes-install-guide/release-notes/release-3720.html) 标识所处发布周期。`latest` 是滚动文档，未来版本可能增加 API 或调整限制；本文没有绑定 NVSHMEM 源码 commit，因此只讨论公开编程契约，不把某个 transport、地址换算公式、QP 布局或 progress engine 写成所有版本都成立的实现事实。
 
 文中的 C++/CUDA 片段用于解释控制关系，没有在本任务中编译或运行，也没有 GPU、NVLink、InfiniBand 或 IBGDA 实测结果。为保持主线清晰，示例省略错误检查；真实程序必须检查 CUDA 与 NVSHMEM 初始化、内存分配和 kernel launch 的返回状态。
 
@@ -126,7 +126,7 @@ NVSHMEM 操作可以从 host、CUDA stream 和 device kernel 发起。Host API �
 
 这些坐标不能相互替代。某个 block 的 `threadIdx.x == 0` 只选出了当前 block 的一个线程，没有选出 world PE 0；两个操作位于不同 CUDA stream，也不会因为它们由同一个 PE 提交就自动串行；host 上的完成操作与 device 发起的通信也不能未经 API 契约证明就视为同一个 completion domain。跨 stream 依赖通常需要 CUDA event 或明确同步，跨 NVSHMEM 发起域的完成关系则必须查对应 API 契约。B03 将系统分析这些组合。
 
-## 八、thread、warp 与 block API 表示协作发起范围
+## 八、thread、warp 与 Block API 表示协作发起范围
 
 device 端既有由单个 CUDA thread 调用的接口，也有带 `_warp` 或 `_block` 后缀的 thread-group 接口。后两者表示一个 warp 或整个 thread block 共同参与同一逻辑 NVSHMEM 操作，runtime 可以让多个线程协作搬运较大的连续数据。它们不是“任意线程都可独立调用的更快版本”：规定 group 内所有线程参与的接口必须由所有成员调用，并为共同参数传入一致值；若只有部分线程进入，可能产生未定义行为或死锁。
 
@@ -140,7 +140,7 @@ CUDA kernel 若调用 NVSHMEM wait、barrier 或其他 synchronization/collectiv
 
 Team 的关键不是“给 PE 分组”这一句定义，而是参与契约：同一个 collective 实例必须由 Team 中所要求的 PE 以匹配参数和兼容顺序调用，Team 外 PE 不参与；同一 PE 在多个 Team 中的相对编号可能不同；同一 Team 上不允许并发的 collective 不能被任意提交到不同 stream 后期待 runtime 自动排序。B06 会区分 synchronization collective 与 data collective，并讨论 broadcast、reduce、collect/fcollect 和 all-to-all 的数据布局。
 
-## 十、一个最小 ring PUT 程序如何贯穿这些抽象
+## 十、一个最小 Ring PUT 程序如何贯穿这些抽象
 
 下面的教学示例让每个 PE 把自己的 world PE 编号写到下一个 PE 的 `inbox`。它展示的是生命周期与角色关系，不用于证明特定版本的性能或完成细节。
 
@@ -237,4 +237,3 @@ MPI、NCCL 与 NVSHMEM 可以出现在同一个应用中，不是简单的三选
 - NVIDIA, [NVSHMEM and the CUDA Model](https://docs.nvidia.com/nvshmem/api/latest/cuda-interactions.html)：stream、device operation、nonlocal dependency 与 CUDA forward progress。
 - NVIDIA, [Kernel Launch Routines](https://docs.nvidia.com/nvshmem/api/latest/api/launch.html)：`nvshmemx_collective_launch` 的适用条件与 grid 限制。
 - NVIDIA, [Collective Communication](https://docs.nvidia.com/nvshmem/api/latest/gen/api/collectives.html)：Team-based/implicit collective 与并发访问边界。
-

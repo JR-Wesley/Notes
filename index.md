@@ -68,7 +68,9 @@ Domain → Topic → Concept / System
 
 需要快速独立的小任务时，用 [快速任务](AI-Workspace/02-Prompts/00-Quick-Task.md)。需要跨对话、并行或高影响批量变更时，用 [统筹项目](AI-Workspace/02-Prompts/07-Coordinate-Team.md)。
 
-新增功能：当你告诉我某个学习主题时，可以直接走 [学习辅导](AI-Workspace/02-Prompts/26-Learning-Tutor.md)；AI 先定位现有文档、给出理解路径，再补齐关键知识点。若你希望改进现有文档可用 [文档改进](AI-Workspace/02-Prompts/27-Document-Improvement.md)，输出修改建议或按授权直接改写。
+需要长期建设时有两个专家入口：给出主题或领域后，[知识体系架构专家](AI-Workspace/02-Prompts/28-Knowledge-System-Architect.md) 会盘点现有文档、研究外部资料并持续形成由浅入深的知识体系；指定一篇笔记后，[单篇知识笔记教授](AI-Workspace/02-Prompts/29-Note-Professor.md) 会围绕它反复讲解、讨论、检查理解，并按授权持续更新正文。
+
+一次性的主题讲解仍可使用 [学习辅导](AI-Workspace/02-Prompts/26-Learning-Tutor.md)；只需诊断或修改现有文档时使用 [文档改进](AI-Workspace/02-Prompts/27-Document-Improvement.md)。
 
 凡涉及知识正文成文的任务，默认使用清晰、自然、逻辑连贯且信息密度适当的段落表达。`AI-Workspace` 与领域知识库分离，并在 `.gitignore` 中排除。
 

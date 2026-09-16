@@ -8,7 +8,7 @@ tags:
 
 # 08 · Linux 设备模型、驱动与 sysfs：把 BDF 映射到内核对象
 
-本文承接 [[02-AISystem/cluster-and-hardware/07-PCIe链路、AER与错误恢复：从可见设备到运行中稳定性|PCIe 链路、AER 与错误恢复]]。前面的“设备”主要按硬件和 PCIe function 讨论；本篇转向 Linux 内核如何把它们建模为 `struct device`、总线设备、驱动和 class，并解释为什么一个 BDF 可以存在于 `/sys`，却没有绑定驱动，更不能据此断言 GPU 或 NIC 已经可用。
+本文位于 [[02-AISystem/cluster-and-hardware/00-Overview-GPU服务器：从物理硬件到Linux设备系统|GPU 服务器多层架构]] 的 Kernel/KMD 与 OS 观察接口交界，承接 [[02-AISystem/cluster-and-hardware/07-PCIe链路、AER与错误恢复：从可见设备到运行中稳定性|PCIe 链路、AER 与错误恢复]]。前面的“设备”主要按硬件和 PCIe function 讨论；本篇转向 Linux 内核如何把它们建模为 `struct device`、总线设备、驱动和 class，并解释为什么一个 BDF 可以存在于 `/sys`，却没有绑定驱动，更不能据此断言 GPU 或 NIC 已经可用。
 
 ## 1. device model 的对象关系
 

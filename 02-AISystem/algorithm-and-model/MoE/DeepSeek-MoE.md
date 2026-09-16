@@ -1,4 +1,4 @@
----
+﻿---
 tags:
   - AI
 ---
@@ -188,7 +188,7 @@ DeepSeek V3 在标准 MoE 架构（如 GShard）基础上进行了优化，将�
 
 图 1. DeepSeek-V3 Figure 2
 
-![[DeepSeek-V3 Fig2.png]]
+> 图缺失：DeepSeek-V3 Fig2.png（原图未随笔记下载）
 
 ### 专家在多 GPU 上的分配策略
 

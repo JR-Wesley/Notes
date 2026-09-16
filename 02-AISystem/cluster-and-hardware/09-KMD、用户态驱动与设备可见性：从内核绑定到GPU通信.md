@@ -9,7 +9,7 @@ tags:
 
 # 09 · KMD、用户态驱动与设备可见性：从内核绑定到 GPU 通信
 
-本文承接 [[02-AISystem/cluster-and-hardware/08-Linux设备模型、驱动与sysfs：把BDF映射到内核对象|Linux 设备模型、驱动与 sysfs]]。KMD（Kernel Mode Driver）是运行在内核中的设备驱动部分；用户态驱动、runtime 和应用通过稳定的用户态 API 与它协作。看到 PCI BDF、内核模块、`/dev` 节点、CUDA device 或 NCCL rank，实际上是在观察同一硬件对象的不同投影。
+本文位于 [[02-AISystem/cluster-and-hardware/00-Overview-GPU服务器：从物理硬件到Linux设备系统|GPU 服务器多层架构]] 的 Kernel/KMD—用户态边界，承接 [[02-AISystem/cluster-and-hardware/08-Linux设备模型、驱动与sysfs：把BDF映射到内核对象|Linux 设备模型、驱动与 sysfs]]。KMD（Kernel Mode Driver）是运行在内核中的设备驱动部分；用户态驱动、runtime 和应用通过稳定的用户态 API 与它协作。看到 PCI BDF、内核模块、`/dev` 节点、CUDA device 或 NCCL rank，实际上是在观察同一硬件对象的不同投影。
 
 ## 1. 从 PCI function 到可用计算设备
 

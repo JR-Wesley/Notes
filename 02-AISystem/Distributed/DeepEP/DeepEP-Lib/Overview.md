@@ -1,4 +1,4 @@
----
+﻿---
 tags:
 category: Code
 ---
@@ -19,7 +19,7 @@ This document provides a high-level overview of the DeepEP system architecture, 
 
 DeepEP implements the dispatch-combine communication pattern that is fundamental to MoE architectures. This pattern involves two primary phases:
 
-![[Core MoE Communication Pattern.png]]
+> 图缺失：Core MoE Communication Pattern.png（原图未随笔记下载）
 
 The dispatch phase takes input tokens and routing information (`topk_idx`, `topk_weights`) and redistributes tokens to the appropriate expert ranks. The combine phase performs the inverse operation, aggregating expert outputs back to the original token layout using the routing metadata.
 
@@ -29,7 +29,7 @@ Sources: [README.md1-10]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/RE
 
 DeepEP is structured in multiple layers, from high-level Python APIs down to hardware-specific CUDA kernels:
 
-![[DeepWiki/DeepEP/assets/System Architecture.png]]
+> 图缺失：DeepWiki/DeepEP/assets/System Architecture.png（原图未随笔记下载）
 
 The architecture provides multiple abstraction layers that allow users to access optimized communication primitives through a simple Python interface while leveraging low-level hardware capabilities.
 
@@ -59,7 +59,7 @@ Sources: [README.md13-23]([https://github.com/deepseek-ai/DeepEP/blob/4b67064d/R
 
 The `deep_ep.Buffer` class serves as the main interface for MoE communication operations. It manages memory allocation for both NVLink (`num_nvl_bytes`) and RDMA (`num_rdma_bytes`) buffers and provides methods for `dispatch`, `combine`, and `get_dispatch_layout` operations.
 
-![[Buffer System.png]]
+> 图缺失：Buffer System.png（原图未随笔记下载）
 
 ## Configuration System
 

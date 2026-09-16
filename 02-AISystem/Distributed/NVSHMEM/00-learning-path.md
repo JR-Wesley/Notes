@@ -14,7 +14,76 @@ A：RDMA 使用基础
   -> E：应用与性能
 ```
 
-目录与知识框架已经完成重建，现按用户授权逐课撰写正式正文；未创建空白课程文件，未提供硬件环境时也不伪造编译、运行或性能结果。
+五个模块不是把同一批术语换一种名称，而是在不同抽象层回答不同问题。A 从主机内存和 RNIC 出发建立通用 RDMA 模型；B 把通信能力提升为 GPU 程序可依赖的 NVSHMEM 语义；C 将 API、数据移动和请求提交拆成三条路径；D 再下降到固定源码中的 NIC work construction；E 最后把正确性协议放回真实 workload 和性能测量。学习过程中应始终保留“上层契约可以由多种下层机制实现”这一关系，不能把某个 IBGDA 实现细节反向解释成所有 NVSHMEM transport 的 API 保证。
+
+| 模块 | 面向的核心问题 | 主要技术对象与手段 | 完成后的能力 |
+| --- | --- | --- | --- |
+| A：RDMA 使用基础 | 一次 RDMA 通信在两个节点上究竟如何发生 | SEND/RECV、READ/WRITE、MR、QP、CQ、WR/WQE/CQE、RDMA CM、两端时序与 buffer lifecycle | 能解释两端分别执行什么，并用 verbs/rping 建立或验证通信 |
+| B：NVSHMEM 编程 | 如何在 GPU 程序中正确表达远程访问与同步 | PE、PGAS、symmetric object、RMA、completion、ordering、signal、AMO、Team、CUDA execution domain | 能设计正确的 GPU 通信协议，判断何时可以消费数据和复用槽位 |
+| C：GPU 网络路径 | NVSHMEM 语义实际经过哪条软件与硬件路径 | runtime/bootstrap、Host staging、P2P、GPUDirect RDMA、CPU proxy、GPU handler、topology 与 transport evidence | 能分开 control/data/submission path，并用证据确认实际 transport |
+| D：IBGDA 实现 | GPU 如何直接构造请求并驱动 NIC | address/key、RC/DCI/DCT、QP/WQE、DBREC/UAR、CQ、并发 reservation/publication/reclamation | 能沿固定 NVSHMEM commit 追踪 PUT、GET、AMO 和 signal 的完整实现生命周期 |
+| E：应用与性能 | 这些机制能否在真实 workload 中保持正确并产生收益 | latency、bandwidth、message rate、batching、concurrency、overlap、halo、MoE、persistent work queue | 能设计可复现实验，用端到端证据解释性能、活性和瓶颈 |
+
+目录、知识框架和 A—E 正文主线已经完成；实验课程仍按实际环境逐项推进。没有执行的命令和测试继续标为“规划”“未运行”或“未确认”，不因正文已经撰写就推定硬件路径、性能结果或学习者掌握状态。
+
+## 推荐顺序与依赖分支
+
+零基础主线按照下面的顺序阅读。A 与 B 应顺序完成；C00—C02 是从编程语义进入实现层的桥梁；D00/D01 建立固定源码入口后，D02 的并发队列与 D03 的连接资源可以交叉学习，最后由 D04 闭合 AMO、signal 与 ordering。E01 先建立测量方法，E02 和 E03 再分别进入规则/稀疏数据交换与动态任务系统。
+
+**A01 → A02 → A03 → A04 → B00 → B01 → B02 → B03 → B04 → B05 → B06 → C00 → C01 → C02 → D00 → D01 →（D02、D03）→ D04 → E01 →（E02、E03）**
+
+这条顺序不是说所有章节只能串行。B05 在掌握 B02/B04 后即可阅读，B06 在掌握 B00/B02/B03 后即可阅读；C00 主要依赖 B00/B01，C01 同时依赖 A 模块的 RDMA 模型和 B 模块的 API 语义；D02、D03 都依赖 D00/D01，但一个侧重共享队列状态机，另一个侧重 endpoint 与资源规模，可以并行推进；E02 主要依赖 B04/B06/E01，E03 主要依赖 B03—B05/E01。若目标只是正确使用 NVSHMEM，可以在 B06 后直接进入 E01/E02；若目标是读懂 IBGDA，则必须先完成 C 模块再进入 D 模块。
+
+## 逐课问题、技术手段与学习产出
+
+下面的表格是课程导航，不替代各篇正文。每一节都先规定要解决的问题，再选择技术手段和证据；“学习产出”用于判断是否具备进入下一节的条件，而不是用阅读完成代替掌握。
+
+### A：从通信操作到可运行的 RDMA 程序
+
+| 课程 | 面向的问题 | 使用的技术手段 | 学习产出 |
+| --- | --- | --- | --- |
+| A01：RDMA 通信模型 | SEND/RECV、WRITE、READ、WRITE WITH IMM 分别由谁主动，谁提供 buffer，双方何时得到通知 | 两进程/两节点时间线；比较 two-sided 与 one-sided；首次建立 context→PD/MR→QP/CQ 的最小资源图 | 能为四类操作画出双方动作、数据方向、通知和 buffer reuse 条件 |
+| A02：资源、内存注册与建连 | 为什么知道远端地址仍不能直接 DMA，以及 PD、MR、key、QP state、CM 如何组合和释放 | verbs 资源依赖图；MR access/lkey/rkey；QP RESET→INIT→RTR→RTS；RDMA CM event；失败回滚与反向销毁 | 能独立说明资源创建参数、地址/key 交换、连接前提和生命周期错误 |
+| A03：请求、完成与缓冲区协议 | 请求提交、本地完成、远端交付和应用消费为什么是不同事件 | WR/SGE→WQE→CQE/WC 请求链；signaled completion；RECV replenishment；ready/ack、背压和 source/target ownership | 能从一笔请求追踪到 completion，并证明 source、receive slot 何时可复用 |
+| A04：rping 全流程 | 如何在真实程序中把 CM、控制消息、READ/WRITE、CQ 和状态机连成闭环 | 固定 rdma-core commit 的 call path/source trace；客户端/服务端状态对照；地址范围和 MR 容量检查 | 能从入口追踪 rping 一轮通信，并把代码事实、推论和未运行验证分开 |
+
+### B：从 RDMA 机制到 NVSHMEM 编程语义
+
+| 课程 | 面向的问题 | 使用的技术手段 | 学习产出 |
+| --- | --- | --- | --- |
+| B00：编程模型 | PE、PGAS、Team、CUDA thread 与 runtime 各自处于什么层次，NVSHMEM 与 MPI/NCCL 如何分工 | job/PE/process/thread 多坐标模型；`<symmetric address, PE>`；host/on-stream/device API 分类；one-sided 与 collective 对比 | 能选择正确调用域和参与集合，并解释 NVSHMEM 提供的抽象边界 |
+| B01：对称对象与远端寻址 | “对称”到底约束对象什么属性，远端地址如何成立 | 对象身份+offset 模型；collective allocation lifecycle；UVA、`nvshmem_ptr`、heap 与 registered buffer 对比 | 能判断一个地址能否作为远端 symmetric object，避免把虚拟地址数值相等当成前提 |
+| B02：完成、排序与可见性 | blocking/NBI、`fence`、`quiet`、signal、barrier/sync 分别保证什么 | 六阶段传输模型；API 契约表；PUT/GET 对照；local/remote completion、visibility 与 consumption 分层 | 能为操作选择正确 completion/synchronization，并指出尚未建立的依赖边 |
+| B03：CUDA 执行与协作 | thread/warp/block/grid、stream/event 与跨 PE progress 如何相互作用 | execution-domain 矩阵；thread-group participation；collective launch；residency/forward-progress 等待环 | 能识别参与不一致、跨 stream 依赖和等待者占满资源导致的 deadlock |
+| B04：发布、所有权与有界流水 | signal 表示 ready 后，为什么仍不能立即覆盖 buffer | 单槽、双槽和 K 槽状态机；ticket、ready/ack sequence；producer-consumer ownership；EOS 与 drain | 能证明 payload publication、消费确认、背压与槽位回收的完整协议 |
+| B05：原子操作与分布式协调 | AMO 保证了什么，为什么唯一 reservation 不等于完整发布 | fetching/non-fetching AMO 对比；fetch-add ticket、CAS 状态机、allocator、ABA/wrap-around、publication hole | 能区分原子性、完成与发布，并设计有界 counter/allocator/work-queue 协议 |
+| B06：Team 与集合通信 | Team 编号、collective matching、数据布局和同步语义如何约束所有参与者 | Team split/destroy 生命周期；world/team rank 翻译；broadcast/reduction/fcollect/all-to-all 公式与 buffer layout | 能选择 collective、计算目标下标和容量，并验证每个 PE 的参与与调用匹配 |
+
+### C：从 API 调用定位真实 GPU 网络路径
+
+| 课程 | 面向的问题 | 使用的技术手段 | 学习产出 |
+| --- | --- | --- | --- |
+| C00：初始化与控制面 | 第一笔通信前，launcher、bootstrap、GPU、heap、transport 和 endpoint 如何准备 | `init→bootstrap→device selection→heap/registration→transport setup→finalize` 生命周期；三类 init 入口；分层错误定位 | 能解释控制面依赖，并从初始化失败位置判断缺失的环境或资源 |
+| C01：Host RDMA、GDR 与 IBGDA | GPU 调 API、NIC 访问 GPU memory、GPU 提交 WQE 为什么是三种能力 | API caller/data mover/work submitter 三轴；Host staging、P2P、host-posted GDR、CPU proxy、IBGDA 路径图 | 能准确区分 CPU proxy 与 host staging，以及 GPUDirect RDMA 与 GPUDirect Async |
+| C02：Transport 与拓扑核验 | 如何证明程序实际使用了哪条 transport，而不是仅相信环境变量 | capability→build/config→runtime selection→operation observation→A/B 五层证据；BDF/NUMA/HCA mapping；日志、NVTX、counter | 能形成可复现的 transport 证据链，并在证据不足时保持“未确认” |
+
+### D：从 GPU API 下降到 IBGDA 请求实现
+
+| 课程 | 面向的问题 | 使用的技术手段 | 学习产出 |
+| --- | --- | --- | --- |
+| D00：实现总览 | IBGDA 的地址、endpoint、队列、doorbell 和 completion 对象如何连接 | 固定 NVSHMEM commit；remote address/key→QP→WQE→publication→DBREC/UAR→CQ→reclaim 总图；RC/DCI/DCT 定位 | 能在源码中定位一次请求经过的主要对象与 dispatch 边界 |
+| D01：单请求生命周期 | 一笔 PUT 如何从 device API 变成 NIC 可执行工作，GET/fetch-AMO 有何差异 | 固定场景 call-path trace；address/rkey lookup；QP selection；WQE segment；GPU/CPU handler doorbell；collapsed CQ | 能记录每个 symbol 的输入、输出、状态变化与 ordering requirement，而非只列函数名 |
+| D02：并发与队列管理 | 多 thread/warp/CTA 共享 QP 时，如何避免 NIC 看到半写 WQE | `reserve→wait capacity→fill→publish ready→batch submit→complete→reclaim` 状态机；publication hole、wrap-around、backpressure | 能依据固定源码解释并发不变量，并区分逻辑 reservation 与物理槽位可写 |
+| D03：RC/DC 与资源管理 | endpoint sharing 如何影响连接规模、NIC/GPU 资源和并发 | RC per-peer 与 DCI/DCT 动态连接对比；bootstrap handle exchange；QP mapping；资源增长阶与多 QP ordering | 能按 PE 数、QP 配置和 workload 推导资源权衡，而非笼统判断 RC/DC 快慢 |
+| D04：AMO、Signal 与排序 | atomic result、put-with-signal、GET consistency、fence/quiet 如何落到 WQE | atomic opcode/result-slot trace；WRITE→atomic 发布链；DUMP/CST；`get_head/get_tail`；单/多 QP fence/quiet | 能把 API 最低保证与固定实现中的额外 WQE/等待分开，并指出待动态验证边界 |
+
+### E：用应用协议和可复现实验检验机制
+
+| 课程 | 面向的问题 | 使用的技术手段 | 学习产出 |
+| --- | --- | --- | --- |
+| E01：性能测量与调优 | 测得的 latency、bandwidth、message rate 和 overlap 各代表什么 | issue/completion/protocol 计时边界；warmup/重复/统计；硬件→微基准→pattern→应用四层基线；受控变量 sweep | 能设计可复现实验，只在端到端时间缩短时声称有效 overlap |
+| E02：Halo 与 MoE 数据交换 | 固定邻居与动态稀疏路由应如何选择 RMA、signal 或 collective | Halo generation/ack 与 PUSH/PULL；MoE counts/offsets/capacity、reservation/publication、identity/combine；负载尾部分析 | 能为规则交换和变长 dispatch 证明 ownership、容量与完成协议，并保留模型语义 |
+| E03：Persistent Kernel 与工作队列 | 长驻留 worker 如何发布/窃取任务，并证明系统真正终止 | reserve/publish/claim/reclaim；BFS frontier/CAS；work stealing；queued/active/reserved/in-flight；credit/epoch termination | 能分析安全性、活性、背压、终止检测和失败传播，不把空队列快照当作全局完成 |
 
 ## 必须贯穿全程的区分
 
@@ -31,7 +100,7 @@ A：RDMA 使用基础
 
 依据新增的“NVSHMEM 基础原理与知识框架”逐项复核后，当前路线已经覆盖其主要因果链。PE、PGAS、symmetric heap/object、UVA 与 PGAS 的区别在 B00—B01；PUT/GET/NBI、local/remote completion、visibility、fence/quiet、signal/wait 在 B02；thread/warp/CTA、stream 和 collective launch 在 B03；producer-consumer、atomic reservation 的边界和 buffer ownership 在 B04；host runtime、P2P、GPUDirect RDMA、proxy、IBGDA 及 GPU/NIC 路径在 C01—D03；性能与 MoE/halo 应用在 E01—E02。
 
-复核也发现五个主题目前只有零散说明，尚不足以独立验收，因此加入规划课程而不创建空文件：B05 系统讲解远程 AMO 与分布式协调；B06 讲 Team 管理和数据 collective；C00 讲初始化、bootstrap 和 runtime control plane；D04 在固定源码中追踪 AMO/signal/ordering 的 IBGDA 实现；E03 讨论 persistent kernel、图任务和分布式 work queue。这些补充不是重写已有路线，而是把输入材料中真正缺少的语义层、实现层和应用层闭合。
+当时的复核发现五个主题只有零散说明，尚不足以独立验收，因此增设 B05、B06、C00、D04 和 E03：B05 系统讲解远程 AMO 与分布式协调，B06 讲 Team 管理和数据 collective，C00 讲初始化、bootstrap 和 runtime control plane，D04 在固定源码中追踪 AMO/signal/ordering 的 IBGDA 实现，E03 讨论 persistent kernel、图任务和 distributed work queue。上述课程现均已有正式正文；补充的目的不是重写已有路线，而是闭合原先缺少的语义层、实现层和应用层。
 
 输入材料中的部分表达只适合作为第一层心智模型，后续正文必须继续保留边界：`remote_base + symmetric_offset` 是寻址教学模型，不是 NVSHMEM 对所有 transport 承诺的内部公式；NBI 提供较早返回，不自动保证计算通信重叠；高级 collective 不应未经源码证明就断言由 PUT/GET/signal 组合实现；NVSHMEM atomic 也不能在未固定 transport 与源码前一律映射成原生 mlx5 RDMA atomic WQE。
 
@@ -47,7 +116,7 @@ A：RDMA 使用基础
 | P2P、IB、GPUDirect RDMA、proxy、IBGDA | A01—A04、C01 建模；C02 建立部署证据链；D00—D03 进入实现 | API、路径与核验方法已覆盖；D00—D03 已完成实现总图、单请求、并发队列与 RC/DC 资源映射 |
 | QP/WQE/CQ/doorbell、RC/DCI/DCT、并发队列 | D00—D04 | 已在固定 commit 上覆盖对象、请求、并发状态机、RC/DC 连接、AMO/signal 与 ordering/consistency |
 | MoE、halo/stencil、性能与 overlap | E01—E02 | 已覆盖测量方法、规则邻居交换与动态稀疏重分发；应用实验仍待执行 |
-| persistent kernel、graph、distributed work queue | B03/B04 只有基础机制 | 新增 E03，补足综合应用与活性分析 |
+| persistent kernel、graph、distributed work queue | B03—B05、E03 | 已覆盖 queue 状态、图 frontier、work stealing、终止检测、背压与失败传播；实验仍待执行 |
 
 ## 前置依赖
 
@@ -90,7 +159,7 @@ NVSHMEM/
 ├── d04-ibgda-atomics-signals-and-ordering.md                [已有]
 ├── e01-performance-measurement-and-tuning.md                [已有]
 ├── e02-halo-and-moe-communication.md                        [已有]
-├── e03-persistent-kernels-graph-and-work-queues.md           [规划]
+├── e03-persistent-kernels-graph-and-work-queues.md           [已有]
 ├── experiments/
 │   ├── experiment-a01-rdma-env-and-rping.md                 [规划]
 │   ├── experiment-a02-rping-state-machine.md                [规划]
@@ -171,28 +240,28 @@ A03 沿 WR → SGE → WQE → CQE/WC 跟踪请求，区分软件描述、队列
 
 [E02：Halo 与 MoE 数据交换](e02-halo-and-moe-communication.md)把寻址、同步、ownership 和测量方法用于两类相反的通信图：halo/stencil 的固定邻居、固定边界与 generation 槽位，以及 MoE dispatch/combine 的动态 counts、offsets、capacity、publication 和 token identity。课程先证明 ready/ack 与 buffer reuse，再比较 PUT/GET、fixed-count collective、padding 和变长 RMA；不预设 NVSHMEM 必然优于其他通信组件，也未运行应用实验。
 
-E03 把 B03—B05 的前进性、槽位协议和原子预留用于 persistent kernel、图遍历与 distributed work queue，分析 termination detection、负载不均、抢占/驻留、publication hole 和失败传播。它关注综合正确性，不与 E01 的基准测试或 E02 的 halo/MoE 模式重复。
+[E03：Persistent Kernel、图任务与分布式工作队列](e03-persistent-kernels-graph-and-work-queues.md)把 B03—B05 的前进性、槽位协议和原子预留用于 persistent workers、图 frontier 与 work stealing，分开 queue reservation/publication/claim/reclaim，并用 queued、active、reserved 和 in-flight responsibility 推导 termination detection。课程还分析 cooperative residency、满队列等待、负载不均、取消和失败传播；状态机只经静态推演，实验仍未运行。
 
 ## 实验映射
 
-| 实验 | 对应课程 | 核心问题 | 当前状态 |
-| --- | --- | --- | --- |
-| `experiment-a01-rdma-env-and-rping.md` | A01、A02 | 两端设备、IP、显式匹配的 `-S`、rping 成功与故障定位 | 规划 |
-| `experiment-a02-rping-state-machine.md` | A03、A04 | 无硬件推演请求、事件依赖、地址范围和生命周期反例 | 规划 |
-| [experiment-b01-symmetric-addressing-and-put.md](experiments/experiment-b01-symmetric-addressing-and-put.md) | B00、B01 | 两 PE 对称寻址和单元素 PUT | 初稿；未编译、未运行 |
-| `experiment-b02-put-get-completeness.md` | B02 | blocking/NBI PUT/GET、源覆写与结果消费 | 规划 |
-| `experiment-b03-thread-block-cooperation.md` | B03 | CTA 协作、线程交接、collective launch 与跨流依赖 | 规划 |
-| `experiment-b04-single-dual-slot-pipeline.md` | B04 | 单槽/双槽、轮次、确认、背压与最终排空 | 规划 |
-| `experiment-b04-protocol-model.py` | B04 | 有限状态模型发现覆盖反例，不替代硬件验证 | 规划 |
-| `experiment-b05-atomic-coordination.md` | B05 | fetch-add/compare-swap、唯一 ticket、publication hole 与回收 | 规划 |
-| `experiment-b06-team-collectives.md` | B06 | Team 编号、collective matching、buffer 约束和结果校验 | 规划 |
-| `experiment-c00-initialization-and-bootstrap.md` | C00 | bootstrap、PE/GPU/NIC 映射、初始化失败与反向释放证据 | 规划 |
-| `experiment-c01-transport-verification.md` | C01、C02 | 实际 transport/handler 与 GPU–NIC 路径证据 | 规划 |
-| `experiment-d01-request-tracing.md` | D00、D01 | 固定 commit 的请求生命周期 | 规划 |
-| `experiment-d02-queue-concurrency.md` | D02、D03 | 队列并发、回绕和资源配置 | 规划 |
-| `experiment-d04-atomic-signal-path.md` | D04 | AMO/signal/ordering 的实际 opcode、fallback 与完成路径 | 规划 |
-| `experiment-e01-performance-baseline.md` | E01、E02 | 可复现的延迟、带宽和 overlap 基线 | 规划 |
-| `experiment-e03-persistent-work-queue.md` | E03 | persistent kernel 的任务发布、终止检测、前进性和负载不均 | 规划 |
+| 实验                                                                                                           | 对应课程    | 核心问题                                                  | 当前状态       |
+| ------------------------------------------------------------------------------------------------------------ | ------- | ----------------------------------------------------- | ---------- |
+| `experiment-a01-rdma-env-and-rping.md`                                                                       | A01、A02 | 两端设备、IP、显式匹配的 `-S`、rping 成功与故障定位                      | 规划         |
+| `experiment-a02-rping-state-machine.md`                                                                      | A03、A04 | 无硬件推演请求、事件依赖、地址范围和生命周期反例                              | 规划         |
+| [experiment-b01-symmetric-addressing-and-put.md](experiments/experiment-b01-symmetric-addressing-and-put.md) | B00、B01 | 两 PE 对称寻址和单元素 PUT                                     | 初稿；未编译、未运行 |
+| `experiment-b02-put-get-completeness.md`                                                                     | B02     | blocking/NBI PUT/GET、源覆写与结果消费                         | 规划         |
+| `experiment-b03-thread-block-cooperation.md`                                                                 | B03     | CTA 协作、线程交接、collective launch 与跨流依赖                   | 规划         |
+| `experiment-b04-single-dual-slot-pipeline.md`                                                                | B04     | 单槽/双槽、轮次、确认、背压与最终排空                                   | 规划         |
+| `experiment-b04-protocol-model.py`                                                                           | B04     | 有限状态模型发现覆盖反例，不替代硬件验证                                  | 规划         |
+| `experiment-b05-atomic-coordination.md`                                                                      | B05     | fetch-add/compare-swap、唯一 ticket、publication hole 与回收 | 规划         |
+| `experiment-b06-team-collectives.md`                                                                         | B06     | Team 编号、collective matching、buffer 约束和结果校验            | 规划         |
+| `experiment-c00-initialization-and-bootstrap.md`                                                             | C00     | bootstrap、PE/GPU/NIC 映射、初始化失败与反向释放证据                  | 规划         |
+| `experiment-c01-transport-verification.md`                                                                   | C01、C02 | 实际 transport/handler 与 GPU–NIC 路径证据                   | 规划         |
+| `experiment-d01-request-tracing.md`                                                                          | D00、D01 | 固定 commit 的请求生命周期                                     | 规划         |
+| `experiment-d02-queue-concurrency.md`                                                                        | D02、D03 | 队列并发、回绕和资源配置                                          | 规划         |
+| `experiment-d04-atomic-signal-path.md`                                                                       | D04     | AMO/signal/ordering 的实际 opcode、fallback 与完成路径         | 规划         |
+| `experiment-e01-performance-baseline.md`                                                                     | E01、E02 | 可复现的延迟、带宽和 overlap 基线                                 | 规划         |
+| `experiment-e03-persistent-work-queue.md`                                                                    | E03     | persistent kernel 的任务发布、终止检测、前进性和负载不均                 | 规划         |
 
 ## 每课写作与验收模板
 
@@ -258,10 +327,10 @@ E03 把 B03—B05 的前进性、槽位协议和原子预留用于 persistent ke
 | [D04](d04-ibgda-atomics-signals-and-ordering.md) | 已写；作者自检 | 已核对 NVIDIA NVSHMEM v3.7.2-0 / `3f4c6d81225f45f9c42ed9af09bdb3c61eb356d4` | AMO/signal、result ownership、CST 与跨 QP ordering 静态检查 | 未开始 | 未开始 | 未确认 |
 | [E01](e01-performance-measurement-and-tuning.md) | 已写；作者自检 | 当前官方性能指南及固定 v3.7.2-0 perftest 源码 | 指标、计时边界、overlap 公式与调优因果静态检查 | 未开始 | 未开始 | 未确认 |
 | [E02](e02-halo-and-moe-communication.md) | 已写；作者自检 | NVIDIA NVSHMEM API、Jacobi 示例与现有模型背景 | halo generation/ack 与 MoE dispatch/combine 协议静态推演 | 未开始 | 未开始 | 未确认 |
-| E03 | 未开始 | — | 未开始 | 未开始 | 未开始 | 未确认 |
+| [E03](e03-persistent-kernels-graph-and-work-queues.md) | 已写；作者自检 | 当前 NVIDIA NVSHMEM 与 CUDA cooperative launch 文档 | 队列、图 frontier、终止检测、背压和失败状态机静态推演 | 未开始 | 未开始 | 未确认 |
 | [实验 B01](experiments/experiment-b01-symmetric-addressing-and-put.md) | 初稿 | — | 静态检查 | 未验证 | 未验证 | 未确认 |
 | 其余实验 | 未开始 | 按实验决定 | 未开始 | 未开始 | 未开始 | 未确认 |
 
 ## 当前阅读入口
 
-完整主线应依次阅读 A01—A04 建立 RDMA 基础，阅读 B00—B06 掌握 NVSHMEM 编程语义，通过 C00—C02 理解初始化、GPU 网络路径和 transport/topology 核验，再以 D00—D04 闭合 IBGDA 请求、队列、连接、AMO、signal 与 consistency 实现。应用部分先读 [E01：NVSHMEM 性能测量与调优](e01-performance-measurement-and-tuning.md)建立可复现基线，再读 [E02：Halo 与 MoE 数据交换](e02-halo-and-moe-communication.md)，把 completion、ownership 和 overlap 用于固定邻居与动态稀疏通信；下一篇应进入 E03 的 persistent kernel、graph 与 distributed work queue。已有 [实验 B01](experiments/experiment-b01-symmetric-addressing-and-put.md)可用于纸面推演或环境验证；其余配套实验仍是规划，不能据正文状态推断已运行。
+完整主线应依次阅读 A01—A04 建立 RDMA 基础，阅读 B00—B06 掌握 NVSHMEM 编程语义，通过 C00—C02 理解初始化、GPU 网络路径和 transport/topology 核验，再以 D00—D04 闭合 IBGDA 请求、队列、连接、AMO、signal 与 consistency 实现。应用部分依次阅读 [E01：性能测量与调优](e01-performance-measurement-and-tuning.md)、[E02：Halo 与 MoE 数据交换](e02-halo-and-moe-communication.md)和 [E03：Persistent Kernel、图任务与分布式工作队列](e03-persistent-kernels-graph-and-work-queues.md)，把 completion、ownership、overlap 与前进性用于规则、稀疏和动态任务通信。A—E 正文主线已经写齐；下一步应按实际环境补充实验，而不能据正文状态推断任何命令已经运行或学习者已经掌握。
