@@ -1,4 +1,4 @@
-﻿---
+---
 dateCreated: 2025-08-08
 dateModified: 2025-08-08
 ---

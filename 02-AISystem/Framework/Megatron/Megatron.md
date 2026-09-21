@@ -6,7 +6,7 @@
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[02-AISystem/Framework/Megatron/Megatron-Lib/Megatron-Lib|Megatron-Lib]] | Megatron 库级精读 | 进行中 |
+| [[02-AISystem/Framework/Megatron/Megatron-Lib/Megatron-Lib\|Megatron-Lib]] | Megatron 库级精读 | 进行中 |
 
 ## 关键笔记
 

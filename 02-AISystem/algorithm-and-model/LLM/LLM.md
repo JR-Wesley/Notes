@@ -6,7 +6,7 @@
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[02-AISystem/algorithm-and-model/LLM/现代LLM/现代LLM|现代LLM]] | 现代 LLM（分词/注意力） | 进行中 |
+| [[02-AISystem/algorithm-and-model/LLM/modern-llm/现代LLM\|现代LLM]] | 现代 LLM（分词/注意力） | 进行中 |
 
 ## 关键笔记
 

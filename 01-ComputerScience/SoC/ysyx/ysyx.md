@@ -6,7 +6,7 @@
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[01-ComputerScience/SoC/ysyx/PA-分析/PA-分析|PA-分析]] | PA 阶段深入分析（NEMU） | 进行中 |
+| [[01-ComputerScience/SoC/ysyx/pa-analysis/PA-分析\|PA-分析]] | PA 阶段深入分析（NEMU） | 进行中 |
 
 ## 关键笔记
 

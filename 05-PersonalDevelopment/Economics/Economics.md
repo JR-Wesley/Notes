@@ -6,8 +6,8 @@
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[05-PersonalDevelopment/Economics/Macro/Macro|Macro]] | 宏观经济学 | 起步 |
-| [[05-PersonalDevelopment/Economics/Micro/Micro|Micro]] | 微观经济学 | 起步 |
+| [[05-PersonalDevelopment/Economics/Macro/Macro\|Macro]] | 宏观经济学 | 起步 |
+| [[05-PersonalDevelopment/Economics/Micro/Micro\|Micro]] | 微观经济学 | 起步 |
 
 ## 关键笔记
 

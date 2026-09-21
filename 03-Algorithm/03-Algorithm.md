@@ -1,4 +1,4 @@
-﻿---
+---
 tags:
   - Algorithm
 ---
@@ -11,7 +11,7 @@ tags:
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[03-Algorithm/basic-algorithm/basic-algorithm|basic-algorithm]] | 基础算法：算法（第 4 版）笔记、算法入门、最大公约数等 | 进行中 |
-| [[03-Algorithm/Compression/Compression|Compression]] | 数据压缩：LZMA/7-zip 原理与解压实现分析 | 起步 |
-| [[03-Algorithm/computer-graphics/computer-graphics|computer-graphics]] | 计算机图形学：GPU 逻辑管线、光线追踪、图形学硬件 | 进行中 |
-| [[03-Algorithm/Encryption/Encryption|Encryption]] | 加密算法：Paillier、有限域运算、密码学实现 | 进行中 |
+| [[03-Algorithm/basic-algorithm/basic-algorithm\|basic-algorithm]] | 基础算法：算法（第 4 版）笔记、算法入门、最大公约数等 | 进行中 |
+| [[03-Algorithm/Compression/Compression\|Compression]] | 数据压缩：LZMA/7-zip 原理与解压实现分析 | 起步 |
+| [[03-Algorithm/computer-graphics/computer-graphics\|computer-graphics]] | 计算机图形学：GPU 逻辑管线、光线追踪、图形学硬件 | 进行中 |
+| [[03-Algorithm/Encryption/Encryption\|Encryption]] | 加密算法：Paillier、有限域运算、密码学实现 | 进行中 |

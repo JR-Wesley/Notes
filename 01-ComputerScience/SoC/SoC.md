@@ -6,14 +6,14 @@
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[01-ComputerScience/SoC/cache/cache|cache]] | 缓存一致性设计 | 进行中 |
-| [[01-ComputerScience/SoC/chipyard/chipyard|chipyard]] | Chipyard SoC 生成框架 | 进行中 |
-| [[01-ComputerScience/SoC/riscv/riscv|riscv]] | RISC-V 指令集与处理器核 | 进行中 |
-| [[01-ComputerScience/SoC/ysyx/ysyx|ysyx]] | 一生一芯（ysyx）学习记录 | 进行中 |
-| [[01-ComputerScience/SoC/Embedded/Embedded|Embedded]] | 嵌入式开发（STM32 等） | 起步 |
-| [[02-AISystem/cluster-and-hardware/PCIE|PCIE]] | PCIe 总线协议 | 起步 |
-| [[01-ComputerScience/SoC/pulp-VLSI/pulp-VLSI|pulp VLSI]] | PULP 开源处理器项目 | 起步 |
-| [[01-ComputerScience/SoC/RVFPGA/RVFPGA|RVFPGA]] | RISC-V + FPGA 实践 | 起步 |
+| [[01-ComputerScience/SoC/cache/cache\|cache]] | 缓存一致性设计 | 进行中 |
+| [[01-ComputerScience/SoC/chipyard/chipyard\|chipyard]] | Chipyard SoC 生成框架 | 进行中 |
+| [[01-ComputerScience/SoC/riscv/riscv\|riscv]] | RISC-V 指令集与处理器核 | 进行中 |
+| [[01-ComputerScience/SoC/ysyx/ysyx\|ysyx]] | 一生一芯（ysyx）学习记录 | 进行中 |
+| [[01-ComputerScience/SoC/Embedded/Embedded\|Embedded]] | 嵌入式开发（STM32 等） | 起步 |
+| [[02-AISystem/cluster-and-hardware/PCIE\|PCIE]] | PCIe 总线协议 | 起步 |
+| [[01-ComputerScience/SoC/pulp-VLSI/pulp-VLSI\|pulp VLSI]] | PULP 开源处理器项目 | 起步 |
+| [[01-ComputerScience/SoC/RVFPGA/RVFPGA\|RVFPGA]] | RISC-V + FPGA 实践 | 起步 |
 
 ## 关键笔记
 

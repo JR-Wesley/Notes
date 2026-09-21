@@ -6,7 +6,7 @@
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[02-AISystem/AI-sys-review/ZOMI-infra/0-summary/1-scaling-law/1-scaling-law|1-scaling-law]] | Scaling Law | 进行中 |
+| [[02-AISystem/AI-sys-review/ZOMI-infra/0-summary/1-scaling-law/1-scaling-law\|1-scaling-law]] | Scaling Law | 进行中 |
 
 ## 关键笔记
 

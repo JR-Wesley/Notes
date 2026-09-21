@@ -11,9 +11,9 @@ tags:
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[01-ComputerScience/Programming/现代C++/现代C++|现代C++]] | 现代 C++ 特性学习 | 进行中 |
-| [[01-ComputerScience/Programming/并发编程/并发编程|并发编程]] | 并发与并行编程实践 | 进行中 |
-| [[01-ComputerScience/Programming/web/web|web]] | Web 前端/后端开发 | 进行中 |
+| [[01-ComputerScience/Programming/modern-cpp/现代C++\|现代C++]] | 现代 C++ 特性学习 | 进行中 |
+| [[01-ComputerScience/Programming/concurrent-programming/并发编程\|并发编程]] | 并发与并行编程实践 | 进行中 |
+| [[01-ComputerScience/Programming/web/web\|web]] | Web 前端/后端开发 | 进行中 |
 
 ## 关键笔记
 

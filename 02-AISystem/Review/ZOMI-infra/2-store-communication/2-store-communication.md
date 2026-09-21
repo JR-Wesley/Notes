@@ -6,8 +6,8 @@
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[02-AISystem/AI-sys-review/ZOMI-infra/2-store-communication/1-collective-communication/1-collective-communication|1-collective-communication]] | 集合通信 | 进行中 |
-| [[02-AISystem/AI-sys-review/ZOMI-infra/2-store-communication/2-comm-lib/2-comm-lib|2-comm-lib]] | 通信库（NCCL 等） | 进行中 |
+| [[02-AISystem/AI-sys-review/ZOMI-infra/2-store-communication/1-collective-communication/1-collective-communication\|1-collective-communication]] | 集合通信 | 进行中 |
+| [[02-AISystem/AI-sys-review/ZOMI-infra/2-store-communication/2-comm-lib/2-comm-lib\|2-comm-lib]] | 通信库（NCCL 等） | 进行中 |
 
 ## 关键笔记
 

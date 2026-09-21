@@ -6,7 +6,7 @@
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[02-AISystem/Distributed/NCCL/NCCL-lib/NCCL-lib|NCCL-lib]] | NCCL 源码深度解析 | 进行中 |
+| [[02-AISystem/Distributed/NCCL/NCCL-lib/NCCL-lib\|NCCL-lib]] | NCCL 源码深度解析 | 进行中 |
 
 ## 关键笔记
 

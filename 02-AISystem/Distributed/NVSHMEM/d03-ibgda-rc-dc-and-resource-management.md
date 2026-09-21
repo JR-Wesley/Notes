@@ -48,19 +48,19 @@ local DCI ── per-WQE AV ─┼──────── remote PE 2 / DCT 1
 
 ### 2.3 RC：对象数量按远端 PE 数增长
 
-固定实现为每个远端 PE 创建 `NVSHMEM_IBGDA_NUM_RC_PER_PE` 条 RC，并为每个选中 device 重复这组资源。设 job 中有 \(P\) 个 PE，每个 PE 选择 \(H\) 个 HCA/device，每个远端配置 \(R\) 条 RC，则单个 PE 实际创建的非 loopback RC endpoint 约为
+固定实现为每个远端 PE 创建 `NVSHMEM_IBGDA_NUM_RC_PER_PE` 条 RC，并为每个选中 device 重复这组资源。设 job 中有 $P$ 个 PE，每个 PE 选择 $H$ 个 HCA/device，每个远端配置 $R$ 条 RC，则单个 PE 实际创建的非 loopback RC endpoint 约为
 
-\[
+$$
 N_{RC,local}=H\times R\times(P-1),
-\]
+$$
 
 全 job 的 endpoint 数约为
 
-\[
+$$
 N_{RC,job}=H\times R\times P\times(P-1).
-\]
+$$
 
-公式计算的是该源码布局下的 endpoint 增长阶，不等于 NIC 厂商给出的精确字节数，也没有扣除不同设备或自定义 QP API 带来的变化。关键结论是 RC 的本地硬件对象随 \(P\) 线性增长、全局总量近似二次增长；DCI/DCT 的本地 QP 数主要由配置和 HCA 数决定，而 DCT metadata 表随 \(P\) 线性增长。
+公式计算的是该源码布局下的 endpoint 增长阶，不等于 NIC 厂商给出的精确字节数，也没有扣除不同设备或自定义 QP API 带来的变化。关键结论是 RC 的本地硬件对象随 $P$ 线性增长、全局总量近似二次增长；DCI/DCT 的本地 QP 数主要由配置和 HCA 数决定，而 DCT metadata 表随 $P$ 线性增长。
 
 ## 3. device state 如何表达资源集合
 
@@ -119,11 +119,11 @@ DCI 与 RC 的每个 device QP descriptor 又包含 QP type、QPN、device index
 
 当选中 DCI 后，[`ibgda_get_dct_id`](https://github.com/NVIDIA/nvshmem/blob/3f4c6d81225f45f9c42ed9af09bdb3c61eb356d4/src/include/non_abi/device/pt-to-pt/ibgda_device.cuh#L1731-L1739) 根据目标 PE、CTA ID、每 PE 的 DCT 数和当前 device index 选择 DCT。可将其索引结构理解为
 
-\[
+$$
 dct\_id = target\_pe\times(KH)+(cta\_id\bmod K)\times H+device\_idx,
-\]
+$$
 
-其中 \(K\) 是每 PE、每 device 的 DCT 数，\(H\) 是选中 device 数。随后 DCI WQE writer 从 constant/global metadata 表取得该 DCT 的 AV segment，并与 remote address、`rkey`、local address 和 `lkey` 一起写入 WQE。
+其中 $K$ 是每 PE、每 device 的 DCT 数，$H$ 是选中 device 数。随后 DCI WQE writer 从 constant/global metadata 表取得该 DCT 的 AV segment，并与 remote address、`rkey`、local address 和 `lkey` 一起写入 WQE。
 
 RC WQE 不走这一步，因为目标 transport endpoint 已在 RC QP context 中；它仍然需要 remote address 与 `rkey` 来指出对端注册内存。DCT ID 与 `rkey` 解决的是两层不同问题：前者选择远端 DC transport endpoint 和路径，后者授权 NIC 访问特定远端 memory region。把 DCT number 当成内存权限，或把 `rkey` 当成连接地址，都会混淆 transport routing 与 memory protection。
 
@@ -135,12 +135,12 @@ RC WQE 不走这一步，因为目标 transport endpoint 已在 RC QP context �
 
 ## 9. 如何估算资源增长与选择策略
 
-设每 PE 选择 \(H\) 个 devices，每 device 创建 \(I\) 个 DCI、\(K\) 个 DCT，每远端 PE 创建 \(R\) 个 RC。忽略 loopback array 空位和 custom QP 后，单 PE 的硬件 endpoint 数量级为：
+设每 PE 选择 $H$ 个 devices，每 device 创建 $I$ 个 DCI、$K$ 个 DCT，每远端 PE 创建 $R$ 个 RC。忽略 loopback array 空位和 custom QP 后，单 PE 的硬件 endpoint 数量级为：
 
 | 模式 | 本地主动/目标 endpoint 数量级 | per-peer metadata | 主要竞争与代价 |
 | --- | --- | --- | --- |
-| RC | \(HR(P-1)\) 个实际 RC | RC peer handles/连接上下文 | 连接和 NIC state 随 PE 增长；单请求 WQE 更紧凑、通常低延迟 |
-| DC | \(HI\) 个 DCI + \(HK\) 个本地 DCT | 约 \(HPK\) 份 DCT AV metadata | DCI 被更多执行者/目标复用；WQE 带 AV，可能有动态切换延迟 |
+| RC | $HR(P-1)$ 个实际 RC | RC peer handles/连接上下文 | 连接和 NIC state 随 PE 增长；单请求 WQE 更紧凑、通常低延迟 |
+| DC | $HI$ 个 DCI + $HK$ 个本地 DCT | 约 $HPK$ 份 DCT AV metadata | DCI 被更多执行者/目标复用；WQE 带 AV，可能有动态切换延迟 |
 | RC + DC | 普通远端请求主要用 RC，DCI/DCT 仍为 self/consistency 等路径保留 | 两类 metadata 都存在 | 获得 RC 数据路径，同时承担两套资源与跨 QP ordering 管理 |
 
 这个表用于判断增长方向，不能替代测量。NIC firmware 为一条 RC、DCI 或 DCT 分配多少 SRAM/cache，CQ 是否独立、WQ/doorbell page 如何映射、multi-port 如何分摊，都取决于硬件、driver 和固定构建。可靠实验应记录实际 PE 数、选中 HCA、每类 QP 配置、创建日志、device state 数量、初始化时间、GPU/NIC memory 占用、请求到达模式和延迟/带宽，而不是只报告一个环境变量。

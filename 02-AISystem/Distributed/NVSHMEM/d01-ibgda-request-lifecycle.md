@@ -66,9 +66,9 @@ nvshmem_putmem
 
 单个 WQE 的长度还受四个上界共同约束：本次剩余字节数、IBGDA 最大传输大小、本地注册区间剩余长度、远端注册区间剩余长度。可以写成
 
-\[
+$$
 L_{wqe}=\min(L_{remain},L_{max},L_{local\_chunk},L_{remote\_chunk}).
-\]
+$$
 
 因此，“一次 NVSHMEM PUT”与“一条 RDMA WRITE WQE”并非一一对应。本文假设各上界都不截断请求，所以只产生一条数据 WQE；真实的大请求或跨 registration chunk 请求会循环查询 key、预留 WQE、推进源/目标指针，直至 `remaining_bytes` 归零。
 
@@ -78,9 +78,9 @@ L_{wqe}=\min(L_{remain},L_{max},L_{local\_chunk},L_{remote\_chunk}).
 
 发送队列是有限深度的环。IBGDA 使用单调递增的逻辑索引描述请求边界，再通过掩码映射到物理槽位。对深度为 `nwqes` 的二次幂队列，[`ibgda_get_wqe_ptr`](https://github.com/NVIDIA/nvshmem/blob/3f4c6d81225f45f9c42ed9af09bdb3c61eb356d4/src/include/non_abi/device/pt-to-pt/ibgda_device.cuh#L423-L428) 的核心关系是
 
-\[
+$$
 physical\_slot = logical\_wqe\_index \mathbin{\&} (nwqes-1).
-\]
+$$
 
 物理地址再按 `MLX5_SEND_WQE_SHIFT` 偏移。逻辑索引必须持续增长，因为仅有取模后的槽号无法区分“上一轮的槽 5”和“下一轮的槽 5”；完成边界与容量判断依赖这种代际信息。
 
@@ -110,9 +110,9 @@ RC 不需要在每条 WQE 中携带目的端地址向量，因为 QP 已绑定�
 
 这形成四个不可互换的边界：`resv_head` 是已分配但可能未写好的右边界，`ready_head` 是所有字节均已完成写入的连续右边界，`prod_idx` 是已经通知 NIC 的右边界，`cons_idx` 是已由完成侧回收的右边界。正常情况下应保持：
 
-\[
+$$
 cons\_idx \le prod\_idx \le ready\_head \le resv\_head.
-\]
+$$
 
 并发瞬间中某些边界可能相等，不能因此将它们实现为一个计数器。D02 将专门分析各边界的所有权和内存序。
 

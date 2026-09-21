@@ -6,7 +6,7 @@
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[02-AISystem/GPU/tensor-core/CuTe/Lib/Lib|Lib]] | CuTe 库精读 | 进行中 |
+| [[02-AISystem/GPU/tensor-core/CuTe/Lib/Lib\|Lib]] | CuTe 库精读 | 进行中 |
 
 ## 关键笔记
 

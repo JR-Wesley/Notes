@@ -6,8 +6,8 @@
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[02-AISystem/GPU/CUDA-Programming-Guide/CUDA特性/CUDA特性|CUDA特性]] | CUDA 特性专题（cooperative groups） | 进行中 |
-| [[02-AISystem/GPU/CUDA-Programming-Guide/最佳实践/最佳实践|最佳实践]] | 性能最佳实践（GEMM 等） | 进行中 |
+| [[02-AISystem/GPU/CUDA-Programming-Guide/cuda-features/CUDA特性\|CUDA特性]] | CUDA 特性专题（cooperative groups） | 进行中 |
+| [[02-AISystem/GPU/CUDA-Programming-Guide/best-practices/最佳实践\|最佳实践]] | 性能最佳实践（GEMM 等） | 进行中 |
 
 ## 关键笔记
 

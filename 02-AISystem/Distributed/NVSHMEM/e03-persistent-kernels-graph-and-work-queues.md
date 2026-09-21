@@ -18,9 +18,9 @@ Persistent kernel 通常指一个 kernel 在较长阶段内保持驻留，线程
 
 ## 3. 单 PE 有界工作队列：先闭合四个指针语义
 
-一个容量为 \(K\) 的 ring queue 可以用单调 ticket 表示逻辑位置。多生产者先对 `reserve_tail` fetch-add 取得 ticket \(t\)，等待 `t < reclaim_head + K` 后写 `slot=t mod K`；写完 payload 才发布对应 ready sequence。消费者只能认领已经发布的 ticket，处理完成后推进 reclaim state。逻辑上至少存在 reservation、publication、consumption 和 reclamation 四个边界，不能只用一个 head 与一个 tail 承担全部含义。
+一个容量为 $K$ 的 ring queue 可以用单调 ticket 表示逻辑位置。多生产者先对 `reserve_tail` fetch-add 取得 ticket $t$，等待 `t < reclaim_head + K` 后写 `slot=t mod K`；写完 payload 才发布对应 ready sequence。消费者只能认领已经发布的 ticket，处理完成后推进 reclaim state。逻辑上至少存在 reservation、publication、consumption 和 reclamation 四个边界，不能只用一个 head 与一个 tail 承担全部含义。
 
-安全性可以写成三条不变量：任何两个未回收 ticket 不映射到同一可写 generation；消费者只读其 ready sequence 等于期望 ticket 的槽；生产者只有观察到前一 generation 已回收才覆盖。原子 fetch-add 只证明 ticket 唯一；若 producer A 取得 \(t\) 后停顿、producer B 已发布 \(t+1\)，就产生 publication hole，消费者不能仅因 `reserve_tail > t` 读取 A 的空槽。
+安全性可以写成三条不变量：任何两个未回收 ticket 不映射到同一可写 generation；消费者只读其 ready sequence 等于期望 ticket 的槽；生产者只有观察到前一 generation 已回收才覆盖。原子 fetch-add 只证明 ticket 唯一；若 producer A 取得 $t$ 后停顿、producer B 已发布 $t+1$，就产生 publication hole，消费者不能仅因 `reserve_tail > t` 读取 A 的空槽。
 
 ```text
 reserve(t) -> wait capacity -> write payload(t) -> publish ready(t)
@@ -31,7 +31,7 @@ reserve(t) -> wait capacity -> write payload(t) -> publish ready(t)
 
 ## 4. 批量认领、窃取与所有权转移
 
-逐任务 atomic 会在热点 counter 上产生竞争。worker 可以一次 fetch-add 认领 \(B\) 个连续 tickets，再在 block/warp 内分配；这降低原子频率，却会造成尾部碎片和负载颗粒变粗。最后一批必须用有效范围裁剪，不能因为预留了 \(B\) 就读取尚未发布的槽。
+逐任务 atomic 会在热点 counter 上产生竞争。worker 可以一次 fetch-add 认领 $B$ 个连续 tickets，再在 block/warp 内分配；这降低原子频率，却会造成尾部碎片和负载颗粒变粗。最后一批必须用有效范围裁剪，不能因为预留了 $B$ 就读取尚未发布的槽。
 
 Work stealing 让空闲 PE 从负载高的 victim 取得任务。安全协议必须确定哪一侧推进 dequeue boundary，以及任务被偷后由谁负责 completion 和回收。典型 pull-steal 可以先原子认领 victim 的已发布区间，再 GET payload；只有取得唯一 claim 的 thief 能执行该 ticket。若先 GET 再 claim，多个 thief 可能重复执行；若 claim 后 thief 永远不完成，则任务可能永久丢失，因此严格容错还需要 lease、重试或恢复日志，普通原子队列本身不提供这些能力。
 
@@ -39,7 +39,7 @@ Push-based load balancing 由 owner 把任务 PUT 到目标 queue。它需要先
 
 ## 5. 图遍历：frontier 是动态任务集合
 
-以分布式 BFS 为例，每个 vertex 有 owner PE，当前 frontier 中的 vertex 展开 outgoing edges。对邻接点 \(v\)，worker 需要判断是否首次发现，并将新任务发给 owner。若多个 PE 可同时发现 \(v\)，可在 owner 的 symmetric `distance[v]` 上使用 compare-swap，把未访问值原子转换为本层距离；只有 CAS 成功者生成后续任务。CAS 解决“谁首次发现”，但仍需在生成任务时完成 queue reservation、payload publication 和 outstanding accounting。
+以分布式 BFS 为例，每个 vertex 有 owner PE，当前 frontier 中的 vertex 展开 outgoing edges。对邻接点 $v$，worker 需要判断是否首次发现，并将新任务发给 owner。若多个 PE 可同时发现 $v$，可在 owner 的 symmetric `distance[v]` 上使用 compare-swap，把未访问值原子转换为本层距离；只有 CAS 成功者生成后续任务。CAS 解决“谁首次发现”，但仍需在生成任务时完成 queue reservation、payload publication 和 outstanding accounting。
 
 另一方案允许重复候选先进入队列，再由 owner 本地去重。它减少远端 atomic，却增加网络、队列容量和重复计算。哪种方案更好取决于 frontier density、图分区、重复率、atomic 路径和负载倾斜，不能脱离输入图与 transport 判断。高出度 vertex 还可能瞬间生成远超 queue capacity 的任务，producer 必须分块、溢出到备用结构或参与消费，不能无限 reserve 后再等待空间。
 
@@ -51,12 +51,12 @@ Push-based load balancing 由 owner 把任务 PUT 到目标 queue。它需要先
 
 但是单一全局 counter 仍有边界。若对 children 的计数增加成功，而 payload publication 永远失败，系统不会终止；若 payload 已远端可见而计数更新尚未完成，也可能提前终止。计数、payload 和 ready 分属多个位置或 QP 时，需要明确 ordering，并为异常路径定义撤销或失败状态。计数为零还应排除未提交 reservation、in-flight transport 和 active worker，因此更准确的全局 quiescence 条件是：
 
-\[
+$$
 \forall p:\;Q_p=0\;\land\;A_p=0\;\land\;R_p=0,
 \qquad M_{inflight}=0,
-\]
+$$
 
-其中 \(Q_p\) 是已发布未认领任务，\(A_p\) 是正在执行且可能生成新任务的 worker，\(R_p\) 是已预留未发布任务，\(M_{inflight}\) 是尚未落入这些可见状态的跨 PE 消息。实际协议未必直接测量每一项，但必须用守恒量或 phase/ack 间接覆盖它们。
+其中 $Q_p$ 是已发布未认领任务，$A_p$ 是正在执行且可能生成新任务的 worker，$R_p$ 是已预留未发布任务，$M_{inflight}$ 是尚未落入这些可见状态的跨 PE 消息。实际协议未必直接测量每一项，但必须用守恒量或 phase/ack 间接覆盖它们。
 
 ## 7. 两种终止检测思路及其假设
 

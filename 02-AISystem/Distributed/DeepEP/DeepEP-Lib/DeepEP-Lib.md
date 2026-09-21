@@ -6,10 +6,10 @@
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[02-AISystem/Distributed/DeepEP/DeepEP-Lib/1-getting-started/1-getting-started|1-getting-started]] | 快速开始 | 进行中 |
-| [[02-AISystem/Distributed/DeepEP/DeepEP-Lib/2-architecture/2-architecture|2-architecture]] | 架构 | 进行中 |
-| [[02-AISystem/Distributed/DeepEP/DeepEP-Lib/4-communication-implementation/4-communication-implementation|4-communication-implementation]] | 通信实现 | 进行中 |
-| [[02-AISystem/Distributed/DeepEP/DeepEP-Lib/5-C++-runtime/5-C++-runtime|5-C++-runtime]] | C++ 运行时 | 进行中 |
+| [[02-AISystem/Distributed/DeepEP/DeepEP-Lib/1-getting-started/1-getting-started\|1-getting-started]] | 快速开始 | 进行中 |
+| [[02-AISystem/Distributed/DeepEP/DeepEP-Lib/2-architecture/2-architecture\|2-architecture]] | 架构 | 进行中 |
+| [[02-AISystem/Distributed/DeepEP/DeepEP-Lib/4-communication-implementation/4-communication-implementation\|4-communication-implementation]] | 通信实现 | 进行中 |
+| [[02-AISystem/Distributed/DeepEP/DeepEP-Lib/5-C++-runtime/5-C++-runtime\|5-C++-runtime]] | C++ 运行时 | 进行中 |
 
 ## 关键笔记
 

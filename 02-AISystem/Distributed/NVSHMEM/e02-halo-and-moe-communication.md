@@ -21,11 +21,11 @@ EMPTY(g)
 
 ### 2.1 从域分解得到通信对象
 
-以二维五点 stencil 为例，全局网格按行或二维块分给多个 PE。每个 PE 拥有 interior cells，并保存相邻 PE 所需的 top/bottom/left/right boundary；同时为邻居数据预留 ghost/halo cells。第 \(g\) 轮的 interior 更新只依赖本地旧数据，靠近分区边界的更新还依赖邻居发布的第 \(g\) 代 halo。
+以二维五点 stencil 为例，全局网格按行或二维块分给多个 PE。每个 PE 拥有 interior cells，并保存相邻 PE 所需的 top/bottom/left/right boundary；同时为邻居数据预留 ghost/halo cells。第 $g$ 轮的 interior 更新只依赖本地旧数据，靠近分区边界的更新还依赖邻居发布的第 $g$ 代 halo。
 
-若按行分解，PE \(p\) 的上边界发送给 \(p-1\)，下边界发送给 \(p+1\)。物理域首尾没有对应邻居，应使用边界条件而不是对不存在的 PE 通信；周期边界才把首尾 PE 连成环。邻居集合应在启动阶段确定，否则一个看似方便的模运算可能改变数学问题。
+若按行分解，PE $p$ 的上边界发送给 $p-1$，下边界发送给 $p+1$。物理域首尾没有对应邻居，应使用边界条件而不是对不存在的 PE 通信；周期边界才把首尾 PE 连成环。邻居集合应在启动阶段确定，否则一个看似方便的模运算可能改变数学问题。
 
-对称堆中的接收布局可以是 `recv_from_up[K][width]` 和 `recv_from_down[K][width]`。索引 `slot=g mod K` 让不同代使用不同槽；双缓冲允许消费第 \(g\) 代时准备第 \(g+1\) 代，但只把可容忍距离扩为两代。若生产者可能领先更多，仍需 ack 或有界窗口证明不会覆盖。
+对称堆中的接收布局可以是 `recv_from_up[K][width]` 和 `recv_from_down[K][width]`。索引 `slot=g mod K` 让不同代使用不同槽；双缓冲允许消费第 $g$ 代时准备第 $g+1$ 代，但只把可容忍距离扩为两代。若生产者可能领先更多，仍需 ack 或有界窗口证明不会覆盖。
 
 ### 2.2 Push、pull 与 put-with-signal
 
@@ -37,7 +37,7 @@ PULL 中，消费者在需要数据时从邻居发布 buffer GET。它减少远�
 
 一轮 halo exchange 可以按以下因果关系组织：
 
-1. 确认发送源属于稳定的第 \(g\) 代，并通过邻居 ack 确认 `slot=g mod K` 可覆盖。
+1. 确认发送源属于稳定的第 $g$ 代，并通过邻居 ack 确认 `slot=g mod K` 可覆盖。
 2. 计算或 pack 边界。连续行通常可直接发送，列边界可能需要 pack 成连续 buffer。
 3. 对每个有效邻居执行 put-with-signal，让 signal 携带 generation，而不是恒置 1。
 4. 同时计算不依赖新 halo 的 interior；只有这一部分天然允许与通信重叠。
@@ -54,17 +54,17 @@ Halo 通常只依赖少量几何邻居。每轮全局 barrier 会把无关 PE �
 
 ### 3.1 Dispatch 为什么不是固定消息矩阵
 
-Expert Parallelism 中，每个源 PE 持有 token hidden states，router 选择 top-k experts，expert placement 再映射到目标 PE。若源 PE \(s\) 有 \(N_s\) 个 token、hidden width 为 \(H\)、元素宽度为 \(b\)，则忽略 metadata 的逻辑 dispatch payload 约为
+Expert Parallelism 中，每个源 PE 持有 token hidden states，router 选择 top-k experts，expert placement 再映射到目标 PE。若源 PE $s$ 有 $N_s$ 个 token、hidden width 为 $H$、元素宽度为 $b$，则忽略 metadata 的逻辑 dispatch payload 约为
 
-\[
+$$
 B_s=N_s\times k\times H\times b.
-\]
+$$
 
-发往目标 \(d\) 的 token 数 \(c_{s,d}\) 每轮变化，且 \(\sum_d c_{s,d}=N_s k\)。因此 MoE 必须处理 counts、offsets、capacity 和 token identity：先对 `(target PE, local expert)` 计数并计算 send offsets，再 pack token，让目标获得各源 count 和互不重叠的接收位置，传输 hidden state、routing weight 与恢复原序所需的 metadata，最后发布完成。expert 输出还要按 source/token identity 返回并 combine。
+发往目标 $d$ 的 token 数 $c_{s,d}$ 每轮变化，且 $\sum_d c_{s,d}=N_s k$。因此 MoE 必须处理 counts、offsets、capacity 和 token identity：先对 `(target PE, local expert)` 计数并计算 send offsets，再 pack token，让目标获得各源 count 和互不重叠的接收位置，传输 hidden state、routing weight 与恢复原序所需的 metadata，最后发布完成。expert 输出还要按 source/token identity 返回并 combine。
 
 ### 3.2 Collective all-to-all 的适用条件
 
-NVSHMEM 标准 typed `alltoall` 为每个目标传送相同 `nelems` 的块，适合规则等长布局；动态 MoE 的 \(c_{s,d}\) 通常不相等，不能未经转换就假定 fixed-count all-to-all 天然匹配。按 capacity padding 到等长块可简化 collective 和 offset，但会增加预留空间与无效区域；容量不足仍需定义 drop、reroute 或 overflow，而这些选择都会影响模型语义或尾延迟。
+NVSHMEM 标准 typed `alltoall` 为每个目标传送相同 `nelems` 的块，适合规则等长布局；动态 MoE 的 $c_{s,d}$ 通常不相等，不能未经转换就假定 fixed-count all-to-all 天然匹配。按 capacity padding 到等长块可简化 collective 和 offset，但会增加预留空间与无效区域；容量不足仍需定义 drop、reroute 或 overflow，而这些选择都会影响模型语义或尾延迟。
 
 另一方案是先交换 counts，再以 RMA 传真实长度。它减少 padding，却增加 metadata phase、远端空间规划和细粒度 completion。NVSHMEM collective、NCCL collective、框架 fused MoE communication 和自定义 RMA 都可能合理；应先写出变长语义、参与 group、数据布局与完成要求，再比较库能力，而不是先验认定某个库必然更快。
 
@@ -96,11 +96,11 @@ Dispatch 按 expert/target 重排 token 后，expert 输出顺序与源 batch �
 
 ## 4. 负载不均、容量与尾部完成
 
-定义目标 PE \(d\) 接收 token 数 \(L_d=\sum_s c_{s,d}\)，简单的设备级 imbalance ratio 为
+定义目标 PE $d$ 接收 token 数 $L_d=\sum_s c_{s,d}$，简单的设备级 imbalance ratio 为
 
-\[
+$$
 I=\frac{\max_d L_d}{\frac{1}{P}\sum_d L_d}.
-\]
+$$
 
 它没有表达不同 expert 计算成本、链路位置和本地/远端比例，但比平均 token 数更能暴露 straggler。热门 expert 会同时增加 inbound bytes、reservation contention、expert compute 和 return traffic，step time 通常受最慢目标而不是平均目标控制。
 

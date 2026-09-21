@@ -8,6 +8,8 @@
 
 ## 资料版本与论述边界
 
+官方 Memory Model 对“同一位置、相同 datatype”的 AMO 排他性，以及不同 datatype、atomic/non-atomic NVSHMEM 和普通 load/store 混用的未定义行为，已按“英文原文—中文翻译—技术解读”整理在 [双语核对笔记：NVSHMEM Memory Model](official-docs/r03-usage-memory-model-and-consistency.md)。本课在此基础上继续推导 counter、allocator 和 queue protocol，不把单字原子性扩大为多对象事务。
+
 本文于 2026-09-13 依据 NVIDIA 官方 NVSHMEM API Guide 的滚动 `latest` 页面核对，并以 [NVSHMEM 3.7.2 Release Notes](https://docs.nvidia.com/nvshmem/release-notes-install-guide/release-notes/release-3720.html)标识发布周期。主要契约来自 Atomic Memory Operations、Using NVSHMEM、Memory Ordering、Signaling Operations 和 Point-To-Point Synchronization。滚动 API 文档不是固定源码版本，因此本文不会断言一次 NVSHMEM AMO 必然变成某种 mlx5 WQE，也不会假定所有拓扑都使用 NIC 原生 atomic。
 
 当前 Atomic Memory Operations 文档明确提示：对于 remote transports（文档列举 UCX、IBRC），AMO 只支持 device operation；host-side AMO 只支持 NVLink-connected PEs。具体平台还受 build、transport、GPU/NIC 和运行配置约束。3.7.2 Release Notes 进一步指出，只有 PCIe peer-to-peer 而没有 InfiniBand 的系统，需要使用能以 sockets 支持 atomics 的 UCX transport 才能覆盖 NVSHMEM atomic API。应用必须以目标环境的支持矩阵和实测为准。

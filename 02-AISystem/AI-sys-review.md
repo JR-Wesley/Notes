@@ -62,7 +62,7 @@ flowchart TB
 | --- | --- | --- | --- |
 | 执行与并发 | 任务如何分解、调度、同步和并行？ | [[hpc-basics/并行计算基础理论]]、[[GPU/CPU和GPU的并行与并发]] | 能解释同步开销并运行小型并行程序 |
 | 存储与 I/O | Cache、局部性、带宽、向量化和 I/O 如何限制执行？ | [[hpc-basics/向量化]]、[[hpc-basics/IO]]、[[GPU/CUDA-Programming-Guide/2-2存储模型]] | 区分 compute-bound、memory-bound 和 I/O-bound |
-| 通信性能 | latency、bandwidth、message rate 和扩展效率如何联系？ | [[hpc-basics/通信]]、[[Distributed/分布式基础/通信开销计算]] | 记录消息尺寸、并发度与结果 |
+| 通信性能 | latency、bandwidth、message rate 和扩展效率如何联系？ | [[hpc-basics/通信]]、[[Distributed/distributed-basics/通信开销计算]] | 记录消息尺寸、并发度与结果 |
 | 性能分析 | 如何建立 baseline、定位瓶颈并证伪优化假设？ | [[GPU/Operator/性能分析]]、[[Review/AI-infra]] | 给出 profiler 或 counter 证据，而非只报加速比 |
 
 ### B. 模型、数据与工作负载
@@ -72,9 +72,9 @@ flowchart TB
 | 子域 | 系统关注点 | 主干笔记 | Review 入口 |
 | --- | --- | --- | --- |
 | Transformer | Tensor shape、Embedding、Attention、FFN 和数据流 | [[algorithm-and-model/Model/transformer]]、[[algorithm-and-model/LLM/LLM架构概述]] | [[Review/ZOMI-infra/6-algorithm-data/1-basic/Transformer]] |
-| Attention 与长序列 | MHA/MQA/GQA/MLA、KV 复用、显存与带宽 | [[algorithm-and-model/LLM/现代LLM/注意力]]、[[Inference/Attention]]、[[Inference/kv-cache]] | [[Review/ZOMI-infra/6-algorithm-data/1-basic/4-attention]] |
+| Attention 与长序列 | MHA/MQA/GQA/MLA、KV 复用、显存与带宽 | [[algorithm-and-model/LLM/modern-llm/注意力]]、[[Acceleration/Attention]]、[[Acceleration/kv-cache]] | [[Review/ZOMI-infra/6-algorithm-data/1-basic/4-attention]] |
 | MoE 与路由 | expert、router、负载均衡、dispatch/combine 与 EP | [[algorithm-and-model/MoE/MoE]]、[[algorithm-and-model/MoE/EP]]、[[algorithm-and-model/MoE/DeepSeek-MoE]] | [[Review/ZOMI-infra/6-algorithm-data/2-MoE/Overview]]、[[Review/a-visual-guide/MOE]] |
-| 数据与规模 | Tokenizer、参数量、Scaling Law、训练数据 | [[algorithm-and-model/LLM/现代LLM/分词]]、[[algorithm-and-model/LLM/内存消耗]] | [[Review/ZOMI-infra/6-algorithm-data/1-basic/7-parameter]]、[[Review/ZOMI-infra/0-summary/1-scaling-law/pretraining-scaling]] |
+| 数据与规模 | Tokenizer、参数量、Scaling Law、训练数据 | [[algorithm-and-model/LLM/modern-llm/分词]]、[[algorithm-and-model/LLM/内存消耗]] | [[Review/ZOMI-infra/6-algorithm-data/1-basic/7-parameter]]、[[Review/ZOMI-infra/0-summary/1-scaling-law/pretraining-scaling]] |
 
 ### C. 框架、编程接口与计算图
 
@@ -95,7 +95,7 @@ flowchart TB
 | --- | --- | --- | --- |
 | 前端与 IR | 类型、shape、图和自动微分如何进入编译流程？ | [[AI-compiler/AI-compiler]]、[[AI-compiler/TVM]]、[[Review/openMLsys]] | 画出一段模型到 IR 的转换 |
 | Lowering 与 Codegen | 高层算子如何转为 kernel、library call 或指令？ | [[AI-compiler/ai编译器]]、[[AI-compiler/LLVM]] | 记录一条从图到代码的 lowering 链 |
-| 内存与调度 | buffer planning、fusion、layout 和 execution schedule 如何协同？ | [[Review/AI-infra]]、[[GPU/Operator/算子融合]] | 比较优化前后图、kernel 和内存峰值 |
+| 内存与调度 | buffer planning、fusion、layout 和 execution schedule 如何协同？ | [[Review/AI-infra]]、[[Acceleration/fused-operators/算子融合]] | 比较优化前后图、kernel 和内存峰值 |
 | 自动优化 | specialization、autotuning 和 cost model 如何选择实现？ | [[GPU/Operator/性能分析]]、[[Review/Sys4AI]] | 记录搜索空间、约束、结果和适用边界 |
 
 ### E. 算子、GPU 执行与存储层次
@@ -107,7 +107,7 @@ GPU 不只是“更快的计算设备”。算子性能由线程映射、指令�
 | CUDA 执行模型 | grid、block、warp、SM、kernel、stream/event | [[GPU/CUDA-Programming-Guide/2-1执行模型]]、[[GPU/PMPP/1-Fundamental-Concepts/4-compute-architecture-and-scheduling]] | 解释向量加法或归约的线程映射 |
 | 存储和局部性 | register、shared memory、L1/L2、HBM、coalescing、bank conflict | [[GPU/CUDA-Programming-Guide/2-2存储模型]]、[[GPU/PMPP/1-Fundamental-Concepts/5-memory-architecture-and-data-locality]] | 用 profiler 对比两种访存方案 |
 | Tensor Core 与矩阵 | MMA、WMMA、GEMM、CuTe、layout | [[GPU/tensor-core/tensor-core]]、[[GPU/tensor-core/MMA]]、[[GPU/tensor-core/CuTe/cutlass与GEMM]] | 构建 GEMM baseline 并说明优化来源 |
-| 算子优化 | tiling、fusion、pipeline、量化、稀疏 | [[GPU/Operator/典型算法分析]]、[[GPU/Operator/算子融合]]、[[Inference/Quantization/00-低精度量化知识地图]] | 同时说明数学等价性、局部性和硬件映射 |
+| 算子优化 | tiling、fusion、pipeline、量化、稀疏 | [[GPU/Operator/典型算法分析]]、[[Acceleration/fused-operators/算子融合]]、[[Acceleration/Quantization/00-低精度量化知识地图]] | 同时说明数学等价性、局部性和硬件映射 |
 | PTX 与底层原语 | data movement、conversion、synchronization、special register | [[GPU/ISA/PTX]]、[[GPU/CUDA-Programming-Guide/3-2指令集]] | 只在需要时从高层 kernel 下钻至 PTX |
 
 ### F. 服务器硬件、内存和拓扑
@@ -128,12 +128,12 @@ GPU 不只是“更快的计算设备”。算子性能由线程映射、指令�
 
 | 子域 | 核心问题 | 主干笔记 | Review 入口 |
 | --- | --- | --- | --- |
-| 分布式基础 | rank、process group、P2P、collective 和通信成本如何建模？ | [[Distributed/分布式基础/分布式基础]]、[[Distributed/分布式基础/集合通信]]、[[hpc-basics/MPI]] | [[Review/ZOMI-infra/2-store-communication/1-collective-communication/Overview]] |
+| 分布式基础 | rank、process group、P2P、collective 和通信成本如何建模？ | [[Distributed/distributed-basics/分布式基础]]、[[Distributed/distributed-basics/集合通信]]、[[hpc-basics/MPI]] | [[Review/ZOMI-infra/2-store-communication/1-collective-communication/Overview]] |
 | 通信库 | MPI、NCCL、NVSHMEM 和专用库分别提供什么抽象？ | [[Distributed/NCCL/NCCL]]、[[Distributed/NVSHMEM/NVSHMEM]]、[[Distributed/DeepEP/DeepEP]] | [[Review/ZOMI-infra/2-store-communication/2-comm-lib/Overview]] |
 | RDMA 与 GPU-aware 网络 | MR/QP/CQ、DMA、GDR 和 IBGDA 如何组成路径？ | [[Distributed/RDMA/RDMA]]、[[Distributed/NVSHMEM/00-learning-path]]、[[Distributed/NVSHMEM/c01-host-rdma-to-gpudirect-and-ibgda]] | [[Review/ZOMI-infra/2-store-communication/RDMA-intro]] |
-| 并行策略 | DP/TP/PP/EP/SP/CP 分别切分什么，产生哪些通信？ | [[Distributed/Parallelism/LLM并行策略]]、[[Distributed/Parallelism/LLM并行划分基础]] | [[Review/LLM分布式训练系统/4-并行策略]] |
-| 训练运行时 | 参数/梯度/优化器状态、ZeRO、overlap、checkpoint 如何管理？ | [[Distributed/distributed-training/distributed-training]]、[[Distributed/distributed-training/分布式overlap]]、[[Distributed/distributed-training/DeepSpeed]] | [[Review/LLM分布式训练系统/6-运行时]]、[[Review/ZOMI-infra/4-train/4-train]] |
-| 集群与扩展 | scale-up/scale-out、网络拓扑、rail、拥塞与故障域如何影响效率？ | [[Distributed/分布式基础/scale规模扩展]]、[[cluster-and-hardware/集群架构]] | [[Review/ZOMI-infra/2-store-communication/scaleup-and-out]] |
+| 并行策略 | DP/TP/PP/EP/SP/CP 分别切分什么，产生哪些通信？ | [[Distributed/Parallelism/LLM并行策略]]、[[Distributed/Parallelism/LLM并行划分基础]] | [[Review/llm-distributed-training/4-并行策略]] |
+| 训练运行时 | 参数/梯度/优化器状态、ZeRO、overlap、checkpoint 如何管理？ | [[Distributed/distributed-training/distributed-training]]、[[Distributed/distributed-training/分布式overlap]]、[[Distributed/distributed-training/DeepSpeed]] | [[Review/llm-distributed-training/6-运行时]]、[[Review/ZOMI-infra/4-train/4-train]] |
+| 集群与扩展 | scale-up/scale-out、网络拓扑、rail、拥塞与故障域如何影响效率？ | [[Distributed/distributed-basics/scale规模扩展]]、[[cluster-and-hardware/集群架构]] | [[Review/ZOMI-infra/2-store-communication/scaleup-and-out]] |
 
 ### H. 推理系统与服务
 
@@ -141,10 +141,10 @@ GPU 不只是“更快的计算设备”。算子性能由线程映射、指令�
 
 | 子域 | 核心问题 | 主干笔记 | 掌握证据 |
 | --- | --- | --- | --- |
-| 推理流程 | Prefill、Decode、Sampling 和 batch 怎样构成请求生命周期？ | [[Inference/Inference]]、[[Inference/解码]] | 按 batch、输入/输出长度测量 latency/throughput |
-| KV Cache | 状态怎样组织、分页、复用、传输和淘汰？ | [[Inference/kv-cache]]、[[Framework/vLLM/框架分析]] | 解释序列长度、batch 与显存峰值的关系 |
-| 低精度与算子 | 量化、稀疏、fusion、Flash/Paged Attention 如何改变路径？ | [[Inference/Quantization/00-低精度量化知识地图]]、[[Inference/融合算子/融合算子]] | 比较质量、存储、带宽和速度代价 |
-| 服务运行时 | continuous batching、调度、资源隔离和 PD 分离如何工作？ | [[Framework/vLLM/vLLM]]、[[Inference/推理加速方法论]] | 进行端到端服务基准，而非只测单 kernel |
+| 推理流程 | Prefill、Decode、Sampling 和 batch 怎样构成请求生命周期？ | [[Acceleration/Acceleration]]、[[Acceleration/解码]] | 按 batch、输入/输出长度测量 latency/throughput |
+| KV Cache | 状态怎样组织、分页、复用、传输和淘汰？ | [[Acceleration/kv-cache]]、[[Framework/vLLM/框架分析]] | 解释序列长度、batch 与显存峰值的关系 |
+| 低精度与算子 | 量化、稀疏、fusion、Flash/Paged Attention 如何改变路径？ | [[Acceleration/Quantization/00-低精度量化知识地图]]、[[Acceleration/fused-operators/融合算子]] | 比较质量、存储、带宽和速度代价 |
+| 服务运行时 | continuous batching、调度、资源隔离和 PD 分离如何工作？ | [[Framework/vLLM/vLLM]]、[[Acceleration/推理加速方法论]] | 进行端到端服务基准，而非只测单 kernel |
 | 分布式推理 | TP/PP/EP、KV transfer、prefill/decode 分离如何映射至网络？ | [[Distributed/Parallelism/LLM推理并行优化的必备知识]] | 说明通信对象、频率、尺寸和尾延迟需求 |
 
 ### I. 纵向案例与工程证据
@@ -318,6 +318,8 @@ flowchart TD
 | NUMA 与紧耦合 CPU–GPU | [浅解 NUMA](https://zhuanlan.zhihu.com/p/67558970)、[每个程序员都应该知道的 NUMA](https://zhuanlan.zhihu.com/p/336365600)、[Grace Hopper Architecture](https://developer.nvidia.com/blog/nvidia-grace-hopper-superchip-architecture-in-depth/)、[Grace Hopper 产品页](https://www.nvidia.com/en-us/data-center/grace-hopper-superchip/)、[GH200 资料](https://dam-cdn.nvd.orangelogic.com/AssetLink/h125m07nuew832vthbov0q6b2rs8ta0q.pdf) |
 | AI 硬件课程 | [Eyeriss Tutorial](https://eyeriss.mit.edu/tutorial-previous.html)、[Hardware Architecture for Deep Learning](https://csg.csail.mit.edu/6.5930/index.html)、[TinyML and Efficient Deep Learning Computing](https://hanlab.mit.edu/courses/2024-fall-65940) |
 
+面向H100 的CUDA教程，介绍了很多重要特性： https://cudacourseh100.github.io/index.html#top
+
 ### 内存模型、RDMA 与 GPU 通信
 
 | 用途                          | 资料                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -334,7 +336,7 @@ flowchart TD
 
 | 用途 | 资料 |
 | --- | --- |
-| 并行与互联综合 | [一个互联软件工程师的自我修养](https://alidocs.dingtalk.com/i/nodes/NkDwLng8ZLbL9pXNsaaRlANbVKMEvZBY)、[并行计算课程与资料](https://goodcucumber.github.io/x40paraguide/x40.html) |
+| 并行与互联综合 | [并行计算课程与资料](https://goodcucumber.github.io/x40paraguide/x40.html) |
 | CUDA 实践 | [CUDA 博客合集](https://github.com/caiwanxianhust/CUDA-BLOG)、[CUDA 视频课程](https://www.youtube.com/watch?v=Sdjn9FOkhnA&list=PL5B692fm6--vWLhYPqLcEu6RF3hXjEyJr&index=1) |
 | AI 加速器实验 | [AAML2024](https://nycu-caslab.github.io/AAML2024/index.html)、[Computer Organization](https://nycu-caslab.github.io/CO2024/index.html)、[CFU Playground](https://cfu-playground.readthedocs.io/en/latest/index.html) |
 | 推理与分布式社区 | [vLLM/PD 资料](https://www.zhihu.com/people/52-34-86-1/posts)、[LLM 推理框架](https://zhuanlan.zhihu.com/c_1916901019268391457)、[分布式训练专题](https://www.cnblogs.com/sunstrikes/collections/17032)、[AI 纵贯线](https://www.zhihu.com/column/c_1777819405453787137) |

@@ -6,8 +6,8 @@
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[02-AISystem/Distributed/NCCL/NCCL-lib/1-core-architecture/1-core-architecture|1-core-architecture]] | 核心架构 | 进行中 |
-| [[02-AISystem/Distributed/NCCL/NCCL-lib/8-build-system-and-packaging/8-build-system-and-packaging|8-build-system-and-packaging]] | 构建与打包 | 进行中 |
+| [[02-AISystem/Distributed/NCCL/NCCL-lib/1-core-architecture/1-core-architecture\|1-core-architecture]] | 核心架构 | 进行中 |
+| [[02-AISystem/Distributed/NCCL/NCCL-lib/8-build-system-and-packaging/8-build-system-and-packaging\|8-build-system-and-packaging]] | 构建与打包 | 进行中 |
 
 ## 关键笔记
 

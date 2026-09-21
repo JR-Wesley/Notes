@@ -25,9 +25,9 @@ D01 追踪了一条 PUT 如何变成 WQE，并把 `resv_head`、`ready_head`、`
 
 在无错误的稳态下，它们满足
 
-\[
+$$
 cons\_idx \le prod\_idx \le ready\_head \le resv\_head.
-\]
+$$
 
 这个偏序只说明生命周期阶段，不能直接当作容量公式。特别是 `resv_head` 先原子前移、生产者随后才等待物理槽位可用，所以大量生产者同时竞争时，`resv_head-cons_idx` 可以暂时大于队列深度。真正阻止覆盖的是每个生产者在写 WQE 前执行的 availability wait，而不是限制 reservation counter 永远留在物理环容量之内。
 
@@ -35,17 +35,17 @@ cons\_idx \le prod\_idx \le ready\_head \le resv\_head.
 
 [`ibgda_reserve_wqe_slots`](https://github.com/NVIDIA/nvshmem/blob/3f4c6d81225f45f9c42ed9af09bdb3c61eb356d4/src/include/non_abi/device/pt-to-pt/ibgda_device.cuh#L1926-L1951) 以 `atomicAdd` 或 `atomicAdd_block` 推进 `resv_head`。返回值是本组 WQE 的 `base_wqe_idx`，右边界为
 
-\[
+$$
 new\_wqe\_idx = base\_wqe\_idx + num\_wqes.
-\]
+$$
 
 QP 可能被多个 CTA 共享时使用 GPU scope 原子操作；确定只在 CTA 内共享时使用 block scope 版本。作用域选择不是单纯性能提示：如果另一个 CTA 也能修改同一管理状态，CTA scope 原子性便不足以建立全体生产者可见的唯一顺序。QP 映射如何决定 `is_qp_shared_among_ctas` 留到 D03，此处只需要记住“共享域必须覆盖全部潜在并发者”。
 
-原子加法后，函数把右边界传给 [`ibgda_wait_for_slot_availability`](https://github.com/NVIDIA/nvshmem/blob/3f4c6d81225f45f9c42ed9af09bdb3c61eb356d4/src/include/non_abi/device/pt-to-pt/ibgda_device.cuh#L1705-L1722)。若队列深度为 \(N\)，且 `new_wqe_idx >= N`，生产者等待
+原子加法后，函数把右边界传给 [`ibgda_wait_for_slot_availability`](https://github.com/NVIDIA/nvshmem/blob/3f4c6d81225f45f9c42ed9af09bdb3c61eb356d4/src/include/non_abi/device/pt-to-pt/ibgda_device.cuh#L1705-L1722)。若队列深度为 $N$，且 `new_wqe_idx >= N`，生产者等待
 
-\[
+$$
 cons\_idx \ge new\_wqe\_idx-N.
-\]
+$$
 
 右边界所对应的最后一个物理槽位若已结束上一轮使用，则更早槽位也因 QP 顺序完成而可用，所以检查这一完成边界即可保护本组所有槽位。availability wait 返回后，生产者才可把逻辑索引用 `index & (N-1)` 映射到物理 WQ，并开始覆盖其中的旧字节。
 
@@ -53,7 +53,7 @@ cons\_idx \ge new\_wqe\_idx-N.
 
 设队列深度为 8，`cons_idx=100`，多个线程连续预留后，某线程得到 `[108, 110)`。它的右边界 110 要求等待 `cons_idx >= 102`，因为逻辑 108、109 将覆盖上一轮物理槽位 4、5，对应的旧使用必须已经结束。与此同时，更后的线程仍可能把 `resv_head` 推到 120；这并不立即覆盖环，因为它们也各自停在 availability wait。由此可见，观察到 `resv_head-cons_idx=20` 不足以证明环已损坏，必须继续检查 `ready_head`、实际 WQE 写入和等待目标。
 
-相反，如果某条路径绕过 availability wait，或把“预留成功”误当成“物理槽位可写”，才会出现真实覆盖。D02 的关键安全断言不是 `resv_head-cons_idx <= N`，而是：任何生产者写入逻辑区间 \([b,e)\) 的物理映射前，完成边界必须至少达到 \(e-N\)。
+相反，如果某条路径绕过 availability wait，或把“预留成功”误当成“物理槽位可写”，才会出现真实覆盖。D02 的关键安全断言不是 `resv_head-cons_idx <= N`，而是：任何生产者写入逻辑区间 $[b,e)$ 的物理映射前，完成边界必须至少达到 $e-N$。
 
 ## 3. 第二阶段：独立填充 WQE，并建立写入可见性
 
@@ -88,9 +88,9 @@ B 在 time 1 已经完成自己的内容，却不能声明边界 102 ready，因
 
 在 [`ibgda_rma_thread`](https://github.com/NVIDIA/nvshmem/blob/3f4c6d81225f45f9c42ed9af09bdb3c61eb356d4/src/include/non_abi/device/pt-to-pt/ibgda_device.cuh#L2077-L2216) 中，只有 active mask 为完整 warp、lane 的 proxy PE 相同，并在取得 QP 后确认 QP 相同时，才能进行 warp coalescing。lane 0 为整个 warp 一次预留
 
-\[
+$$
 num\_wqes=num\_wqes\_per\_cmd\times32+additional\_wqe,
-\]
+$$
 
 再把基址广播给所有 lane。每个 lane 填充自己的固定子区间，warp 同步后由最后一个 lane 写额外 DUMP/NOP（如有）并提交整组。这样把 32 次 reservation 和最多 32 次 publication 合并为一次，也让一组 lane 共享一个 CQ update 与 doorbell 机会。
 
@@ -134,7 +134,7 @@ CQ polling 因而也是共享 progress：等待新槽位的生产者和执行 qu
 
 ### 6.3 一次跨物理环尾的完整例子
 
-设深度 \(N=8\)，初始 `cons=prod=ready=resv=106`。生产者 A 预留 `[106,108)`，物理槽位为 2、3；生产者 B 预留 `[108,110)`，物理槽位为 4、5。两组的右边界分别要求旧完成至少达到 100 和 102，因此当前 `cons=106` 足够，二者都可填充。若 B 先写完，它仍在 ready CAS 等待 A；A 发布 106→108 后，B 才能发布 108→110。
+设深度 $N=8$，初始 `cons=prod=ready=resv=106`。生产者 A 预留 `[106,108)`，物理槽位为 2、3；生产者 B 预留 `[108,110)`，物理槽位为 4、5。两组的右边界分别要求旧完成至少达到 100 和 102，因此当前 `cons=106` 足够，二者都可填充。若 B 先写完，它仍在 ready CAS 等待 A；A 发布 106→108 后，B 才能发布 108→110。
 
 假设 batch 条件令 B post-send 到 110，NIC 完成 WQE 109 后报告低位 counter 109，polling 将其转换为软件 next-boundary 110，`cons_idx` 随之变为 110。下一轮逻辑 114 会映射到物理槽位 2，但 reservation 后必须等待 `cons >= 106`；当前已经满足，所以覆盖逻辑 106 所用旧槽位是安全的。例子中的逻辑值刻意不从零开始，用于强调“物理位置相同”和“生命周期相同”不是一回事。
 

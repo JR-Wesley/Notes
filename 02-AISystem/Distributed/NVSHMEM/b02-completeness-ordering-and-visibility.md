@@ -8,6 +8,8 @@
 
 ## 资料版本与证据边界
 
+官方 Memory Model 中关于 blocking fetching ordering、NVSHMEM/OpenSHMEM 差异及 mixed NVLink/InfiniBand visibility 的英文原文、中文翻译和解读，集中保存在 [双语核对笔记：NVSHMEM Memory Model](official-docs/r03-usage-memory-model-and-consistency.md)。本课以下内容仍按具体 API 契约组织，双语笔记用于核对官方措辞，不替代 `fence`、`quiet`、signal 和 collective 各自的接口文档。
+
 本文在 2026-09-12 核对 NVIDIA 官方 NVSHMEM API Guide 的滚动 `latest` 文档，并以 [NVSHMEM 3.7.2 Release Notes](https://docs.nvidia.com/nvshmem/release-notes-install-guide/release-notes/release-3720.html)标识当前发布周期。主要契约来自 Memory Ordering、Remote Memory Access、Signaling Operations、Point-To-Point Synchronization、Collective Communication、NVSHMEM and the CUDA Model 以及官方 FAQ。滚动页面不是固定源码版本，因此本文不把 API 语义映射为某个确定的 WQE、CQE、proxy 请求或 IBGDA 完成记录。
 
 文中的代码是教学片段，未编译、未运行；没有 GPU、NVLink、InfiniBand 或 IBGDA 实测结果。关于“请求可能经过队列、proxy 或 NIC”的描述只用于解释为何调用返回与远端消费不同步，具体 transport 如何实现 `quiet`、是否使用 CQ、使用几条请求以及如何批处理，必须在后续固定 NVSHMEM commit 的源码课中核验。

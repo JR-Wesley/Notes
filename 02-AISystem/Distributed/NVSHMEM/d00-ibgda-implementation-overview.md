@@ -105,9 +105,9 @@ lkey 与 rkey 不能互换。lkey 授权本地 NIC 读取或写入本地 SGE 指
 
 这四者对应的正常偏序是：
 
-\[
+$$
 \texttt{cons\_idx} \le \texttt{prod\_idx} \le \texttt{ready\_head} \le \texttt{resv\_head}.
-\]
+$$
 
 这里是对源码状态含义的教学归纳，不是源码中的显式 assert。并发执行时等号可以断开：线程 A 先预留前面的槽后暂停，线程 B 可以填完后面的槽，但 `ready_head` 不能越过 A 留下的空洞；若它越过，NIC 可能读取半写 WQE。B04 中的 publication hole 在这里变成了实际的 WQ 管理问题。
 
@@ -251,5 +251,5 @@ IBGDA 的核心不是简单地“让 GPU 调用网络 API”，而是把一套�
 - NVIDIA NVSHMEM 3.7.2 release tag 与固定源码：[`v3.7.2-0`](https://github.com/NVIDIA/nvshmem/tree/v3.7.2-0)，commit [`3f4c6d81225f45f9c42ed9af09bdb3c61eb356d4`](https://github.com/NVIDIA/nvshmem/commit/3f4c6d81225f45f9c42ed9af09bdb3c61eb356d4)，静态核对日期 2026-09-13。
 - [NVIDIA NVSHMEM 3.7.2 Release Notes](https://docs.nvidia.com/nvshmem/release-notes-install-guide/release-notes/release-3720.html)：版本兼容性、限制和 IBGDA RC QP ABI known issue。
 - [NVSHMEM Environment Variables](https://docs.nvidia.com/nvshmem/api/latest/gen/env.html)：IBGDA enable、NIC handler、RC/DCI/DCT、mapping、batch 与 fetch-slot 选项；该页为滚动文档，使用时仍须与固定 tag 的 `src/modules/transport/common/env_defs.h` 对照。
-- [NVSHMEM Performance：Tuning the queue-pair Type and Configuration for IBGDA](https://docs.nvidia.com/nvshmem/release-notes-install-guide/best-practice-guide/performance.html#tuning-the-queue-pair-type-and-configuration-for-ibgda)：RC 与动态连接的资源/性能权衡；性能建议需在目标环境复测。
+- [NVSHMEM Performance：Tuning the queue-pair Type and Configuration for IBGDA](https://docs.nvidia.com/nvshmem/release-notes-install-guide/best-practice-guide/performance.html#tuning-the-queue-pair-type-and-configuration-for-ibgda)：RC 与动态连接的assets/性能权衡；性能建议需在目标环境复测。
 - 本知识库前置笔记：[A01：从零开始理解 RDMA 通信模型](a01-rdma-communication-model.md)、[A02：RDMA 资源、内存注册与建连生命周期](a02-rdma-resources-and-memory-registration.md)、[A03：RDMA 请求、完成与缓冲区协议](a03-rdma-requests-and-buffer-protocol.md)、[B01：NVSHMEM 对称对象与远端寻址](b01-symmetric-objects-and-remote-addressing.md)、[B02：完成、排序与可见性](b02-completeness-ordering-and-visibility.md)、[B04：数据发布、缓冲区所有权与有界流水协议](b04-data-publishing-and-buffer-ownership.md)、[C01：从 host RDMA 到 GPUDirect RDMA 与 IBGDA](c01-host-rdma-to-gpudirect-and-ibgda.md)与 [C02：Transport 与 GPU–NIC 拓扑核验](c02-transport-verification-and-topology.md)。

@@ -163,7 +163,7 @@ Host Bridge / root bus 0000:00
 
 配置空间可读，BAR 仍可能分配失败；BAR 可用，DMA mapping 或 Device firmware 仍可能失败；driver 已绑定，链路仍可能降速、报 AER 或发生 surprise down。`LnkCap` 表示能力，`LnkSta` 表示当前协商状态；ACS 描述访问控制能力，IOMMU group 描述隔离粒度，二者都不能单独证明 P2P/GDR 实际可用。
 
-本级产物是一张带 BDF、Bridge 类型、bus range、link speed/width 和 NUMA 的 PCIe Tree，以及一条 endpoint 的资源/传输说明。通过标准是拿到任意 BDF 后，能说明它是什么 function、经过哪些上游端口、如何被 CPU 控制、如何 DMA、如何报告完成，并能从共同分支或降速证据提出下一步。对应笔记按依赖阅读：[[02-AISystem/cluster-and-hardware/02-PCIe拓扑与BDF：从设备地址追踪上游|02 PCIe 拓扑与 BDF]] → [[02-AISystem/cluster-and-hardware/04-配置空间、BAR与MMIO：从设备身份到地址资源|04 BAR/MMIO]] → [[02-AISystem/cluster-and-hardware/05-DMA与IOMMU：设备如何访问内存|05 DMA/IOMMU]] → [[02-AISystem/cluster-and-hardware/06-MSI与MSI-X：从数据完成到中断通知|06 MSI/MSI-X]] → [[02-AISystem/cluster-and-hardware/07-PCIe链路、AER与错误恢复：从可见设备到运行中稳定性|07 链路/AER/恢复]]。
+本级产物是一张带 BDF、Bridge 类型、bus range、link speed/width 和 NUMA 的 PCIe Tree，以及一条 endpoint 的assets/传输说明。通过标准是拿到任意 BDF 后，能说明它是什么 function、经过哪些上游端口、如何被 CPU 控制、如何 DMA、如何报告完成，并能从共同分支或降速证据提出下一步。对应笔记按依赖阅读：[[02-AISystem/cluster-and-hardware/02-PCIe拓扑与BDF：从设备地址追踪上游|02 PCIe 拓扑与 BDF]] → [[02-AISystem/cluster-and-hardware/04-配置空间、BAR与MMIO：从设备身份到地址资源|04 BAR/MMIO]] → [[02-AISystem/cluster-and-hardware/05-DMA与IOMMU：设备如何访问内存|05 DMA/IOMMU]] → [[02-AISystem/cluster-and-hardware/06-MSI与MSI-X：从数据完成到中断通知|06 MSI/MSI-X]] → [[02-AISystem/cluster-and-hardware/07-PCIe链路、AER与错误恢复：从可见设备到运行中稳定性|07 链路/AER/恢复]]。
 
 ## Level 5：建立 Linux Device Model 与设备可见性阶梯
 

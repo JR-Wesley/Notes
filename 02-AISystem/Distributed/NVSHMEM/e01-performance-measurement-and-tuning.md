@@ -18,19 +18,19 @@ NVSHMEM 性能分析的难点并不是得到一个 GB/s 数字，而是确认这
 
 可把观测延迟粗略分解为：
 
-\[
+$$
 T_{obs}=T_{launch}+T_{issue}+T_{queue}+T_{network}+T_{remote}+T_{completion}+T_{sync}.
-\]
+$$
 
 不同 benchmark 会省略或放大其中某些项。kernel 内循环可以摊薄 `T_launch`，但也可能测到稳态流水而不是冷启动；每轮 barrier 能建立严格迭代边界，却把 collective synchronization 混入结果；一次发很多 NBI 再 quiet 测到的是批处理吞吐，不能命名为单操作 latency。
 
 ### 2.2 带宽必须说明有效字节和聚合范围
 
-若在测量窗口 \(T\) 内完成 \(N\) 次、每次 payload 为 \(S\) 字节的单向传输，应用有效带宽可写为
+若在测量窗口 $T$ 内完成 $N$ 次、每次 payload 为 $S$ 字节的单向传输，应用有效带宽可写为
 
-\[
+$$
 BW_{payload}=\frac{N\times S}{T}.
-\]
+$$
 
 双向同时传输时，有的工具报告两个方向 payload 总和，有的报告单方向值；多 PE 测试也可能输出 per-PE、per-pair 或 aggregate bandwidth。报告中必须写明分子如何计算，不能仅保留单位。协议 header、WQE、PCIe transaction 和链路编码不在 payload 字节中，因此应用 GB/s 与物理 wire rate 不是同一个量。
 
@@ -38,7 +38,7 @@ BW_{payload}=\frac{N\times S}{T}.
 
 ### 2.3 消息率揭示细粒度通信能力
 
-对于固定小消息，\(R=N/T\) 次每秒比 GB/s 更容易反映 WQE 生成、doorbell、QP contention 和 NIC packet processing。IBGDA 的价值之一是让许多 GPU 线程直接并行提交请求，从而提高细粒度注入能力；但单个 GPU thread 填写 WQE 未必比 CPU 快，更多 QP 也会增加资源占用以及 fence/quiet 遍历成本。因此“单消息 latency 较高、并发 message rate 或带宽较高”并不矛盾，它们测量的是不同工作点。
+对于固定小消息，$R=N/T$ 次每秒比 GB/s 更容易反映 WQE 生成、doorbell、QP contention 和 NIC packet processing。IBGDA 的价值之一是让许多 GPU 线程直接并行提交请求，从而提高细粒度注入能力；但单个 GPU thread 填写 WQE 未必比 CPU 快，更多 QP 也会增加资源占用以及 fence/quiet 遍历成本。因此“单消息 latency 较高、并发 message rate 或带宽较高”并不矛盾，它们测量的是不同工作点。
 
 ## 3. 正确设计微基准的计时边界
 
@@ -70,19 +70,19 @@ mpirun -np 2 "$NVSHMEM_HOME/bin/perftest/device/pt-to-pt/shmem_put_bw" \
 
 ## 5. Overlap 必须以端到端缩短为证据
 
-计算 kernel 与通信 kernel 在 profiler 上时间区间相交，只说明它们被并发调度，不说明通信被有效隐藏。设独立测得计算时间为 \(T_c\)，通信完成时间为 \(T_m\)，组合执行时间为 \(T_{both}\)。一个便于解释的隐藏量是
+计算 kernel 与通信 kernel 在 profiler 上时间区间相交，只说明它们被并发调度，不说明通信被有效隐藏。设独立测得计算时间为 $T_c$，通信完成时间为 $T_m$，组合执行时间为 $T_{both}$。一个便于解释的隐藏量是
 
-\[
+$$
 T_{hidden}=T_c+T_m-T_{both},
-\]
+$$
 
 并可用
 
-\[
+$$
 \eta_{overlap}=\frac{T_{hidden}}{\min(T_c,T_m)}
-\]
+$$
 
-描述较短阶段被隐藏的比例。该比值只有在三次测量处理同一工作量、相同 completion 语义和相近稳态条件时才有意义；资源竞争可能使 \(T_{both}\) 大于 \(T_c+T_m\)，测得负收益也应保留，而不是截断为零。
+描述较短阶段被隐藏的比例。该比值只有在三次测量处理同一工作量、相同 completion 语义和相近稳态条件时才有意义；资源竞争可能使 $T_{both}$ 大于 $T_c+T_m$，测得负收益也应保留，而不是截断为零。
 
 有效 overlap 需要满足依赖独立与资源可并行两个条件。数据尚未产生时不能提前发送，接收数据尚未完成时不能提前消费；即使依赖允许，计算和通信仍可能竞争 SM issue slots、HBM bandwidth、L2、copy/transport resources 或 NIC injection。IBGDA 把 WQE 生成放到 GPU 上，减少 CPU proxy 依赖的同时，也可能让通信提交与计算争夺 GPU 执行资源。因此调大通信 CTA 数并不单调改善 overlap。
 

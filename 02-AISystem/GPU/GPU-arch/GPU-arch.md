@@ -6,7 +6,7 @@
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[02-AISystem/GPU/GPU-arch/GPU-ISA-Arch/GPU-ISA-Arch|GPU-ISA-Arch]] | GPU 指令集架构 | 进行中 |
+| [[02-AISystem/GPU/GPU-arch/GPU-ISA-Arch/GPU-ISA-Arch\|GPU-ISA-Arch]] | GPU 指令集架构 | 进行中 |
 
 ## 关键笔记
 

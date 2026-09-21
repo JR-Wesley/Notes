@@ -1,5 +1,7 @@
 # C01：从 host RDMA 到 GPUDirect RDMA 与 IBGDA——分离调用、提交和数据路径
 
+官方 Using NVSHMEM 页面关于 GDAKI、IBGDA、GPUNetIO、DOCA、TMA 与 transport 选择条件的英文原文和中文对照，见 [双语核对笔记：Using NVSHMEM](official-docs/r05-using-nvshmem.md)。这些滚动版本条件用于建立候选路径，实际 handler 与数据路径仍需按 C02 的证据链验证。
+
 “GPU 通信”常被一句“数据直接从 GPU 经过网卡发送”概括，但这句话省略了决定架构和性能的三个问题：谁调用通信 API，谁把请求提交给 NIC，NIC 实际读取或写入哪种内存。传统 host verbs、GPUDirect RDMA、NVSHMEM device API、CPU proxy 和 IBGDA 可以在这三个维度上形成不同组合；只确认其中一项，不能推出另外两项。
 
 本课从 [A01：RDMA 通信模型](a01-rdma-communication-model.md)的 CPU verbs 基线出发，逐步比较 host staging、同节点 GPU P2P、CPU 提交的 GPUDirect RDMA、NVSHMEM device API 的 proxy path，以及 IBGDA/GDAKI。重点是控制路径和 payload 数据路径，不进入某个固定 NVSHMEM commit 的 WQE、doorbell record、CQ 或 QP 映射实现；这些内容属于后续 D 模块。正文按 2026-09-12 可见的 NVSHMEM 3.7.2 发布周期文档、CUDA 13.4 GPUDirect RDMA Guide 和当前 CUDA Programming Guide 核对。本文没有检查实际机器、编译 NVSHMEM、运行通信程序或测量性能。
@@ -263,4 +265,3 @@ IBGDA 允许多个 GPU threads 映射到多个 QPs 并行提交，官方 Best Pr
 - [NVSHMEM Installation](https://docs.nvidia.com/nvshmem/release-notes-install-guide/install-guide/nvshmem-install-proc.html)：IBGDA 构建选项和当前依赖说明。
 - [NVSHMEM Troubleshooting and FAQs](https://docs.nvidia.com/nvshmem/api/latest/faq.html)：`NVSHMEM_INFO`、`NVSHMEM_DEBUG`、debug file 以及 InfiniBand/P2P 常见配置边界。
 - [NVSHMEM 3.7.2 Release Notes](https://docs.nvidia.com/nvshmem/release-notes-install-guide/release-notes/release-3720.html)：本课核对时的当前发布周期；滚动 API/Best Practice 页面不代表固定源码 commit。
-

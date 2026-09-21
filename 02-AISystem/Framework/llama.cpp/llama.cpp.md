@@ -6,7 +6,7 @@
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[02-AISystem/Framework/llama.cpp/repo/repo|repo]] | llama.cpp 源码精读 | 进行中 |
+| [[02-AISystem/Framework/llama.cpp/repo/repo\|repo]] | llama.cpp 源码精读 | 进行中 |
 
 ## 关键笔记
 

@@ -12,6 +12,8 @@ C00 解释了 runtime 在第一个通信操作前需要建立哪些控制面条�
 
 本文于 2026-09-13 依据 NVIDIA NVSHMEM 3.7.2 发布周期的滚动 API、Best Practice 与 Installation 文档，以及 CUDA 13.4 GPUDirect RDMA Guide 和当前 `nvidia-smi` 文档核对。环境变量、transport 列表、NIC handler 选项和默认值会随 NVSHMEM 版本变化；执行前必须以实际安装版本的文档和 `NVSHMEM_INFO` 输出复核。
 
+当前 Using NVSHMEM 页面列出的 GDAKI prerequisites、transport selector 和启用变量已保存为 [双语核对笔记：Using NVSHMEM](official-docs/r05-using-nvshmem.md)。该清单只证明文档要求，不能替代对已安装构建、driver/module、NIC、拓扑、运行日志和跨节点行为的核验。
+
 本文只建立观测方法，不固定 NVSHMEM 源码 commit，也不把日志文本格式、内部 transport 名称、proxy thread 名称或 profiler event 数量当成稳定 ABI。若日志没有直接给出某项结论，应记录“未确认”，不能用性能差异替代实现证据。
 
 ## 一、先定义要证明的命题，而不是先收集大量输出

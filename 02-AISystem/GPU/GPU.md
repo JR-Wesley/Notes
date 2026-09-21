@@ -12,12 +12,12 @@ tags:
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[02-AISystem/GPU/CUDA-Programming-Guide/CUDA-Programming-Guide|CUDA-Programming-Guide]] | CUDA C 编程指南精读 | 进行中 |
-| [[02-AISystem/GPU/PMPP/PMPP|PMPP]] | 并行编程实战（Programming Massively Parallel Processors） | 进行中 |
-| [[02-AISystem/GPU/GPU-arch/GPU-arch|GPU-arch]] | GPU 微架构 | 进行中 |
-| [[02-AISystem/GPU/ISA/ISA|ISA]] | GPU 指令集 | 起步 |
-| [[02-AISystem/GPU/tensor-core/tensor-core|tensor-core]] | Tensor Core 原理 | 起步 |
-| [[02-AISystem/GPU/Operator/Operator|Operator]] | 算子实现与优化 | 进行中 |
+| [[02-AISystem/GPU/CUDA-Programming-Guide/CUDA-Programming-Guide\|CUDA-Programming-Guide]] | CUDA C 编程指南精读 | 进行中 |
+| [[02-AISystem/GPU/PMPP/PMPP\|PMPP]] | 并行编程实战（Programming Massively Parallel Processors） | 进行中 |
+| [[02-AISystem/GPU/GPU-arch/GPU-arch\|GPU-arch]] | GPU 微架构 | 进行中 |
+| [[02-AISystem/GPU/ISA/ISA\|ISA]] | GPU 指令集 | 起步 |
+| [[02-AISystem/GPU/tensor-core/tensor-core\|tensor-core]] | Tensor Core 原理 | 起步 |
+| [[02-AISystem/GPU/Operator/Operator\|Operator]] | 算子实现与优化 | 进行中 |
 
 ## 关键笔记
 

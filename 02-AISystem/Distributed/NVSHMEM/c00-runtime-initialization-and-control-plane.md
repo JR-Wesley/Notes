@@ -10,6 +10,10 @@
 
 ## 资料版本与论述边界
 
+官方 Execution Model 对 `nvshmem_init`/`nvshmem_init_thread`、collective `nvshmem_finalize`、`nvshmem_global_exit` 和 finalize 后不得重新初始化的英文原文与中文翻译，见 [双语核对笔记：NVSHMEM Execution Model](official-docs/r04-execution-model-and-progress.md)。本课在该生命周期契约上继续展开 bootstrap、heap、transport 和 reverse cleanup。
+
+官方 Using NVSHMEM 页面关于 MPI communicator 初始化、PE→GPU 选择、host/device libraries、PMI/PMIx 与 launcher 的完整双语材料，见 [双语核对笔记：Using NVSHMEM](official-docs/r05-using-nvshmem.md)。其中 launcher/bootstrap 与 payload transport 是不同层次，不能由 `mpirun` 或 `srun` 反推数据路径。
+
 本文于 2026-09-13 依据 NVIDIA NVSHMEM API Guide 的滚动 `latest` 页面核对，并以 [NVSHMEM 3.7.2 Release Notes](https://docs.nvidia.com/nvshmem/release-notes-install-guide/release-notes/release-3720.html)标识发布周期。API 状态、默认环境变量和可选 transport 可能随版本变化；本文没有固定 NVSHMEM 源码 commit，因此不会把某个版本的内部函数名、初始化线程、endpoint 数量、QP 建立顺序或 key 数据结构写成长期契约。
 
 文中把初始化拆成多个概念阶段，其中“bootstrapping 与 device initialization 两阶段”是当前官方文档明确给出的状态模型；“拓扑发现、内存注册、peer metadata/endpoint 准备、device state 发布”则是根据后续通信必须拥有的信息所作的系统性分解。后者用于解释职责和排错，不代表公开 API 保证按此顺序逐项执行，也不保证每种 transport 都创建相同资源。

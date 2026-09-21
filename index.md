@@ -29,7 +29,7 @@ AI Systems 的几个常用入口：
 - [GPU](02-AISystem/GPU/GPU.md)：CUDA 编程、执行与存储模型、GPU 架构、算子、Tensor Core、CuTe。
 - [Distributed](02-AISystem/Distributed/Distributed.md)：Parallelism、RDMA、NCCL、NVSHMEM、DeepEP 与分布式训练。
 - [Framework](02-AISystem/Framework/Framework.md)：PyTorch、Megatron、vLLM、llama.cpp 与 Hugging Face 相关资料。
-- [Inference](02-AISystem/Inference/Inference.md)：KV Cache、Attention、量化、解码与推理优化。
+- [Acceleration](02-AISystem/Acceleration/Acceleration.md)：KV Cache、Attention、量化、解码与推理优化。
 - [AISysReview](02-AISystem/AI-sys-review.md)：综合学习体系、课程和跨主题总结。
 
 ## 知识如何组织
@@ -82,7 +82,7 @@ Domain → Topic → Concept / System
 | --- | --- |
 | 计算机系统 | [系统基础](01-ComputerScience/system-basics/system-basics.md) → [体系结构](01-ComputerScience/Architecture/Architecture.md) → [操作系统](01-ComputerScience/operating-system/operating-system.md) → [系统编程](01-ComputerScience/Programming/Programming.md) |
 | GPU 编程与优化 | [HPC 基础](02-AISystem/hpc-basics/hpc-basics.md) → [GPU](02-AISystem/GPU/GPU.md) 中的 CUDA / PMPP → 算子与存储优化 → Tensor Core / CuTe |
-| 分布式 AI 系统 | [模型基础](02-AISystem/algorithm-and-model/algorithm-and-model.md) → [并行策略](02-AISystem/Distributed/Parallelism/Parallelism.md) → [通信系统](02-AISystem/Distributed/Distributed.md) → [框架实现](02-AISystem/Framework/Framework.md) → [推理优化](02-AISystem/Inference/Inference.md) |
+| 分布式 AI 系统 | [模型基础](02-AISystem/algorithm-and-model/algorithm-and-model.md) → [并行策略](02-AISystem/Distributed/Parallelism/Parallelism.md) → [通信系统](02-AISystem/Distributed/Distributed.md) → [框架实现](02-AISystem/Framework/Framework.md) → [推理优化](02-AISystem/Acceleration/Acceleration.md) |
 | 数字 IC 与处理器 | [电路与设计基础](04-IntegratedCircuit/Basics/Basics.md) → [SoC](01-ComputerScience/SoC/SoC.md) / [IP](04-IntegratedCircuit/IP/IP.md) → [加速器](04-IntegratedCircuit/Accelerator/Accelerator.md) → [ASIC Flow](04-IntegratedCircuit/asic-flow/asic-flow.md) |
 
 阅读时结合系统整体与实现细节，从基本原理推导，再通过源码和实践检查理解。源码笔记应尽量明确 Repository、Commit、File 和 Symbol；实验记录应说明环境、命令、配置和结果条件，区分实测与估算。

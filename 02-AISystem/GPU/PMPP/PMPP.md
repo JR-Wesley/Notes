@@ -6,9 +6,9 @@
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[02-AISystem/GPU/PMPP/1-Fundamental-Concepts/1-Fundamental-Concepts|1-Fundamental-Concepts]] | 基础概念（并发/存储/性能） | 进行中 |
-| [[02-AISystem/GPU/PMPP/2-Parallel-Patterns/2-Parallel-Patterns|2-Parallel-Patterns]] | 并行模式 | 进行中 |
-| [[02-AISystem/GPU/PMPP/4-Advanced-Practices/4-Advanced-Practices|4-Advanced-Practices]] | 高级实践 | 起步 |
+| [[02-AISystem/GPU/PMPP/1-Fundamental-Concepts/1-Fundamental-Concepts\|1-Fundamental-Concepts]] | 基础概念（并发/存储/性能） | 进行中 |
+| [[02-AISystem/GPU/PMPP/2-Parallel-Patterns/2-Parallel-Patterns\|2-Parallel-Patterns]] | 并行模式 | 进行中 |
+| [[02-AISystem/GPU/PMPP/4-Advanced-Practices/4-Advanced-Practices\|4-Advanced-Practices]] | 高级实践 | 起步 |
 
 ## 关键笔记
 

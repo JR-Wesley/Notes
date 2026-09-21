@@ -313,7 +313,7 @@ flowchart LR
 | 4. 对象与操作 | WR/WQE、CQE/WC 和 SEND/READ/WRITE/Atomic 怎样关联？ | 能读懂最小 verbs 程序并判断谁提供地址 | [[02-AISystem/Distributed/NVSHMEM/a01-rdma-communication-model|A01]]、[[02-AISystem/Distributed/NVSHMEM/a03-rdma-requests-and-buffer-protocol|A03]] |
 | 5. 建连与生命周期 | QP 状态、RDMA CM、控制面交换与销毁依赖是什么？ | 能追踪 QP 从创建到退出 | [[02-AISystem/Distributed/NVSHMEM/a02-rdma-resources-and-memory-registration|A02]] |
 | 6. RNIC 快路径 | post、doorbell、DMA、packet、ACK、CQE 与 polling 怎样串联？ | 能从 API 调用追到设备队列和完成 | [[02-AISystem/Distributed/NVSHMEM/a03-rdma-requests-and-buffer-protocol|A03]]、[[02-AISystem/Distributed/NVSHMEM/a04-rping-full-rdma-flow|A04]] |
-| 7. 网络与部署 | RC 等 transport 怎样运行在 IB/RoCE/iWARP 上？ | 能区分 host、RNIC 和 fabric 问题 | [[02-AISystem/Distributed/分布式基础/分布式互联技术总览|分布式互联技术总览]] |
+| 7. 网络与部署 | RC 等 transport 怎样运行在 IB/RoCE/iWARP 上？ | 能区分 host、RNIC 和 fabric 问题 | [[02-AISystem/Distributed/distributed-basics/分布式互联技术总览|分布式互联技术总览]] |
 | 8. 性能与验证 | 如何建立分层基线而不是直接调整参数？ | 能保存环境、拓扑、命令、原始结果和适用条件 | [[02-AISystem/Distributed/RDMA/RDMA模拟编程|RDMA 模拟编程]]、本文验证表 |
 | 9. GPU 与上层系统 | 高层通信怎样映射到 RDMA、GDR 或 GPU-initiated 路径？ | 能区分 collective、transport、DMA target 和 work submitter | [[02-AISystem/Distributed/NVSHMEM/c01-host-rdma-to-gpudirect-and-ibgda|C01]]、[[02-AISystem/AI-sys-review/GPU通信与互联/04-RDMA与GPU网络|RDMA 与 GPU 网络]] |
 

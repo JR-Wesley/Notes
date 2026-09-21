@@ -4,6 +4,8 @@ NVSHMEM 允许通信直接出现在 CUDA kernel 中，这使计算、数据搬�
 
 本课承接 [B02：完成、排序与可见性](b02-completeness-ordering-and-visibility.md)，但关注点不同。B02 解决的是“一次操作走到了源可复用、远端交付还是消费确认”；本课解决的是“哪些执行者共同发起这次操作，以及它们能否执行到那个完成点”。正文按 2026-09-12 可见的 NVSHMEM 3.7.2 发布周期滚动 API 文档和 CUDA 官方编程指南核对。示例均为教学片段，未编译、未运行，也未在具体 GPU、互连或 transport 上验证。
 
+官方 Execution Model 对 one-sided operation progress 的英文原文、中文翻译和“目标 PE 无显式调用”这一保证的边界，见 [双语核对笔记：NVSHMEM Execution Model](official-docs/r04-execution-model-and-progress.md)。该保证不能替代本课对发起侧 CUDA residency、stream dependency 和 collective participation 的前进性分析。
+
 ## 前置模型：先把三套坐标系分开
 
 假设每个 PE 管理一块 GPU：PE 0 上的 kernel 计算一段数组，然后把数组发送到 PE 1；PE 1 的 kernel 等待数据到达并继续计算。这个场景同时存在三套坐标系。第一套是 NVSHMEM 的 PE/Team 坐标，回答哪些进程级通信端点参与；第二套是 CUDA 的 thread/warp/block/grid 坐标，回答同一 GPU 上哪些线程执行代码；第三套是 host、device 和 CUDA stream 的发起坐标，回答操作由 CPU 直接调用、由 GPU thread 调用，还是由 CPU 排入某条 stream。

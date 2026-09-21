@@ -6,7 +6,7 @@
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[02-AISystem/Distributed/NVSHMEM/experiments/experiments|experiments]] | 实验记录 | 进行中 |
+| [[02-AISystem/Distributed/NVSHMEM/experiments/experiments\|experiments]] | 实验记录 | 进行中 |
 
 ## 关键笔记
 

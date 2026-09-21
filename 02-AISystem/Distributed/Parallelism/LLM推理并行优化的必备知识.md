@@ -10,9 +10,9 @@
 
 先从线性层出发。设 
 
-\[
+$$
 Y = XW
-\]
+$$
 
 其中 \\n$X\in\mathbb{R}^{M\times N}$，$W\in\mathbb{R}^{N\times K}$。
 
@@ -20,23 +20,23 @@ Y = XW
 
 | 切分方式 | 每张 GPU 的计算 | 如何恢复完整结果 |
 | --- | --- | --- |
-| \(W\) 按列切分 | \(Y_i = XW_i\) | 按列拼接（Gather/AllGather） |
-| \(X\) 按行切分 | \(Y_i = X_iW\) | 按行拼接（Gather/AllGather） |
-| \(X\) 按列切分，\(W\) 按行对应切分 | 计算的是同一输出元素的局部贡献 \(Y_i\) | 逐元素求和（Reduce/AllReduce） |
+| $W$ 按列切分 | $Y_i = XW_i$ | 按列拼接（Gather/AllGather） |
+| $X$ 按行切分 | $Y_i = X_iW$ | 按行拼接（Gather/AllGather） |
+| $X$ 按列切分，$W$ 按行对应切分 | 计算的是同一输出元素的局部贡献 $Y_i$ | 逐元素求和（Reduce/AllReduce） |
 
 这三类里，前两类产出的都是完整输出片段，后者是同元素的部分和。前两类只在后续层需要完整输出时才必须重组；若后续算子也能消费分片，就可延迟甚至省去重组。
 
 对于两层 MLP：
 
-\[
+$$
 Y=\phi(XW_1)W_2
-\]
+$$
 
-若切 \(W_1\) 的列和 \(W_2\) 的行，且 \(\phi\) 是逐元素激活（例如 GELU、ReLU），则
+若切 $W_1$ 的列和 $W_2$ 的行，且 $\phi$ 是逐元素激活（例如 GELU、ReLU），则
 
-\[
+$$
 Y=\sum_i \phi(XW_{1,i})W_{2,i}
-\]
+$$
 
 中间激活可以按分片保留到最后再归约，这就是推理下 MLP 常见 TP/ SP 组合的关键理解点。
 
@@ -57,9 +57,9 @@ Megatron 的 SP 与 Attention 的 CP 并不等价：SP 常与 TP 联动承担 la
 
 ## 三、Attention 的难点在于 Softmax 归一化范围
 
-\[
+$$
 O=\operatorname{softmax}\left(\frac{QK^\top}{\sqrt d}\right)V
-\]
+$$
 
 并行切分时，Q/K/V 的可切分性不同，关键在“归一化是否跨本地分片范围”。
 
@@ -73,21 +73,21 @@ O=\operatorname{softmax}\left(\frac{QK^\top}{\sqrt d}\right)V
 
 ## 四、分块 Attention 的正确归并
 
-对某个 query，记第\(i\)块 KV 分支为 \(s_i\)。
+对某个 query，记第$i$块 KV 分支为 $s_i$。
 
-\[
+$$
 m_i = \max(s_i),\quad l_i = \sum_j e^{s_{ij}-m_i},\quad u_i = \sum_j e^{s_{ij}-m_i}v_{ij}
-\]
+$$
 
 
 
-\[
+$$
 m=\max_i m_i,
-\]
+$$
 
-\[
+$$
 O=\frac{\sum_i e^{m_i-m}u_i}{\sum_i e^{m_i-m}l_i}
-\]
+$$
 
 所以分块输出不能平均。必须携带归一化统计量（max 与 sum）才可正确拼接。这个结构支持树形归并：
 

@@ -8,6 +8,10 @@
 
 ## 资料版本与论述边界
 
+官方 Execution Model 关于 PE/SPMD、PE identifier 和 NVSHMEM phase 的英文原文、中文翻译与规范边界解读，集中整理在 [双语核对笔记：NVSHMEM Execution Model](official-docs/r04-execution-model-and-progress.md)。本课继续按编程模型组织概念；双语摘记用于核对官方措辞，不把 PE 与 CUDA thread/block 混为同一执行实体。
+
+官方 Using NVSHMEM 页面把 job/PE、PGAS、环形 PUT、MPI 集成、编译启动、GDAKI、通信与一致性、collective launch 和 MPG 放在同一入门上下文中，英文原文、中文对照和跨课程边界见 [双语核对笔记：Using NVSHMEM](official-docs/r05-using-nvshmem.md)。
+
 本文于 2026-09-12 依据 NVIDIA 官方 NVSHMEM API Guide 的 `latest` 页面核对，并以 [NVSHMEM 3.7.2 Release Notes](https://docs.nvidia.com/nvshmem/release-notes-install-guide/release-notes/release-3720.html) 标识所处发布周期。`latest` 是滚动文档，未来版本可能增加 API 或调整限制；本文没有绑定 NVSHMEM 源码 commit，因此只讨论公开编程契约，不把某个 transport、地址换算公式、QP 布局或 progress engine 写成所有版本都成立的实现事实。
 
 文中的 C++/CUDA 片段用于解释控制关系，没有在本任务中编译或运行，也没有 GPU、NVLink、InfiniBand 或 IBGDA 实测结果。为保持主线清晰，示例省略错误检查；真实程序必须检查 CUDA 与 NVSHMEM 初始化、内存分配和 kernel launch 的返回状态。

@@ -180,11 +180,13 @@ NVSHMEM/
 └── official-docs/
     ├── r01-symmetric-heap.md                                [规划]
     ├── r02-initialization.md                                [规划]
-    ├── r03-usage-memory-model-and-consistency.md             [规划]
-    └── r04-communication-and-scalability.md                 [规划]
+    ├── r03-usage-memory-model-and-consistency.md             [已有]
+    ├── r04-execution-model-and-progress.md                  [已有]
+    ├── r05-using-nvshmem.md                                [已有]
+    └── r06-communication-and-scalability.md                 [规划]
 ```
 
-`official-docs/` 尚无实际摘记，因此本轮不创建空目录。未来的参考摘记用于保存版本化核对结果，不复制官方原文，也不重复扩写课程正文。
+`official-docs/` 已保存用户明确要求保留的官方英文、中文对照与技术解读。参考摘记用于核对原文语义和版本条件；课程正文仍按问题组织，不机械复制双语材料。
 
 ## 课程主线
 

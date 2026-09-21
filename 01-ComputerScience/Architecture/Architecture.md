@@ -11,10 +11,10 @@ tags:
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[01-ComputerScience/Architecture/book-CSAPP/book-CSAPP|book-CSAPP]] | CSAPP（深入理解计算机系统）阅读笔记 | 进行中 |
-| [[01-ComputerScience/Architecture/book-cs-organization-riscv/book-cs-organization-riscv|book-cs-organization-riscv]] | RISC-V 计算机组成教材笔记 | 进行中 |
-| [[01-ComputerScience/Architecture/book-super-scalar-processor/book-super-scalar-processor|book-super-scalar-processor]] | 超标量处理器设计（现代处理器）阅读 | 起步 |
-| [[01-ComputerScience/Architecture/computer-architecture/computer-architecture|ComputerArchitecture]] | 计算机体系结构（课程/教材）笔记 | 进行中 |
+| [[01-ComputerScience/Architecture/book-CSAPP/book-CSAPP\|book-CSAPP]] | CSAPP（深入理解计算机系统）阅读笔记 | 进行中 |
+| [[01-ComputerScience/Architecture/book-cs-organization-riscv/book-cs-organization-riscv\|book-cs-organization-riscv]] | RISC-V 计算机组成教材笔记 | 进行中 |
+| [[01-ComputerScience/Architecture/book-super-scalar-processor/book-super-scalar-processor\|book-super-scalar-processor]] | 超标量处理器设计（现代处理器）阅读 | 起步 |
+| [[01-ComputerScience/Architecture/computer-architecture/computer-architecture\|ComputerArchitecture]] | 计算机体系结构（课程/教材）笔记 | 进行中 |
 
 ## 关键笔记
 

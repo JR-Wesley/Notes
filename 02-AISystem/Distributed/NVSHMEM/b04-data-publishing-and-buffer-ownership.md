@@ -4,6 +4,8 @@
 
 本课以一个生产者 PE 0、一个消费者 PE 1 和容量为 `K` 的有界槽位队列为主模型。它把 [B02：完成、排序与可见性](b02-completeness-ordering-and-visibility.md)的六阶段状态与 [B03：CUDA 执行域、协作通信与前进性](b03-cuda-execution-and-cooperation.md)的 thread/block/stream 交接组合成完整协议。正文按 2026-09-12 可见的 NVSHMEM 3.7.2 发布周期滚动 API 文档核对；状态机和不变量是基于 API 契约的教学推导，不是 NVSHMEM 内部实现。代码均未编译、未运行，硬件行为和性能也未验证。
 
+官方 Execution Model 关于 pointer argument overlap、buffer in-use 期间的读写限制和多 symmetric segment 参数的英文原文与中文对照，见 [双语核对笔记：NVSHMEM Execution Model](official-docs/r04-execution-model-and-progress.md)。该规范给出 calling PE 上的 buffer access discipline；本课进一步处理 remote consumer 尚未结束时的 slot ownership。
+
 ## 先区分两个缓冲区和三种所有权
 
 设 PE 0 在本地 `source[p]` 中生成第 `p` 条消息，再 PUT 到 PE 1 的 `slot[j]`。这里至少有两个物理对象：生产者本地 source 和消费者所在 PE 的远端 slot。blocking PUT 返回或 NBI PUT 经 flush 后，本地 source 可能已经允许复用；但远端 slot 即使已经交付，也可能仍在被消费者读取。把二者都简称为“buffer”，容易错误地用一个完成条件同时释放两个不同对象。
@@ -47,15 +49,15 @@ ready 与 ack 必须指向同一个逻辑 ticket。若 ready 只是布尔值 1�
 
 令生产者的消息 ticket 为 `p = 0, 1, 2, ...`，消费者按相同顺序使用 ticket `c`。队列容量为 `K`，ticket `p` 使用槽：
 
-\[
+$$
 j = p \bmod K
-\]
+$$
 
 每个 slot `j` 对应两个控制序号：位于消费者 PE 的 `ready[j]`，以及位于生产者 PE 的 `ack[j]`。协议初始化为：
 
-\[
+$$
 ready[j]=0,\qquad ack[j]=j,\qquad 0\le j<K
-\]
+$$
 
 当生产者准备 ticket `p` 时，它只能在 `ack[j] == p` 后使用槽 `j=p mod K`。发布 payload 后，把消费者的 `ready[j]` 设置为 `p+1`。消费者处理 ticket `c` 时等待 `ready[j] == c+1`；处理结束后，把生产者的 `ack[j]` 设置为 `c+K`。下一次映射到同一槽的 ticket 正好是 `p+K`，因此消费者返回的值就是该槽下一次允许生产的序号。
 
@@ -155,9 +157,9 @@ for (uint64_t p = begin; p < message_count; ++p) {
 
 可以定义已发布但未确认的数量 `O`。对于严格有序的单生产者—单消费者协议，应维持：
 
-\[
+$$
 0 \le O \le K
-\]
+$$
 
 若生产者累计发布 `P` 条，消费者累计确认 `A` 条，则 `O=P-A`。生产者只在目标槽 ack 匹配时发布下一条，正是用分散的每槽序号维护这个容量不变量。背压等待是否阻塞一个 thread、一个 block 或一条 stream，要结合 B03 的 forward progress 审查；协议上的“应该等待”不代表任何放置方式都不会形成调度环。
 

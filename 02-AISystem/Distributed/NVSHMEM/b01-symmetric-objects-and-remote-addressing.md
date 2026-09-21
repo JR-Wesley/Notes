@@ -8,6 +8,8 @@
 
 ## 资料版本与论述边界
 
+官方 Memory Model 的完整英文、逐段中文翻译和规范边界解读已整理为 [双语核对笔记：NVSHMEM Memory Model](official-docs/r03-usage-memory-model-and-consistency.md)。本课保留面向问题的中文推导；需要核对 symmetric object、symmetric address、alignment 或 `nvshmem_ptr` 原始措辞时，应回到该双语笔记与其链接的 NVIDIA 页面。
+
 本文在 2026-09-12 核对 NVIDIA 官方 NVSHMEM API Guide 的 `latest` 页面，并用 [NVSHMEM 3.7.2 Release Notes](https://docs.nvidia.com/nvshmem/release-notes-install-guide/release-notes/release-3720.html)确认当前发布周期。`latest` 是会随发布更新的滚动 URL，不是不可变归档，因此本文将 API 结论标记为“3.7.2 发布周期所见契约”，不声称已经绑定 NVSHMEM 源码 commit。后续 D 模块分析实现时必须另外选择固定源码版本。
 
 本文的代码用于说明地址关系，未编译、未运行，也没有 GPU、NVLink、InfiniBand 或 IBGDA 实测结果。诸如“runtime 可概念化为按对象内偏移寻找远端对应位置”的表达是教学模型；官方 API 保证的是 symmetric address 与目标 PE 的组合能够标识远端对应对象，不公开承诺内部一定采用某个固定地址表、算术公式、MR 或 key 布局。

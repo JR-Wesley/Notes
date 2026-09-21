@@ -6,7 +6,7 @@
 
 | 子主题 | 内容概述 | 进度 |
 | --- | --- | --- |
-| [[05-PersonalDevelopment/Psychology/Understanding/Understanding|Understanding]] | 心理学理解（入门书） | 进行中 |
+| [[05-PersonalDevelopment/Psychology/Understanding/Understanding\|Understanding]] | 心理学理解（入门书） | 进行中 |
 
 ## 关键笔记
 
